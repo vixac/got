@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#opens $1 filename in vim, then when closed, inserts the timestamp at the top  of the file.
 FILE=$1.txt
 TMPFILE=.$FILE.vxdaytmp
 touch $FILE
