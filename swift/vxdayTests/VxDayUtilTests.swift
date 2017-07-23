@@ -8,7 +8,9 @@
 
 import XCTest
 
-class vxdayTests: XCTestCase {
+@testable import vxday
+
+class VxDayUtilTest: XCTestCase {
     
     override func setUp() {
         super.setUp()
@@ -28,6 +30,9 @@ class vxdayTests: XCTestCase {
     }
     
     func testSplitString() {
+        
+        let array = VxDayUtil.splitString(string: "one two three")
+        XCTAssertEqual(array.count, 3)
         
     }
 }

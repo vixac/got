@@ -9,11 +9,3 @@
 import Foundation
 
 
-class VxDayUtil {
-    
-    class func splitString(string: String) -> [String] {
-        return string.components(separatedBy: " ")
-        
-    }    
-}
-
