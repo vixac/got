@@ -1,1 +1,2 @@
-cat VxDayUtil.swift test.swift  | swift - $@
+
+cat VxdayExec.swift VxdayUtil.swift VxdayParser.swift test.swift  | swift - $@

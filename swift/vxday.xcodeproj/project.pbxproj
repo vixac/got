@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1C38CA2F1F267C220034028E /* VxdayParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA2E1F267C220034028E /* VxdayParser.swift */; };
+		1C38CA311F2684060034028E /* VxdayExec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA301F2684060034028E /* VxdayExec.swift */; };
 		1C77A6021F251CCB00109773 /* test.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C77A6011F251CCB00109773 /* test.swift */; };
-		1C77A6041F25267D00109773 /* VxDayUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C77A6031F25267D00109773 /* VxDayUtil.swift */; };
+		1C77A6041F25267D00109773 /* VxdayUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C77A6031F25267D00109773 /* VxdayUtil.swift */; };
 		1C77A6061F2539C700109773 /* Vxday.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C77A6051F2539C700109773 /* Vxday.swift */; };
 		1C8444D51E85CBB10060E661 /* VxDayUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C8444D41E85CBB10060E661 /* VxDayUtilTests.swift */; };
 /* End PBXBuildFile section */
@@ -26,9 +28,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1C38CA2E1F267C220034028E /* VxdayParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayParser.swift; sourceTree = "<group>"; };
+		1C38CA301F2684060034028E /* VxdayExec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayExec.swift; sourceTree = "<group>"; };
 		1C4C6FC71E7EC96C00AB1949 /* vxday */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = vxday; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C77A6011F251CCB00109773 /* test.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = test.swift; path = vxday/test.swift; sourceTree = "<group>"; };
-		1C77A6031F25267D00109773 /* VxDayUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxDayUtil.swift; sourceTree = "<group>"; };
+		1C77A6031F25267D00109773 /* VxdayUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayUtil.swift; sourceTree = "<group>"; };
 		1C77A6051F2539C700109773 /* Vxday.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Vxday.swift; path = vxday/Vxday.swift; sourceTree = "<group>"; };
 		1C8444D21E85CBB10060E661 /* vxdayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vxdayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C8444D41E85CBB10060E661 /* VxDayUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxDayUtilTests.swift; sourceTree = "<group>"; };
@@ -75,7 +79,9 @@
 		1C4C6FC91E7EC96C00AB1949 /* vxday */ = {
 			isa = PBXGroup;
 			children = (
-				1C77A6031F25267D00109773 /* VxDayUtil.swift */,
+				1C77A6031F25267D00109773 /* VxdayUtil.swift */,
+				1C38CA2E1F267C220034028E /* VxdayParser.swift */,
+				1C38CA301F2684060034028E /* VxdayExec.swift */,
 			);
 			path = vxday;
 			sourceTree = "<group>";
@@ -188,9 +194,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C38CA311F2684060034028E /* VxdayExec.swift in Sources */,
 				1C77A6061F2539C700109773 /* Vxday.swift in Sources */,
+				1C38CA2F1F267C220034028E /* VxdayParser.swift in Sources */,
 				1C77A6021F251CCB00109773 /* test.swift in Sources */,
-				1C77A6041F25267D00109773 /* VxDayUtil.swift in Sources */,
+				1C77A6041F25267D00109773 /* VxdayUtil.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

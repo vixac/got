@@ -9,24 +9,12 @@
 
 import Foundation
 
-
-
-
 func printArgs() {
     for  argument in CommandLine.arguments {
         print(argument)
     }
 }
 
-@discardableResult
-func shell(_ args: String...) -> Int32 {
-    let task = Process()
-    task.launchPath = "/usr/bin/env"
-    task.arguments = args
-    task.launch()
-    task.waitUntilExit()
-    return task.terminationStatus
-}
 
 
 
@@ -41,14 +29,16 @@ print("converted back its:")
 print(original)
 printArgs()
 */
-shell("echo", "wehey this works")
-shell("ls", "-a")
-shell("touch", "testfile.txt")
-shell("./vic.sh", "from swift!")
+//shell("echo", "wehey this works")
+//shell("ls", "-a")
+//shell("touch", "testfile.txt")
+//shell("./vic.sh", "from swift!")
+
+let srcDir = VxdayExec.getEnvironmentVar("VXDAY_SRC_DIR")!
+print("Src dir is \(srcDir)")
+let command = srcDir + "/bash/retire.sh"
 
 
-
-
-
-
+//VxdayExec.retire(ListName("me"))
+VxdayExec.unretire(ListName("me"))
 //shell("cat out.txt | xargs wc")
