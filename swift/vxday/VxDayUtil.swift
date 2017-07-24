@@ -93,7 +93,6 @@ enum Verb : String {
     case unretire = "unretire"
     case what = "what"
     case x = "x"
-    case yesterday = "yesterday"
     
     func isa(_ verbs: [Verb]) -> Bool {
         for v in verbs {
@@ -130,7 +129,9 @@ enum Instruction {
     case today(IntOffset?)
     case all
     case what
+    case track
     case week(IntOffset?)
+    case help
     
     static func create(args: [String]) -> Instruction? {
         if args.count == 0 {
@@ -165,25 +166,96 @@ enum Instruction {
                 else {
                     return .all
                 }
-        case .doIt:
-            print("TODOO FINISH UP")
             
+            case .doIt:
+                guard let listName = ArgParser.listName(args: args, index: 1) else {
+                    print("Error: Do couldn't find list name in \(args)")
+                    return nil
+                }
+                guard let description = ArgParser.description(args: args, start: 2) else {
+                    print("Error: Do couldn't find a description in args: \(args)")
+                    return nil
+                }
+                return .doIt(listName, description)
             
+            case .go:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash  in \(args)")
+                    return nil
+                }
+                return .go(hash)
+                
+            case .help:
+                return .help
+                
+            case .less:
+                if let hash = ArgParser.hash(args: args, index: 1)  {
+                    return .lessHash(hash)
+                }
+                else {
+                    guard let listName = ArgParser.listName(args: args, index: 1) else {
+                        print("Error: Do couldn't find list name or hash name in \(args)")
+                        return nil
+                    }
+                    return lessList(listName)
+                }
+                
+            case .note:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash name in \(args)")
+                    return nil
+                }
+                return .note(hash)
+                
+                
             case .retire:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Retire couldn't find list name in \(args)")
                     return nil
                 }
                 return .retire(listName)
+                
+                
+            case .today:
+                    return .today(ArgParser.offset(args: args, index: 1)) // nil is ok.
             
+            case .top:
+                guard let listName = ArgParser.listName(args: args, index: 1) else {
+                    print("Error: Do couldn't find list name in \(args)")
+                    return nil
+                }
+                return .top(listName)
+            
+            case .track:
+                if let hash = ArgParser.hash(args: args, index: 1)  {
+                    return .trackHash(hash)
+                }
+                
+                if let listName = ArgParser.listName(args: args, index: 1) {
+                    return trackList(listName)
+                }
+                return .track
+                    
+                
+
             case .unretire:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Unretire couldn't find list name in \(args)")
                     return nil
                 }
                 return .unretire(listName)
-            
-        }
+                
+                
+            case .what:
+                return .what
+                
+            case .x:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash  in \(args)")
+                    return nil
+                }
+                return .x(hash)
+            }
     }
     
     
@@ -214,12 +286,31 @@ class ArgParser {
         return IntOffset(intOffset)
     }
     
+    static func hash(args: [String], index: Int) -> Hash? {
+        if args.count < index {
+            return nil
+        }
+        let str = args[index]
+        guard  str.characters.first != "0" else {
+            print("Error this doesn't look like a hash, it doesn't start with a 0: \(str)")
+            return nil
+        }
+        guard str.characters.count == 8 else {
+            print("This hash is the wrong length: \(str). Hashes are 8 chars")
+            return nil
+        }
+        return Hash(str)
+        
+    }
+    
     static func description(args: [String], start: Int) -> Description? {
         guard let str = VxdayUtil.flattenRest(args, start: start) else {
             return nil
         }
         return Description(str)
     }
+    
+    
 }
 
 struct Hash {
@@ -228,6 +319,7 @@ struct Hash {
         self.hash = hash
     }
 }
+
 struct Description {
     let text: String
     init(_ text: String) {
