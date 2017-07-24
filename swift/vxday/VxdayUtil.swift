@@ -115,8 +115,6 @@ struct Item {
         }
     }
     
-    
-    
     func toString() -> String {
         let typeStr = type.rawValue
         let createdStr = VxdayUtil.datetimeFormatter.string(from: self.created)

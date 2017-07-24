@@ -33,12 +33,18 @@ printArgs()
 //shell("ls", "-a")
 //shell("touch", "testfile.txt")
 //shell("./vic.sh", "from swift!")
-
-let srcDir = VxdayExec.getEnvironmentVar("VXDAY_SRC_DIR")!
-print("Src dir is \(srcDir)")
-let command = srcDir + "/bash/retire.sh"
-
-
 //VxdayExec.retire(ListName("me"))
-VxdayExec.unretire(ListName("me"))
-//shell("cat out.txt | xargs wc")
+//VxdayExec.unretire(ListName("me"))
+
+let str = VxdayInstruction.makeAddString(ListName("me"), description: Description("Check add string looks correct."), offset: IntOffset(4))
+
+
+print("str is \(str)")
+
+let task = VxdayInstruction.makeAddString(ListName("vxday"), description: Description("Get task strings wokring."), offset: nil)
+print("task is \(task)")
+
+
+VxdayExec.append(ListName("wehey"), content: str)
+
+

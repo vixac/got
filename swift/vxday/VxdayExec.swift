@@ -9,19 +9,26 @@
 import Foundation
 
 
+
+enum FileType : String {
+    case Summary = "summary"
+    case Tokens  = "tokens"
+}
+
 class VxdayExec {
     
     
+    
     private static let activeDir: String = {
-        VxdayExec.getEnvironmentVar("VXDAY_ACTIVE_DIR")!
+        VxdayExec.getEnvironmentVar("VXDAY2_ACTIVE_DIR")!
     }()
     
     private static let retiredDir: String = {
-        VxdayExec.getEnvironmentVar("VXDAY_RETIRED_DIR")!
+        VxdayExec.getEnvironmentVar("VXDAY2_RETIRED_DIR")!
     }()
     
     private static let bashDir: String = {
-        VxdayExec.getEnvironmentVar("VXDAY_SRC_DIR")! + "/bash"
+        VxdayExec.getEnvironmentVar("VXDAY2_SRC_DIR")! + "/bash"
     }()
     private static let starVxday = "_*.vxday"
     
@@ -52,5 +59,15 @@ class VxdayExec {
         let script = VxdayExec.bashDir + "/unretire.sh"
         VxdayExec.shell(script, list.name)
     }
+    
+    static func append(_ list: ListName, content: String ) {
+        let script = VxdayExec.bashDir + "/append.sh"
+        
+        
+        let filename = VxdayExec.activeDir + "/" + list.name + "_summary.vxday"
+        VxdayExec.shell(script, content, filename)
+    }
+    
+    
     
 }
