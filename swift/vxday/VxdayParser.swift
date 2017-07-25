@@ -39,13 +39,6 @@ struct IntOffset {
 }
 
 
-//TODO make this config
-enum ItemType : String {
-    case Complete = "x."
-    case TokenEntry = "->."
-    case Job = "=."
-    case Task = "-."
-}
 
 
 enum Verb : String {
@@ -110,7 +103,7 @@ enum Instruction {
 class ArgParser {
     
     static func createInstruction(args: [String]) -> Instruction? {
-        if args.count == 0 {
+        guard args.count > 0 else  {
             print("Error: Empty instruction args. You need a verb. Example: day help")
             return nil
         }
@@ -242,10 +235,9 @@ class ArgParser {
     }
     
     static func listName(args: [String], index: Int) -> ListName? {
-        if args.count < index {
+        guard let str = ArgParser.str(args: args, index: index) else  {
             return nil
         }
-        let str = args[index]
         if str.characters.first == "0" {
             print("Error, this looks like a hash, not a list name: \(str)")
             return nil
@@ -254,10 +246,9 @@ class ArgParser {
     }
     
     static func offset(args: [String], index: Int) -> IntOffset? {
-        if args.count < index {
+        guard let str = ArgParser.str(args: args, index: index) else  {
             return nil
         }
-        let str : String = args[index]
         guard let intOffset : Int  = Int(str) else {
             print("Error, this doesn't look like an integer offset: \(str)")
             return nil
@@ -266,10 +257,9 @@ class ArgParser {
     }
     
     static func hash(args: [String], index: Int) -> Hash? {
-        if args.count < index {
+        guard let str = ArgParser.str(args: args, index: index) else  {
             return nil
         }
-        let str = args[index]
         guard  str.characters.first != "0" else {
             print("Error this doesn't look like a hash, it doesn't start with a 0: \(str)")
             return nil
@@ -288,6 +278,32 @@ class ArgParser {
         }
         return Description(str)
     }
+    static func itemType(args: [String], index: Int) -> ItemType? {
+        guard let str = ArgParser.str(args: args, index: index) else  {
+            return nil
+        }
+        return ItemType(rawValue: str)
+    }
     
+    static func dateTime(args: [String], index: Int) -> Date? {
+        guard let str = ArgParser.str(args: args, index: index) else  {
+            return nil
+        }
+        return VxdayUtil.datetimeFormatter.date(from: str)
+        
+    }
+    static func date(args: [String], index: Int) -> Date? {
+        guard let str = ArgParser.str(args: args, index: index) else  {
+            return nil
+        }
+        return VxdayUtil.dateFormatter.date(from: str)
+    }
+    
+    private static func str(args: [String], index: Int) -> String? {
+        guard args.count > index else {
+            return nil
+        }
+        return args[index]
+    }
     
 }

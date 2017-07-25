@@ -63,62 +63,10 @@ class VxdayUtil {
         return  Calendar.current.date(byAdding: comp, to: date )!
     }
     
+    class func humanDuration(between start: Date, and end: Date) -> String {
+        return "TODO"
+        
+    }
     
 }
 
-struct Item {
-    var type : ItemType
-    var created: Date
-    var completion: Date
-    var description: String
-    var hash: String
-    init?(_ line: String) {
-        print("hash of line is: \(VxdayUtil.hash(line))")
-        let array = VxdayUtil.splitString(line)
-        guard array.count > 3  else {
-            print("Error parsing. : \(line), not enough items in array: \(array)")
-            return nil
-        }
-        guard let type = ItemType(rawValue: array[0]) else {
-            print("Error parsing: \(line), unknown Vxday type: \(array[0])")
-            return nil
-        }
-        
-        if type == .TokenEntry {
-            print("TODO handle token entry")
-            return nil
-        }
-        else {
-            let hash = array[1]
-            guard VxdayUtil.isValidHash(hash) else {
-                print("invalid hash.: \(hash)")
-                return nil
-            }
-            
-            guard let createdTime = VxdayUtil.datetimeFormatter.date(from: array[2]) else {
-                print("Error extracting created time: \(array[2])")
-                return nil
-            }
-            guard let deadline = VxdayUtil.dateFormatter.date(from: array[3]) else {
-                print("Error extracted completion date from : \(array[3])")
-                return nil
-            }
-            guard let description = VxdayUtil.flattenRest(array, start: 4) else {
-                print("Error, this job has no description.")
-                return nil
-            }
-            self.hash = hash
-            self.type = type
-            self.created = createdTime
-            self.completion = deadline
-            self.description = description
-        }
-    }
-    
-    func toString() -> String {
-        let typeStr = type.rawValue
-        let createdStr = VxdayUtil.datetimeFormatter.string(from: self.created)
-        let completionStr = VxdayUtil.dateFormatter.string(from: self.completion)
-        return typeStr + " " + createdStr + " " + completionStr + " " + description
-    }
-}

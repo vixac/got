@@ -36,15 +36,33 @@ printArgs()
 //VxdayExec.retire(ListName("me"))
 //VxdayExec.unretire(ListName("me"))
 
+
+
+
+/*
 let str = VxdayInstruction.makeAddString(ListName("me"), description: Description("Check add string looks correct."), offset: IntOffset(4))
-
-
 print("str is \(str)")
-
 let task = VxdayInstruction.makeAddString(ListName("vxday"), description: Description("Get task strings wokring."), offset: nil)
 print("task is \(task)")
-
-
 VxdayExec.append(ListName("wehey"), content: str)
+*/
+
+let now = VxdayUtil.now()
+
+//VxdayExec.note(ListName("bam"), hash: Hash("abcdefg"))
 
 
+
+
+print("waiting: \(now)")
+VxdayExec.wait(ListName("me"), hash: Hash("abcdefg"))
+/*
+if let x = readLine(strippingNewline: true) {
+    print("Read line \(x)")
+}
+
+
+let finish = VxdayUtil.now()
+print("done waiting. \(finish)")
+
+ */
