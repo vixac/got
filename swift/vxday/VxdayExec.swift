@@ -88,7 +88,13 @@ class VxdayExec {
     }
     static func allList(_ list: ListName) {
         let filename = VxdayFile.getSummaryFilename(list)
-        VxdayExec.shell("cat", filename)
+        let contents = VxdayReader.readFile(filename)
+        let items = VxdayReader.readSummary(contents, list: list)
+        let view  = VxdayView(items)
+        let jobsStrings = view.showJobs()
+        jobsStrings.forEach { print($0)}
+        
+        //VxdayExec.shell("cat", filename)
     }
     
     //TODO try to write these using mv

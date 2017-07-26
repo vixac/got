@@ -45,6 +45,12 @@ class VxdayUtil {
         return endWords.flatMap({$0 + " " }).joined()
     }
     
+    
+    class func nowDay() -> Date {
+        let c = Calendar.current
+        return c.startOfDay(for: now())
+    }
+    
     class func now() -> Date {
         return Date()
     }

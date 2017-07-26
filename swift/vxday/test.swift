@@ -73,13 +73,20 @@ print("done waiting. \(finish)")
 
  */
 
+/*
 let allLists = VxdayReader.allLists()
 print("all Lists: \(allLists)")
+*/
 
-
-let summaryPath = VxdayFile.getSummaryFilename(ListName("me"))
+let list = ListName("vic")
+VxdayExec.allList(list)
+/*
+let summaryPath = VxdayFile.getSummaryFilename(list)
 let contents = VxdayReader.readFile(summaryPath)
-
-let items = VxdayReader.readSummary(contents, list: ListName("me"))
+print("CONTENTS ARE: \(contents)'")
+let items = VxdayReader.readSummary(contents, list: list)
 print("items are: \(items)")
+ */
+
+
 

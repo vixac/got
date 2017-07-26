@@ -33,6 +33,10 @@ struct CompletionDate {
         }
         self.date = d
     }
+    
+    func pretty() -> String {
+        return self.date.ago()
+    }
     func toString() -> String {
         return VxdayUtil.datetimeFormatter.string(from: self.date)
     }
@@ -48,6 +52,11 @@ struct CreationDate {
         }
         self.date = d
     }
+    
+    func pretty() -> String {
+        return self.date.ago()
+    }
+    
     func toString() -> String {
         return VxdayUtil.datetimeFormatter.string(from: self.date)
     }
@@ -64,6 +73,10 @@ struct DeadlineDate {
         }
         self.date = d
     }
+    func pretty() -> String {
+        return self.date.daysAgo()
+    }
+    
     func toString() -> String {
         return VxdayUtil.dateFormatter.string(from: self.date)
     }
@@ -81,6 +94,61 @@ struct IntOffset {
         self.offset = offset
     }
 }
+
+
+extension Date {
+    static func daysOffsetString(_ days: Int) -> String {
+        switch days {
+            case let x where x == -1:
+                return "Yesterday"
+            case let x where x == 0:
+                return "Today"
+            case let x where x == 1:
+                return "Tomorrow"
+            case let x where x < 0:
+                return "\(abs(days)) days ago"
+            default:
+                return "In \(days) days"
+        }
+    }
+    
+    func daysAgo() -> String {
+        let offset = Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
+        return Date.daysOffsetString(offset)
+    }
+    
+    func ago() -> String {
+        let SECONDS_IN_A_DAY = 86400
+        let SECONDS_IN_AN_HOUR = 60 * 60
+        let SECONDS_IN_A_MINUTE = 60
+        let now = VxdayUtil.now()
+        
+
+        let interval =  Int(self.timeIntervalSince(now))
+        print("interval is \(interval)")
+        let absInterval = abs(interval)
+        if absInterval > SECONDS_IN_A_DAY {
+            return Date.daysOffsetString(interval / SECONDS_IN_A_DAY)
+        }
+        else if absInterval > SECONDS_IN_AN_HOUR {
+            let hours = interval / SECONDS_IN_AN_HOUR
+            if hours < 0 {
+                return "In \(hours) hours."
+            }
+            
+            return "\(hours) hours ago"
+        }
+        else if absInterval > SECONDS_IN_A_MINUTE {
+            let mins = interval / SECONDS_IN_A_MINUTE
+            if mins < 0 {
+                return "In \(mins) minutes."
+            }
+            return "\(mins) minutes ago."
+        }
+        return "Just now."
+    }
+}
+
 
 
 
@@ -372,55 +440,6 @@ class ArgParser {
     
 }
 //
-//  VxdayRead.swift
-//  vxday
-//
-//  Created by vic on 26/07/2017.
-//  Copyright © 2017 vixac. All rights reserved.
-//
-
-import Foundation
-
-//TODO make this config
-enum ItemType : String {
-    case complete = "x."
-    case completeJob = "X."
-    case tokenEntry = "->."
-    case job = "=."
-    case task = "-."
-}
-
-
-
-class VxdayReader {
-    
-    static func allLists() -> [ListName] {
-        let fm = FileManager.default
-        let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
-        //var lists: [ListName] = []
-        var lists : Set<String> = Set()
-        while  let file  = enumerator.nextObject() as? String  {
-            print("File is \(file)")
-            lists.insert(VxdayUtil.beforeUnderscore(file))
-        }
-        return lists.map {return ListName($0)}
-    }
-    
-    static func readFile(_ path: String) -> [String] {
-        guard let contents =  try? String(contentsOfFile: path) else {
-            print("Error reading file: \(path)")
-            return []
-        }
-        return contents.components(separatedBy: "\n")
-    }
-    
-    
-    static func readSummary(_ lines: [String], list: ListName) -> [Item] {
-        return lines.flatMap{ Item.create($0, list: list)}
-    }
-
-}
-//
 //  VxdayView.swift
 //  vxday
 //
@@ -430,16 +449,54 @@ class VxdayReader {
 
 import Foundation
 
-
-
-
 enum Item {
+    
+    
     case job(ListName, Hash, CreationDate , DeadlineDate, Description )
-    case completeJob(ListName, Hash, CreationDate, DeadlineDate, completion: CompletionDate)
+    case completeJob(ListName, Hash, CreationDate, DeadlineDate, CompletionDate, Description)
     case task(ListName, Hash, CreationDate, Description)
+    case completeTask(ListName, Hash, CreationDate, CompletionDate,  Description)
     case token(ListName, Hash, CreationDate, CompletionDate)
     
     
+    func tuple() -> ( list: ListName,  hash: Hash, creation: CreationDate, deadline: DeadlineDate?, completion: CompletionDate?, description : Description?) {
+        switch self {
+            case let .job(list, hash, creation, deadline, description):
+                return (list, hash, creation, deadline, nil, description)
+        case let .completeJob(list, hash, creation, deadline, completion, description):
+                return (list, hash, creation, deadline, completion, description)
+        case let .task(list, hash, creation, description):
+                return (list, hash, creation, nil, nil, description)
+            
+        case let .completeTask(list, hash, creation, completion, description):
+                return (list, hash, creation, nil, completion, description)
+        case let .token(list, hash, creation, completion):
+            return (list, hash, creation, nil, completion, nil)
+            }
+        
+    } /*
+    func list() -> ListName {
+        return tuple().list
+    }
+    func hash() -> Hash {
+        return tuple().hash
+        
+    }
+    func creation() -> CreationDate {
+        return tuple().creation
+        
+    }
+    func description() -> Description? {
+        return tuple().description
+    }
+    
+    func deadline() -> DeadlineDate? {
+        return tuple().deadline
+    }
+    func completion() -> CompletionDate? {
+        return tuple().completion
+    }
+ */
     
     func toString() -> String {
         switch self {
@@ -455,6 +512,7 @@ enum Item {
     }
     
     static func create(_ line: String, list: ListName) -> Item? {
+        print("Creating Item from line: '\(line)'")
         let array = VxdayUtil.splitString(line)
         
         guard let itemType = ArgParser.itemType(args: array, index: 0) else {
@@ -515,9 +573,38 @@ enum Item {
 
 class VxdayView {
     
+    let items: [Item]
     
+    init(_ items: [Item]) {
+        self.items = items
+    }
     
-    
+    private func getDeadlines() -> [Item] {
+        var jobs : [Item]  = []
+        for i in items {
+            if case Item.job(_,_,_,_,_) = i {
+                jobs.append(i)
+            }
+        }
+        let tuples = jobs.map { $0.tuple()}.sorted { $0.deadline!.date < $1.deadline!.date }
+        return tuples.map { return Item.job($0.list, $0.hash, $0.creation, $0.deadline!, $0.description!) }
+    }
+    func showJobs() -> [String] {
+        
+        var str : [String] = []
+        let sorted = self.getDeadlines()
+        if items.count == 0 {
+            return ["No impending jobs."]
+        }
+        
+        let tuples = sorted.map {$0.tuple()}
+        let listName = tuples[0].list.name
+        str.append("Jobbies: \(listName):")
+        for t in tuples {
+            str.append(t.deadline!.pretty() + " : " + t.description!.text)
+        }
+        return str
+    }
 }
 
 /*
@@ -723,7 +810,13 @@ class VxdayExec {
     }
     static func allList(_ list: ListName) {
         let filename = VxdayFile.getSummaryFilename(list)
-        VxdayExec.shell("cat", filename)
+        let contents = VxdayReader.readFile(filename)
+        let items = VxdayReader.readSummary(contents, list: list)
+        let view  = VxdayView(items)
+        let jobsStrings = view.showJobs()
+        jobsStrings.forEach { print($0)}
+        
+        //VxdayExec.shell("cat", filename)
     }
     
     //TODO try to write these using mv
@@ -807,6 +900,12 @@ class VxdayUtil {
         return endWords.flatMap({$0 + " " }).joined()
     }
     
+    
+    class func nowDay() -> Date {
+        let c = Calendar.current
+        return c.startOfDay(for: now())
+    }
+    
     class func now() -> Date {
         return Date()
     }
@@ -836,6 +935,53 @@ class VxdayUtil {
     
 }
 
+//
+//  VxdayRead.swift
+//  vxday
+//
+//  Created by vic on 26/07/2017.
+//  Copyright © 2017 vixac. All rights reserved.
+//
+
+import Foundation
+
+//TODO make this config
+enum ItemType : String {
+    case complete = "x."
+    case completeJob = "X."
+    case tokenEntry = "->."
+    case job = "=."
+    case task = "-."
+}
+
+
+
+class VxdayReader {
+    
+    static func allLists() -> [ListName] {
+        let fm = FileManager.default
+        let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
+        var lists : Set<String> = Set()
+        while  let file  = enumerator.nextObject() as? String  {
+            lists.insert(VxdayUtil.beforeUnderscore(file))
+        }
+        return lists.map {return ListName($0)}
+    }
+    
+    static func readFile(_ path: String) -> [String] {
+        guard let contents =  try? String(contentsOfFile: path) else {
+            print("Error reading file: \(path)")
+            return []
+        }
+        return contents.components(separatedBy: "\n").filter{ $0 != ""}
+    }
+    
+    
+    static func readSummary(_ lines: [String], list: ListName) -> [Item] {
+        return lines.flatMap{ Item.create($0, list: list)}
+    }
+
+}
 //
 //  test.swift
 //  vxday
@@ -911,13 +1057,20 @@ print("done waiting. \(finish)")
 
  */
 
+/*
 let allLists = VxdayReader.allLists()
 print("all Lists: \(allLists)")
+*/
 
-
-let summaryPath = VxdayFile.getSummaryFilename(ListName("me"))
+let list = ListName("vic")
+VxdayExec.allList(list)
+/*
+let summaryPath = VxdayFile.getSummaryFilename(list)
 let contents = VxdayReader.readFile(summaryPath)
-
-let items = VxdayReader.readSummary(contents, list: ListName("me"))
+print("CONTENTS ARE: \(contents)'")
+let items = VxdayReader.readSummary(contents, list: list)
 print("items are: \(items)")
+ */
+
+
 

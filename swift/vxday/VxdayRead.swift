@@ -24,10 +24,8 @@ class VxdayReader {
     static func allLists() -> [ListName] {
         let fm = FileManager.default
         let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
-        //var lists: [ListName] = []
         var lists : Set<String> = Set()
         while  let file  = enumerator.nextObject() as? String  {
-            print("File is \(file)")
             lists.insert(VxdayUtil.beforeUnderscore(file))
         }
         return lists.map {return ListName($0)}
@@ -38,7 +36,7 @@ class VxdayReader {
             print("Error reading file: \(path)")
             return []
         }
-        return contents.components(separatedBy: "\n")
+        return contents.components(separatedBy: "\n").filter{ $0 != ""}
     }
     
     

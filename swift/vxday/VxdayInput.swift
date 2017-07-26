@@ -33,6 +33,10 @@ struct CompletionDate {
         }
         self.date = d
     }
+    
+    func pretty() -> String {
+        return self.date.ago()
+    }
     func toString() -> String {
         return VxdayUtil.datetimeFormatter.string(from: self.date)
     }
@@ -48,6 +52,11 @@ struct CreationDate {
         }
         self.date = d
     }
+    
+    func pretty() -> String {
+        return self.date.ago()
+    }
+    
     func toString() -> String {
         return VxdayUtil.datetimeFormatter.string(from: self.date)
     }
@@ -64,6 +73,10 @@ struct DeadlineDate {
         }
         self.date = d
     }
+    func pretty() -> String {
+        return self.date.daysAgo()
+    }
+    
     func toString() -> String {
         return VxdayUtil.dateFormatter.string(from: self.date)
     }
@@ -81,6 +94,61 @@ struct IntOffset {
         self.offset = offset
     }
 }
+
+
+extension Date {
+    static func daysOffsetString(_ days: Int) -> String {
+        switch days {
+            case let x where x == -1:
+                return "Yesterday"
+            case let x where x == 0:
+                return "Today"
+            case let x where x == 1:
+                return "Tomorrow"
+            case let x where x < 0:
+                return "\(abs(days)) days ago"
+            default:
+                return "In \(days) days"
+        }
+    }
+    
+    func daysAgo() -> String {
+        let offset = Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
+        return Date.daysOffsetString(offset)
+    }
+    
+    func ago() -> String {
+        let SECONDS_IN_A_DAY = 86400
+        let SECONDS_IN_AN_HOUR = 60 * 60
+        let SECONDS_IN_A_MINUTE = 60
+        let now = VxdayUtil.now()
+        
+
+        let interval =  Int(self.timeIntervalSince(now))
+        print("interval is \(interval)")
+        let absInterval = abs(interval)
+        if absInterval > SECONDS_IN_A_DAY {
+            return Date.daysOffsetString(interval / SECONDS_IN_A_DAY)
+        }
+        else if absInterval > SECONDS_IN_AN_HOUR {
+            let hours = interval / SECONDS_IN_AN_HOUR
+            if hours < 0 {
+                return "In \(hours) hours."
+            }
+            
+            return "\(hours) hours ago"
+        }
+        else if absInterval > SECONDS_IN_A_MINUTE {
+            let mins = interval / SECONDS_IN_A_MINUTE
+            if mins < 0 {
+                return "In \(mins) minutes."
+            }
+            return "\(mins) minutes ago."
+        }
+        return "Just now."
+    }
+}
+
 
 
 

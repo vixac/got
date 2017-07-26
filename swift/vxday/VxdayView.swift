@@ -8,16 +8,54 @@
 
 import Foundation
 
-
-
-
 enum Item {
+    
+    
     case job(ListName, Hash, CreationDate , DeadlineDate, Description )
-    case completeJob(ListName, Hash, CreationDate, DeadlineDate, completion: CompletionDate)
+    case completeJob(ListName, Hash, CreationDate, DeadlineDate, CompletionDate, Description)
     case task(ListName, Hash, CreationDate, Description)
+    case completeTask(ListName, Hash, CreationDate, CompletionDate,  Description)
     case token(ListName, Hash, CreationDate, CompletionDate)
     
     
+    func tuple() -> ( list: ListName,  hash: Hash, creation: CreationDate, deadline: DeadlineDate?, completion: CompletionDate?, description : Description?) {
+        switch self {
+            case let .job(list, hash, creation, deadline, description):
+                return (list, hash, creation, deadline, nil, description)
+        case let .completeJob(list, hash, creation, deadline, completion, description):
+                return (list, hash, creation, deadline, completion, description)
+        case let .task(list, hash, creation, description):
+                return (list, hash, creation, nil, nil, description)
+            
+        case let .completeTask(list, hash, creation, completion, description):
+                return (list, hash, creation, nil, completion, description)
+        case let .token(list, hash, creation, completion):
+            return (list, hash, creation, nil, completion, nil)
+            }
+        
+    } /*
+    func list() -> ListName {
+        return tuple().list
+    }
+    func hash() -> Hash {
+        return tuple().hash
+        
+    }
+    func creation() -> CreationDate {
+        return tuple().creation
+        
+    }
+    func description() -> Description? {
+        return tuple().description
+    }
+    
+    func deadline() -> DeadlineDate? {
+        return tuple().deadline
+    }
+    func completion() -> CompletionDate? {
+        return tuple().completion
+    }
+ */
     
     func toString() -> String {
         switch self {
@@ -33,6 +71,7 @@ enum Item {
     }
     
     static func create(_ line: String, list: ListName) -> Item? {
+        print("Creating Item from line: '\(line)'")
         let array = VxdayUtil.splitString(line)
         
         guard let itemType = ArgParser.itemType(args: array, index: 0) else {
@@ -93,9 +132,38 @@ enum Item {
 
 class VxdayView {
     
+    let items: [Item]
     
+    init(_ items: [Item]) {
+        self.items = items
+    }
     
-    
+    private func getDeadlines() -> [Item] {
+        var jobs : [Item]  = []
+        for i in items {
+            if case Item.job(_,_,_,_,_) = i {
+                jobs.append(i)
+            }
+        }
+        let tuples = jobs.map { $0.tuple()}.sorted { $0.deadline!.date < $1.deadline!.date }
+        return tuples.map { return Item.job($0.list, $0.hash, $0.creation, $0.deadline!, $0.description!) }
+    }
+    func showJobs() -> [String] {
+        
+        var str : [String] = []
+        let sorted = self.getDeadlines()
+        if items.count == 0 {
+            return ["No impending jobs."]
+        }
+        
+        let tuples = sorted.map {$0.tuple()}
+        let listName = tuples[0].list.name
+        str.append("Jobbies: \(listName):")
+        for t in tuples {
+            str.append(t.deadline!.pretty() + " : " + t.description!.text)
+        }
+        return str
+    }
 }
 
 /*
