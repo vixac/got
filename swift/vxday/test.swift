@@ -80,6 +80,7 @@ print("all Lists: \(allLists)")
 
 let list = ListName("vic")
 VxdayExec.allList(list)
+
 /*
 let summaryPath = VxdayFile.getSummaryFilename(list)
 let contents = VxdayReader.readFile(summaryPath)

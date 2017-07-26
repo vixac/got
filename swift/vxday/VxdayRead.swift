@@ -17,14 +17,12 @@ enum ItemType : String {
     case task = "-."
 }
 
-
-
 class VxdayReader {
     
     static func allLists() -> [ListName] {
         let fm = FileManager.default
         let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
-        var lists : Set<String> = Set()
+        var lists: Set<String> = Set()
         while  let file  = enumerator.nextObject() as? String  {
             lists.insert(VxdayUtil.beforeUnderscore(file))
         }

@@ -74,7 +74,8 @@ struct DeadlineDate {
         self.date = d
     }
     func pretty() -> String {
-        return self.date.daysAgo()
+        
+        return self.date.daysAgo() 
     }
     
     func toString() -> String {
@@ -82,10 +83,18 @@ struct DeadlineDate {
     }
 }
 
-struct ListName {
+struct ListName : Hashable {
     let name: String
     init(_ name: String) {
         self.name = name
+    }
+    
+    var hashValue: Int {
+        return name.hashValue
+    }
+    
+    static func == (lhs: ListName, rhs: ListName) -> Bool {
+        return lhs.name == rhs.name
     }
 }
 struct IntOffset {
@@ -112,9 +121,12 @@ extension Date {
         }
     }
     
+    func daysAgoInt() -> Int {
+        return Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
+    }
+    
     func daysAgo() -> String {
-        let offset = Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
-        return Date.daysOffsetString(offset)
+        return Date.daysOffsetString(self.daysAgoInt())
     }
     
     func ago() -> String {
@@ -148,10 +160,6 @@ extension Date {
         return "Just now."
     }
 }
-
-
-
-
 
 enum Verb : String {
     case add = "add"
@@ -449,70 +457,103 @@ class ArgParser {
 
 import Foundation
 
+
+
+protocol VxItem {
+    var list: ListName {get}
+    var hash: Hash {get}
+    var creation: CreationDate {get}
+}
+
+struct VxJob : VxItem {
+    let list: ListName
+    let hash: Hash
+    let creation: CreationDate
+    let deadline: DeadlineDate
+    let description : Description
+    let completion: CompletionDate?
+    
+    func isComplete() -> Bool {
+        return completion != nil
+    }
+}
+struct VxTask : VxItem {
+    let list: ListName
+    let hash: Hash
+    let creation: CreationDate
+    let description: Description
+    let completion : CompletionDate?
+    
+    func isComplete() -> Bool {
+        return completion != nil
+    }
+}
+
+struct VxToken : VxItem {
+    let list: ListName
+    let hash: Hash
+    let creation: CreationDate
+    let completion: CompletionDate
+}
+
 enum Item {
     
     
-    case job(ListName, Hash, CreationDate , DeadlineDate, Description )
-    case completeJob(ListName, Hash, CreationDate, DeadlineDate, CompletionDate, Description)
-    case task(ListName, Hash, CreationDate, Description)
-    case completeTask(ListName, Hash, CreationDate, CompletionDate,  Description)
-    case token(ListName, Hash, CreationDate, CompletionDate)
+    case job(VxJob)
+    case task(VxTask)
+    case token(VxToken)
     
+    func getJob() -> VxJob? {
+        if case let Item.job(job) = self  {
+            return job
+        }
+        return nil
+    }
+    func getTask() -> VxTask? {
+        if case let Item.task(task) = self {
+            return task
+        }
+        return nil
+    }
+    func getToken() -> VxToken? {
+        if case let Item.token(token) = self  {
+            return token
+        }
+        return nil
+    }
     
-    func tuple() -> ( list: ListName,  hash: Hash, creation: CreationDate, deadline: DeadlineDate?, completion: CompletionDate?, description : Description?) {
+    func vxItem() -> VxItem {
         switch self {
-            case let .job(list, hash, creation, deadline, description):
-                return (list, hash, creation, deadline, nil, description)
-        case let .completeJob(list, hash, creation, deadline, completion, description):
-                return (list, hash, creation, deadline, completion, description)
-        case let .task(list, hash, creation, description):
-                return (list, hash, creation, nil, nil, description)
-            
-        case let .completeTask(list, hash, creation, completion, description):
-                return (list, hash, creation, nil, completion, description)
-        case let .token(list, hash, creation, completion):
-            return (list, hash, creation, nil, completion, nil)
-            }
-        
-    } /*
-    func list() -> ListName {
-        return tuple().list
+        case let .job(job):
+            return job
+        case let .task(task):
+            return task
+        case let .token(token):
+            return token
+        }
     }
-    func hash() -> Hash {
-        return tuple().hash
-        
-    }
-    func creation() -> CreationDate {
-        return tuple().creation
-        
-    }
-    func description() -> Description? {
-        return tuple().description
-    }
-    
-    func deadline() -> DeadlineDate? {
-        return tuple().deadline
-    }
-    func completion() -> CompletionDate? {
-        return tuple().completion
-    }
- */
     
     func toString() -> String {
         switch self {
-            case let .job(_, hash, creation, deadline, description):
-                return "\(ItemType.job.rawValue) \(hash.hash) \(creation.toString()) \(deadline.toString()) \(description.text)"
-            case let .task(_, hash, creation, description):
-                return "\(ItemType.task.rawValue) \(hash.hash) \(creation.toString()) \(description.text)"
-            case let .token(_, hash, creation, completion):
-                return "\(ItemType.tokenEntry.rawValue) \(hash.hash) \(creation.toString()) \(completion.toString())"
-        default:
-            return "TODO convert item to string."
+            case let .job(job):
+                var completion = job.completion?.toString()  ?? ""
+                if completion != "" {
+                    completion = completion + " "
+                }
+                return "\(ItemType.job.rawValue) \(job.hash.hash) \(job.creation.toString()) \(job.deadline.toString()) \(completion)\(job.description.text)"
+            case let .task(task):
+                var completion = task.completion?.toString()  ?? ""
+                if completion != "" {
+                    completion = completion + " "
+                }
+                return "\(ItemType.task.rawValue) \(task.hash.hash) \(task.creation.toString()) \(completion)\(task.description.text)"
+            case let .token(token):
+                return "\(ItemType.tokenEntry.rawValue) \(token.hash.hash) \(token.creation.toString()) \(token.completion.toString())"
         }
     }
     
     static func create(_ line: String, list: ListName) -> Item? {
-        print("Creating Item from line: '\(line)'")
+
         let array = VxdayUtil.splitString(line)
         
         guard let itemType = ArgParser.itemType(args: array, index: 0) else {
@@ -538,7 +579,7 @@ enum Item {
                 print("Error: could not get description from: \(array)")
                 return nil
             }
-            return Item.job(list, hash, creationDate, deadlineDate, description)
+            return Item.job(VxJob(list: list, hash: hash, creation: creationDate, deadline: deadlineDate, description: description, completion: nil))
             
         case .task:
             guard let creationDate = ArgParser.creation(args: array, index: 2) else {
@@ -550,7 +591,7 @@ enum Item {
                 print("Error: could not get description from: \(array)")
                 return nil
             }
-            return Item.task(list, hash, creationDate, description)
+            return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: nil ))
         case .tokenEntry:
             guard let creationDate = ArgParser.creation(args: array, index: 2) else {
                 print("Error: could not extract creation date from: \(array)")
@@ -560,16 +601,64 @@ enum Item {
                 print("Error: could not extract completion date from: \(array)")
                 return nil
             }
-            return Item.token(list, hash, creationDate, completionDate)
+            return Item.token(VxToken(list: list, hash: hash, creation: creationDate, completion: completionDate))
         default:
             print("TODO unhandled vxday line: \(line).")
             return nil
         }
     }
-    
-    
 }
 
+
+
+class VxdayColor {
+    static let dangerColor : String = ANSIColors.red.rawValue
+    static let warningColor : String = ANSIColors.yellow.rawValue
+    static let baseColor : String = ANSIColors.white.rawValue
+    static let happyColor: String = ANSIColors.green.rawValue
+    static let titleColor :String = ANSIColors.cyan.rawValue
+    
+    static func danger(_ string: String) -> String {
+        return dangerColor + string + baseColor
+    }
+    static func warning(_ string: String) -> String {
+        return warningColor + string + baseColor
+    }
+    static func title(_ string: String) -> String {
+        return titleColor + string + baseColor
+    }
+    static func happy(_ string: String) -> String {
+        return happyColor + string + baseColor
+    }
+}
+
+enum ANSIColors: String {
+    case black = "\u{001B}[0;30m"
+    case red = "\u{001B}[0;31m"
+    case green = "\u{001B}[0;32m"
+    case yellow = "\u{001B}[0;33m"
+    case blue = "\u{001B}[0;34m"
+    case magenta = "\u{001B}[0;35m"
+    case cyan = "\u{001B}[0;36m"
+    case white = "\u{001B}[0;37m"
+    
+    func name() -> String {
+        switch self {
+        case .black: return "Black"
+        case .red: return "Red"
+        case .green: return "Green"
+        case .yellow: return "Yellow"
+        case .blue: return "Blue"
+        case .magenta: return "Magenta"
+        case .cyan: return "Cyan"
+        case .white: return "White"
+        }
+    }
+    
+    static func all() -> [ANSIColors] {
+        return [.black, .red, .green, .yellow, .blue, .magenta, .cyan, .white]
+    }
+}
 
 class VxdayView {
     
@@ -579,31 +668,89 @@ class VxdayView {
         self.items = items
     }
     
-    private func getDeadlines() -> [Item] {
-        var jobs : [Item]  = []
-        for i in items {
-            if case Item.job(_,_,_,_,_) = i {
-                jobs.append(i)
+    private func getDeadlines() -> [VxJob] {
+        let jobs : [VxJob] = items.flatMap {
+            if case let Item.job(job) = $0 {
+               return job
             }
-        }
-        let tuples = jobs.map { $0.tuple()}.sorted { $0.deadline!.date < $1.deadline!.date }
-        return tuples.map { return Item.job($0.list, $0.hash, $0.creation, $0.deadline!, $0.description!) }
+            return nil
+            }.sorted { $0.deadline.date < $1.deadline.date}
+        return jobs
     }
+    
+    private func getTasks() -> [VxTask] {
+        let tasks: [VxTask] = items.flatMap {
+            if case let Item.task(task) = $0 {
+                return task
+            }
+            return nil
+            }.sorted {$0.creation.date < $1.creation.date}
+        return tasks
+    }
+    
+    private func allLists() -> [ListName] {
+        var set : Set<ListName> = Set()
+        items.map { $0.vxItem().list}.forEach { set.insert($0) }
+        return Array(set)
+    }
+
+    func showTasks() -> [String] {
+        return self.getTasks().map { "Created :" + $0.creation.date.daysAgo() + " : " + $0.description.text }
+    }
+    
+    private func pad(_ string: String, toLength length: Int) -> String {
+        if string.characters.count > length {
+            return string
+        }
+        var spaces = ""
+        let needed = length - string.characters.count
+        for _ in 1...needed {
+            spaces = spaces +  " "
+        }
+        return string +  spaces
+    }
+    
     func showJobs() -> [String] {
         
-        var str : [String] = []
-        let sorted = self.getDeadlines()
-        if items.count == 0 {
-            return ["No impending jobs."]
+        return self.getDeadlines().map {
+            
+            let daysAgo = $0.deadline.date.daysAgoInt()
+            let  timeStr =  pad( $0.deadline.pretty(), toLength: 18)
+            var datedStr = timeStr +  VxdayUtil.dateFormatter.string(from: $0.deadline.date) + "   "
+            if daysAgo < 0 {
+                datedStr = VxdayColor.danger(datedStr)
+            }
+            if daysAgo == 0 {
+                datedStr = VxdayColor.warning(datedStr)
+            }
+            else {
+                datedStr = VxdayColor.happy(datedStr)
+            }
+            
+            return datedStr +  $0.description.text
+            
         }
-        
-        let tuples = sorted.map {$0.tuple()}
-        let listName = tuples[0].list.name
-        str.append("Jobbies: \(listName):")
-        for t in tuples {
-            str.append(t.deadline!.pretty() + " : " + t.description!.text)
+    }
+    
+    func renderAll() -> [String] {
+        var output : [String] = []
+        let lists = self.allLists()
+        if lists.count == 0 {
+            return []
         }
-        return str
+        if lists.count == 1 {
+            output.append("Summary for \(lists[0].name):")
+        }
+      //  let white = ANSIColors.white.rawValue
+        output.append("")
+        output.append( ANSIColors.green.rawValue + "---------- Tasks ----------")
+        output += self.showTasks()
+        output.append("")
+        output.append( ANSIColors.yellow.rawValue + "----------- Jobs ----------")
+        //output.append(ANSIColors.green.rawValue)
+        output += self.showJobs()
+        output.append(ANSIColors.white.rawValue)
+        return output
     }
 }
 
@@ -813,14 +960,15 @@ class VxdayExec {
         let contents = VxdayReader.readFile(filename)
         let items = VxdayReader.readSummary(contents, list: list)
         let view  = VxdayView(items)
-        let jobsStrings = view.showJobs()
+        let jobsStrings = view.renderAll()
         jobsStrings.forEach { print($0)}
-        
-        //VxdayExec.shell("cat", filename)
     }
     
     //TODO try to write these using mv
     
+    static func red() {
+        VxdayExec.shell("tput", "sgr", "0")
+    }
     static func retire(_ list: ListName) {
         let script = VxdayFile.getScriptPath(.retire)
         VxdayExec.shell(script, list.name)
@@ -886,11 +1034,6 @@ class VxdayUtil {
         
     }
     
-    class func isValidHash(_ hash: String) -> Bool {
-        return hash.characters.count == 5
-    }
-    
-    
     class func flattenRest(_ array: [String], start: Int) -> String? {
         if array.count < start {
             print("error flattening the rest.")
@@ -914,7 +1057,13 @@ class VxdayUtil {
     class func hash(_ string: String) -> String {
         let time = now().timeIntervalSince1970.hashValue
         let hashable = "\(time)" + string
-        let hashed = "0" + String(format: "%2X", hashable).lowercased()
+        var hashed = "0" + String(format: "%2X", hashable).lowercased()
+        if hashed.characters.count < 9 {
+            let numNeeded = 9 - hashed.characters.count
+            for _ in 1...numNeeded {
+                hashed += "0"
+            }
+        }
         return hashed
     }
     
@@ -954,14 +1103,12 @@ enum ItemType : String {
     case task = "-."
 }
 
-
-
 class VxdayReader {
     
     static func allLists() -> [ListName] {
         let fm = FileManager.default
         let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
-        var lists : Set<String> = Set()
+        var lists: Set<String> = Set()
         while  let file  = enumerator.nextObject() as? String  {
             lists.insert(VxdayUtil.beforeUnderscore(file))
         }
@@ -1064,6 +1211,7 @@ print("all Lists: \(allLists)")
 
 let list = ListName("vic")
 VxdayExec.allList(list)
+
 /*
 let summaryPath = VxdayFile.getSummaryFilename(list)
 let contents = VxdayReader.readFile(summaryPath)

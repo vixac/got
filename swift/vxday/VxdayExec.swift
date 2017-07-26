@@ -91,14 +91,15 @@ class VxdayExec {
         let contents = VxdayReader.readFile(filename)
         let items = VxdayReader.readSummary(contents, list: list)
         let view  = VxdayView(items)
-        let jobsStrings = view.showJobs()
+        let jobsStrings = view.renderAll()
         jobsStrings.forEach { print($0)}
-        
-        //VxdayExec.shell("cat", filename)
     }
     
     //TODO try to write these using mv
     
+    static func red() {
+        VxdayExec.shell("tput", "sgr", "0")
+    }
     static func retire(_ list: ListName) {
         let script = VxdayFile.getScriptPath(.retire)
         VxdayExec.shell(script, list.name)

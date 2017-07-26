@@ -31,11 +31,6 @@ class VxdayUtil {
         
     }
     
-    class func isValidHash(_ hash: String) -> Bool {
-        return hash.characters.count == 5
-    }
-    
-    
     class func flattenRest(_ array: [String], start: Int) -> String? {
         if array.count < start {
             print("error flattening the rest.")
@@ -59,7 +54,13 @@ class VxdayUtil {
     class func hash(_ string: String) -> String {
         let time = now().timeIntervalSince1970.hashValue
         let hashable = "\(time)" + string
-        let hashed = "0" + String(format: "%2X", hashable).lowercased()
+        var hashed = "0" + String(format: "%2X", hashable).lowercased()
+        if hashed.characters.count < 9 {
+            let numNeeded = 9 - hashed.characters.count
+            for _ in 1...numNeeded {
+                hashed += "0"
+            }
+        }
         return hashed
     }
     

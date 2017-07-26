@@ -74,7 +74,8 @@ struct DeadlineDate {
         self.date = d
     }
     func pretty() -> String {
-        return self.date.daysAgo()
+        
+        return self.date.daysAgo() 
     }
     
     func toString() -> String {
@@ -82,10 +83,18 @@ struct DeadlineDate {
     }
 }
 
-struct ListName {
+struct ListName : Hashable {
     let name: String
     init(_ name: String) {
         self.name = name
+    }
+    
+    var hashValue: Int {
+        return name.hashValue
+    }
+    
+    static func == (lhs: ListName, rhs: ListName) -> Bool {
+        return lhs.name == rhs.name
     }
 }
 struct IntOffset {
@@ -112,9 +121,12 @@ extension Date {
         }
     }
     
+    func daysAgoInt() -> Int {
+        return Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
+    }
+    
     func daysAgo() -> String {
-        let offset = Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
-        return Date.daysOffsetString(offset)
+        return Date.daysOffsetString(self.daysAgoInt())
     }
     
     func ago() -> String {
@@ -148,10 +160,6 @@ extension Date {
         return "Just now."
     }
 }
-
-
-
-
 
 enum Verb : String {
     case add = "add"
