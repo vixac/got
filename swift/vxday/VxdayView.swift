@@ -167,7 +167,8 @@ class VxdayColor {
     static let warningColor : String = ANSIColors.yellow.rawValue
     static let baseColor : String = ANSIColors.white.rawValue
     static let happyColor: String = ANSIColors.green.rawValue
-    static let titleColor :String = ANSIColors.cyan.rawValue
+    static let titleColor :String = ANSIColors.test.rawValue
+    static let cyanColor :String = ANSIColors.cyan.rawValue
     
     static func danger(_ string: String) -> String {
         return dangerColor + string + baseColor
@@ -181,6 +182,9 @@ class VxdayColor {
     static func happy(_ string: String) -> String {
         return happyColor + string + baseColor
     }
+    static func hash(_ string: String) -> String {
+        return cyanColor + string + baseColor
+    }
 }
 
 enum ANSIColors: String {
@@ -191,7 +195,9 @@ enum ANSIColors: String {
     case blue = "\u{001B}[0;34m"
     case magenta = "\u{001B}[0;35m"
     case cyan = "\u{001B}[0;36m"
-    case white = "\u{001B}[0;37m"
+    case white = "\u{001B}[1;37m"
+    case test = "\u{001B}[1;34m"
+    
     
     func name() -> String {
         switch self {
@@ -203,6 +209,8 @@ enum ANSIColors: String {
         case .magenta: return "Magenta"
         case .cyan: return "Cyan"
         case .white: return "White"
+        default:
+             return "unknown"
         }
     }
     
@@ -246,11 +254,15 @@ class VxdayView {
     }
 
     func showTasks() -> [String] {
-        return self.getTasks().map { "Created :" + $0.creation.date.daysAgo() + " : " + $0.description.text }
+        return self.getTasks().map {
+            let timeStr = pad( $0.creation.pretty(), toLength:  18)
+            let datedStr = VxdayColor.warning(timeStr + VxdayUtil.dateFormatter.string(from: $0.creation.date) + "   ")
+            
+            let hash = VxdayColor.hash( $0.hash.hash) + "   "
+            return datedStr + hash + $0.description.text
+        }
     }
-    
- 
-    
+
     func showJobs() -> [String] {
         
         return self.getDeadlines().map {
@@ -268,7 +280,8 @@ class VxdayView {
                 datedStr = VxdayColor.happy(datedStr)
             }
             
-            return datedStr +  $0.description.text
+            let hash = VxdayColor.hash( $0.hash.hash) + "   "
+            return datedStr + hash +  $0.description.text
             
         }
     }
@@ -282,13 +295,11 @@ class VxdayView {
         if lists.count == 1 {
             output.append("Summary for \(lists[0].name):")
         }
-      //  let white = ANSIColors.white.rawValue
         output.append("")
-        output.append( ANSIColors.green.rawValue + "---------- Tasks ----------")
+        output.append("----------------- Tasks -----------------")
         output += self.showTasks()
         output.append("")
-        output.append( ANSIColors.yellow.rawValue + "----------- Jobs ----------")
-        //output.append(ANSIColors.green.rawValue)
+        output.append("----------------- Jobs  ----------------")
         output += self.showJobs()
         output.append(ANSIColors.white.rawValue)
         return output

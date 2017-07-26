@@ -144,18 +144,18 @@ extension Date {
         }
         else if absInterval > SECONDS_IN_AN_HOUR {
             let hours = interval / SECONDS_IN_AN_HOUR
-            if hours < 0 {
+            if hours > 0 {
                 return "In \(hours) hours."
             }
             
-            return "\(hours) hours ago"
+            return "\(abs(hours)) hours ago"
         }
         else if absInterval > SECONDS_IN_A_MINUTE {
             let mins = interval / SECONDS_IN_A_MINUTE
-            if mins < 0 {
-                return "In \(mins) minutes."
+            if mins > 0 {
+                return "In \(mins) mins."
             }
-            return "\(mins) minutes ago."
+            return "\(abs(mins)) mins ago."
         }
         return "Just now."
     }
