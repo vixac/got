@@ -47,15 +47,14 @@ print("task is \(task)")
 VxdayExec.append(ListName("wehey"), content: str)
 */
 
-let now = VxdayUtil.now()
+
 
 //VxdayExec.note(ListName("bam"), hash: Hash("abcdefg"))
 
 
 
-
-print("waiting: \(now)")
-VxdayExec.wait(ListName("me"), hash: Hash("abcdefg"))
+//print("waiting: \(now)")
+//VxdayExec.wait(ListName("me"), hash: Hash("abcdefg"))
 /*
 if let x = readLine(strippingNewline: true) {
     print("Read line \(x)")
@@ -66,3 +65,21 @@ let finish = VxdayUtil.now()
 print("done waiting. \(finish)")
 
  */
+
+/*
+ let location = "/Users/vic/Desktop/test.txt"
+ let x =  try? String(contentsOfFile: location)
+ print("x is \(x!)")
+
+ */
+
+let allLists = VxdayReader.allLists()
+print("all Lists: \(allLists)")
+
+
+let summaryPath = VxdayFile.getSummaryFilename(ListName("me"))
+let contents = VxdayReader.readFile(summaryPath)
+
+let items = VxdayReader.readSummary(contents, list: ListName("me"))
+print("items are: \(items)")
+

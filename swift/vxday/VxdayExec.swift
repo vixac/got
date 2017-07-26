@@ -29,15 +29,15 @@ enum Script : String {
 
 class VxdayFile {
     
-    private static let bashDir: String = {
+    static let bashDir: String = {
         VxdayExec.getEnvironmentVar("VXDAY2_SRC_DIR")! + "/bash"
     }()
     
-    private static let activeDir: String = {
+    static let activeDir: String = {
         VxdayExec.getEnvironmentVar("VXDAY2_ACTIVE_DIR")!
     }()
     
-    private static let retiredDir: String = {
+    static let retiredDir: String = {
         VxdayExec.getEnvironmentVar("VXDAY2_RETIRED_DIR")!
     }()
     
@@ -57,8 +57,7 @@ class VxdayFile {
     static func getTokenFilename(_ list: ListName) -> String {
         return VxdayFile.activeDir + "/" + list.name + "_tokens.vxday"
     }
-    
-    
+ 
 }
 
 class VxdayExec {
@@ -81,6 +80,16 @@ class VxdayExec {
         return String(utf8String: rawValue)
     }
  
+    
+    
+    static func lessList(_ list: ListName) {
+        let files = VxdayFile.activeDir + "/" + list.name + "_*.vxday"
+        VxdayExec.shell("cat", files)
+    }
+    static func allList(_ list: ListName) {
+        let filename = VxdayFile.getSummaryFilename(list)
+        VxdayExec.shell("cat", filename)
+    }
     
     //TODO try to write these using mv
     

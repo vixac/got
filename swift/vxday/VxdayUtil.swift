@@ -68,5 +68,9 @@ class VxdayUtil {
         
     }
     
+    class func beforeUnderscore(_ string: String) -> String {
+        return string.components(separatedBy: "_").first ?? ""
+    }
+    
 }
 

@@ -1,5 +1,4 @@
 
-#cat VxdayInstruction.swift VxdayExec.swift VxdayUtil.swift VxdayParser.swift test.swift  | swift - $@
-cat VxdayInstruction.swift VxdayExec.swift VxdayUtil.swift VxdayParser.swift test.swift  > flattened.swift
+cat VxdayInput.swift VxdayRead.swift VxdayView.swift VxdayInstruction.swift VxdayExec.swift VxdayUtil.swift VxdayParser.swift test.swift  > flattened.swift
 
 swift flattened.swift $0
