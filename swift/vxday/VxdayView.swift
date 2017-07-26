@@ -8,8 +8,6 @@
 
 import Foundation
 
-
-
 protocol VxItem {
     var list: ListName {get}
     var hash: Hash {get}
@@ -165,10 +163,11 @@ enum Item {
 class VxdayColor {
     static let dangerColor : String = ANSIColors.red.rawValue
     static let warningColor : String = ANSIColors.yellow.rawValue
-    static let baseColor : String = ANSIColors.white.rawValue
+    static let baseColor : String = ANSIColors.reset.rawValue
     static let happyColor: String = ANSIColors.green.rawValue
-    static let titleColor :String = ANSIColors.test.rawValue
-    static let cyanColor :String = ANSIColors.cyan.rawValue
+    static let titleColor :String = ANSIColors.white.rawValue
+    static let info2Color: String = ANSIColors.test.rawValue
+    static let infoColor :String = ANSIColors.cyan.rawValue
     
     static func danger(_ string: String) -> String {
         return dangerColor + string + baseColor
@@ -182,8 +181,15 @@ class VxdayColor {
     static func happy(_ string: String) -> String {
         return happyColor + string + baseColor
     }
-    static func hash(_ string: String) -> String {
-        return cyanColor + string + baseColor
+    static func info(_ string: String) -> String {
+        return infoColor + string + baseColor
+    }
+    static func info2(_ string: String) -> String {
+        return info2Color + string + baseColor
+    }
+    
+    static func putBack() {
+        print(ANSIColors.reset.rawValue)
     }
 }
 
@@ -197,7 +203,7 @@ enum ANSIColors: String {
     case cyan = "\u{001B}[0;36m"
     case white = "\u{001B}[1;37m"
     case test = "\u{001B}[1;34m"
-    
+    case reset = "\u{001B}[0;0m"
     
     func name() -> String {
         switch self {
@@ -255,21 +261,43 @@ class VxdayView {
 
     func showTasks() -> [String] {
         return self.getTasks().map {
-            let timeStr = pad( $0.creation.pretty(), toLength:  18)
-            let datedStr = VxdayColor.warning(timeStr + VxdayUtil.dateFormatter.string(from: $0.creation.date) + "   ")
-            
-            let hash = VxdayColor.hash( $0.hash.hash) + "   "
-            return datedStr + hash + $0.description.text
+            let dateStr = daysView($0.creation.date)
+            let hash = hashView($0.hash)
+            let listName = listNameView($0.list)
+            return dateStr + hash + listName +  $0.description.text
         }
     }
-
+    
+    func space() -> String {
+        return "   "
+    }
+    
+    func hashView(_ hash: Hash) -> String {
+        return VxdayColor.info(pad(hash.hash, toLength: 11))
+    }
+    
+    func daysView(_ date: Date) -> String {
+        let daysAgo = date.daysAgoInt()
+        let agoStr = pad(date.daysAgo(), toLength: 14)
+        let datedStr = agoStr + VxdayUtil.dateFormatter.string(from: date) + "   "
+        if daysAgo < 0 {
+            return VxdayColor.danger(datedStr)
+        }
+        if daysAgo == 0 {
+            return  VxdayColor.warning(datedStr)
+        }
+        return  VxdayColor.happy(datedStr)
+    }
+    
+    func listNameView(_ list: ListName) -> String {
+        return VxdayColor.info2(pad(list.name, toLength: 9))
+    }
+    
     func showJobs() -> [String] {
-        
         return self.getDeadlines().map {
-            
             let daysAgo = $0.deadline.date.daysAgoInt()
-            let  timeStr =  pad( $0.deadline.pretty(), toLength: 18)
-            var datedStr = timeStr +  VxdayUtil.dateFormatter.string(from: $0.deadline.date) + "   "
+            let timeStr =  pad( $0.deadline.pretty(), toLength: 15)
+            var datedStr = timeStr +  VxdayUtil.dateFormatter.string(from: $0.deadline.date) + space()
             if daysAgo < 0 {
                 datedStr = VxdayColor.danger(datedStr)
             }
@@ -280,10 +308,18 @@ class VxdayView {
                 datedStr = VxdayColor.happy(datedStr)
             }
             
-            let hash = VxdayColor.hash( $0.hash.hash) + "   "
-            return datedStr + hash +  $0.description.text
+            let hash = hashView($0.hash)
+            let listName = listNameView($0.list)
+            return daysView($0.deadline.date) + hash + listName +  $0.description.text
             
         }
+    }
+    
+    func oneLiners() -> [String] {
+        if let listName = allLists().first?.name  {
+            return listName
+        }
+        return "TODO ONE LINER"
     }
     
     func renderAll() -> [String] {
@@ -292,16 +328,14 @@ class VxdayView {
         if lists.count == 0 {
             return []
         }
-        if lists.count == 1 {
-            output.append("Summary for \(lists[0].name):")
-        }
+        
         output.append("")
-        output.append("----------------- Tasks -----------------")
+        output.append(VxdayColor.title("--------------- Tasks --------------"))
         output += self.showTasks()
         output.append("")
-        output.append("----------------- Jobs  ----------------")
+        output.append(VxdayColor.title("--------------- Jobs  --------------"))
         output += self.showJobs()
-        output.append(ANSIColors.white.rawValue)
+        
         return output
     }
     
@@ -318,60 +352,6 @@ class VxdayView {
     }
 }
 
-/*
-protocol LineItem {
-    var list: ListName {get}
-    var hash: Hash {get}
-    var creation: Date {get}
-    var description: Description {get}
-    func toString(complete: Bool) -> String
-}
-
-struct JobLineItem : LineItem {
-    let list: ListName 
-    let hash: Hash
-    let creation: Date
-    let deadline: Date
-    let description: Description
-    
-    func toString(complete: Bool = false) -> String {
-        let createStr = VxdayUtil.datetimeFormatter.string(from: creation)
-        let deadlineStr = VxdayUtil.dateFormatter.string(from: deadline)
-        let itemStr = complete ? ItemType.complete.rawValue : ItemType.job.rawValue
-        return itemStr + " " + hash.hash + " " + createStr + " " + deadlineStr + " " + description.text
-    }
-}
-
-struct TaskLineItem : LineItem {
-    let list: ListName
-    let hash: Hash
-    let description: Description
-    let creation: Date
-    func toString(complete: Bool = false ) -> String {
-        let itemStr = complete ? ItemType.complete.rawValue : ItemType.task.rawValue
-        return itemStr + " " + hash.hash + " " + description.text
-    }
-    func itemType() -> ItemType {
-        return .task
-    }
-}
-
-struct TokenEntry : LineItem {
-    let list: ListName
-    let hash: Hash
-    let creation: Date
-    let stop: Date
-    let description: Description = Description("")
-    func toString(complete: Bool = false) -> String {
-        
-        let startStr = VxdayUtil.datetimeFormatter.string(from: creation)
-        let stopStr = VxdayUtil.datetimeFormatter.string(from: stop)
-        let humanReadable = VxdayUtil.humanDuration(between: creation, and: stop)
-        return ItemType.tokenEntry.rawValue + " " + startStr + " " + stopStr + " " + humanReadable
-    }
-    
-}
-*/
 
 
 

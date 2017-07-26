@@ -50,7 +50,6 @@ class VxdayUtil {
         return Date()
     }
     
-    
     class func hash(_ string: String) -> String {
         let time = now().timeIntervalSince1970.hashValue
         let hashable = "\(time)" + string

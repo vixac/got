@@ -29,6 +29,13 @@ class VxdayReader {
         return lists.map {return ListName($0)}
     }
     
+    static func itemsInList(_ list: ListName) -> [Item] {
+        let filename = VxdayFile.getSummaryFilename(list)
+        let contents = VxdayReader.readFile(filename)
+        let items = VxdayReader.readSummary(contents, list: list)
+        return items
+    }
+    
     static func readFile(_ path: String) -> [String] {
         guard let contents =  try? String(contentsOfFile: path) else {
             print("Error reading file: \(path)")

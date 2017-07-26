@@ -19,15 +19,10 @@ func main() {
         print("Invalid instruction. Try day help")
         return
     }
-    
     VxdayInstruction.executeInstruction(instruction)
-    
+    VxdayColor.putBack()
 }
 
-
-
-
-
-
 main()
+
 

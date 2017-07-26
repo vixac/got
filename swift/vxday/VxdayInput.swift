@@ -74,7 +74,6 @@ struct DeadlineDate {
         self.date = d
     }
     func pretty() -> String {
-        
         return self.date.daysAgo() 
     }
     
@@ -137,7 +136,6 @@ extension Date {
         
 
         let interval =  Int(self.timeIntervalSince(now))
-        print("interval is \(interval)")
         let absInterval = abs(interval)
         if absInterval > SECONDS_IN_A_DAY {
             return Date.daysOffsetString(interval / SECONDS_IN_A_DAY)
@@ -389,8 +387,7 @@ class ArgParser {
             print("This hash is the wrong length: \(str). Hashes are 8 chars")
             return nil
         }
-        return Hash(str)
-        
+        return Hash(str)   
     }
     
     static func description(args: [String], start: Int) -> Description? {
@@ -399,6 +396,7 @@ class ArgParser {
         }
         return Description(str)
     }
+    
     static func itemType(args: [String], index: Int) -> ItemType? {
         guard let str = ArgParser.str(args: args, index: index) else  {
             return nil

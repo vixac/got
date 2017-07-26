@@ -27,6 +27,11 @@ class VxdayInstruction {
                 VxdayExec.lessList(list)
             case let .allList(list):
                 VxdayExec.allList(list)
+            case .all:
+                VxdayExec.all()
+            case .what:
+                VxdayExec.what()
+            
            // case let .x(hash):
            //     VxdayExec.x(hash)
             

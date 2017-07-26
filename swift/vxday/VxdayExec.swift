@@ -8,8 +8,6 @@
 
 import Foundation
 
-
-
 enum FileType : String {
     case summary = "summary"
     case tokens  = "tokens"
@@ -23,8 +21,6 @@ enum Script : String {
     case removeLine = "remove_line.sh"
     case note = "note.sh"
     case wait = "wait.sh"
-    
-    
 }
 
 class VxdayFile {
@@ -80,26 +76,42 @@ class VxdayExec {
         return String(utf8String: rawValue)
     }
  
-    
-    
     static func lessList(_ list: ListName) {
         let files = VxdayFile.activeDir + "/" + list.name + "_*.vxday"
         VxdayExec.shell("cat", files)
     }
+    static func what() {
+        let lists = VxdayReader.allLists()
+        //var allItemsEver: [Item] = []
+        lists.forEach { list in
+            let listItems = VxdayReader.itemsInList(list)
+            let listView  = VxdayView(listItems)
+            print(listView.oneLiner())
+            //allItemsEver += VxdayReader.itemsInList(list)
+        }
+        //let view = VxdayView(allItemsEver)
+        
+        
+    }
+    static func all() {
+        //all lists and their summaries.
+        let lists = VxdayReader.allLists()
+        var allItemsEver: [Item] = []
+        lists.forEach { list in
+            allItemsEver += VxdayReader.itemsInList(list)
+        }
+        let view = VxdayView(allItemsEver)
+        view.renderAll().forEach { print($0) }
+    }
+    
     static func allList(_ list: ListName) {
-        let filename = VxdayFile.getSummaryFilename(list)
-        let contents = VxdayReader.readFile(filename)
-        let items = VxdayReader.readSummary(contents, list: list)
+        let items = VxdayReader.itemsInList(list)
         let view  = VxdayView(items)
         let jobsStrings = view.renderAll()
         jobsStrings.forEach { print($0)}
     }
     
     //TODO try to write these using mv
-    
-    static func red() {
-        VxdayExec.shell("tput", "sgr", "0")
-    }
     static func retire(_ list: ListName) {
         let script = VxdayFile.getScriptPath(.retire)
         VxdayExec.shell(script, list.name)
