@@ -24,9 +24,15 @@ class VxdayReader {
         let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
         var lists: Set<String> = Set()
         while  let file  = enumerator.nextObject() as? String  {
-            lists.insert(VxdayUtil.beforeUnderscore(file))
+            if file.characters.first != "." {
+                lists.insert(VxdayUtil.beforeUnderscore(file))
+            }
+            
         }
         return lists.map {return ListName($0)}
+    }
+    static func hashToList(_ hash: Hash) -> ListName {
+        return ListName("TODO")
     }
     
     static func itemsInList(_ list: ListName) -> [Item] {

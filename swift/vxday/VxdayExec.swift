@@ -82,17 +82,18 @@ class VxdayExec {
     }
     static func what() {
         let lists = VxdayReader.allLists()
-        //var allItemsEver: [Item] = []
+        var allItemsEver: [Item] = []
         lists.forEach { list in
-            let listItems = VxdayReader.itemsInList(list)
-            let listView  = VxdayView(listItems)
-            print(listView.oneLiner())
-            //allItemsEver += VxdayReader.itemsInList(list)
+            allItemsEver += VxdayReader.itemsInList(list)
         }
-        //let view = VxdayView(allItemsEver)
-        
-        
+        let view = VxdayView(allItemsEver)
+        view.oneLiners().forEach {print($0)}
     }
+    
+    static func x(_ hash: Hash) {
+        print("TODO X THIS HASH: \(hash)")
+    }
+    
     static func all() {
         //all lists and their summaries.
         let lists = VxdayReader.allLists()

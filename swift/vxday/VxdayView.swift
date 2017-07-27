@@ -12,6 +12,7 @@ protocol VxItem {
     var list: ListName {get}
     var hash: Hash {get}
     var creation: CreationDate {get}
+    func toVxday() -> String
 }
 
 struct VxJob : VxItem {
@@ -25,6 +26,16 @@ struct VxJob : VxItem {
     func isComplete() -> Bool {
         return completion != nil
     }
+    
+    func toVxday() -> String {
+        let symbolStr = ItemType.job.rawValue + " "
+        let hashStr = hash.hash + " "
+        let creationStr = creation.toString() + " "
+        let deadlineStr = deadline.toString() + " "
+        let descriptionStr = description.text + " "
+        return symbolStr + hashStr + creationStr + deadlineStr + descriptionStr
+    }
+    
 }
 struct VxTask : VxItem {
     let list: ListName
@@ -36,6 +47,13 @@ struct VxTask : VxItem {
     func isComplete() -> Bool {
         return completion != nil
     }
+    func toVxday() -> String  {
+        let symbolStr = ItemType.task.rawValue + " "
+        let hashStr = hash.hash + " "
+        let creationStr = creation.toString() + " "
+        let descriptionStr = description.text + " "
+        return symbolStr + hashStr + creationStr + descriptionStr
+    }
 }
 
 struct VxToken : VxItem {
@@ -43,6 +61,9 @@ struct VxToken : VxItem {
     let hash: Hash
     let creation: CreationDate
     let completion: CompletionDate
+    func toVxday() -> String  {
+        return "TODO"
+    }
 }
 
 enum Item {
@@ -204,24 +225,32 @@ enum ANSIColors: String {
     case white = "\u{001B}[1;37m"
     case test = "\u{001B}[1;34m"
     case reset = "\u{001B}[0;0m"
-    
-    func name() -> String {
-        switch self {
-        case .black: return "Black"
-        case .red: return "Red"
-        case .green: return "Green"
-        case .yellow: return "Yellow"
-        case .blue: return "Blue"
-        case .magenta: return "Magenta"
-        case .cyan: return "Cyan"
-        case .white: return "White"
-        default:
-             return "unknown"
+}
+
+
+
+class ListSummary {
+    let list: ListName
+    var past: [VxJob] = []
+    var present: [VxJob] = []
+    var future: [VxJob] = []
+    var taskCount: Int = 0
+    init(_ list: ListName) {
+        self.list = list
+    }
+    func addJob(_ job: VxJob) {
+        let bucket = job.deadline.date.bucket()
+        switch bucket {
+        case .past:
+            past.append(job)
+        case .present:
+            present.append(job)
+        case .future:
+            future.append(job)
         }
     }
-    
-    static func all() -> [ANSIColors] {
-        return [.black, .red, .green, .yellow, .blue, .magenta, .cyan, .white]
+     func addTask(_ task: VxTask) {
+        taskCount += 1
     }
 }
 
@@ -233,6 +262,37 @@ class VxdayView {
         self.items = items
     }
     
+    private func toBuckets() -> [ListSummary] {
+        var dict : [ListName: ListSummary] = [:]
+        for item in items {
+            if let job = item.getJob() {
+                let list = job.list
+                if dict[list] == nil {
+                     let summary = ListSummary(list)
+                    summary.addJob(job)
+                    dict[list] = summary
+                }
+                else  {
+                    dict[list]?.addJob(job)
+                }
+                
+            }
+            else if let task = item.getTask() {
+                let list = task.list
+                if dict[task.list] == nil {
+                    let summary =  ListSummary(list)
+                    summary.addTask(task)
+                    dict[list] = summary
+                }
+                else {
+                    dict[list]?.addTask(task)
+                }
+                
+            }
+            //tokens aren't part of the summary yet.
+        }
+        return dict.map { return $0.value }
+    }
     private func getDeadlines() -> [VxJob] {
         let jobs : [VxJob] = items.flatMap {
             if case let Item.job(job) = $0 {
@@ -258,6 +318,8 @@ class VxdayView {
         items.map { $0.vxItem().list}.forEach { set.insert($0) }
         return Array(set)
     }
+    
+    
 
     func showTasks() -> [String] {
         return self.getTasks().map {
@@ -273,40 +335,37 @@ class VxdayView {
     }
     
     func hashView(_ hash: Hash) -> String {
-        return VxdayColor.info(pad(hash.hash, toLength: 11))
-    }
-    
-    func daysView(_ date: Date) -> String {
-        let daysAgo = date.daysAgoInt()
-        let agoStr = pad(date.daysAgo(), toLength: 14)
-        let datedStr = agoStr + VxdayUtil.dateFormatter.string(from: date) + "   "
-        if daysAgo < 0 {
-            return VxdayColor.danger(datedStr)
-        }
-        if daysAgo == 0 {
-            return  VxdayColor.warning(datedStr)
-        }
-        return  VxdayColor.happy(datedStr)
+        return VxdayColor.info2(pad(hash.hash, toLength: 11))
     }
     
     func listNameView(_ list: ListName) -> String {
-        return VxdayColor.info2(pad(list.name, toLength: 9))
+        return VxdayColor.info(pad(list.name, toLength: 9))
     }
     
+
+    func timeBucketToColor(_ date: Date, string: String)  -> String {
+        let bucket = date.bucket()
+        switch bucket {
+            case .past:
+                return VxdayColor.danger(string)
+            case .present:
+                return VxdayColor.warning(string)
+            case .future:
+                return  VxdayColor.happy(string)
+            }
+    }
+    
+    func daysView(_ date: Date) -> String {
+        let agoStr = pad(date.daysAgo(), toLength: 14)
+        let datedStr = agoStr + VxdayUtil.dateFormatter.string(from: date) + "   "
+        return timeBucketToColor(date, string: datedStr)
+    }
+
     func showJobs() -> [String] {
         return self.getDeadlines().map {
-            let daysAgo = $0.deadline.date.daysAgoInt()
             let timeStr =  pad( $0.deadline.pretty(), toLength: 15)
             var datedStr = timeStr +  VxdayUtil.dateFormatter.string(from: $0.deadline.date) + space()
-            if daysAgo < 0 {
-                datedStr = VxdayColor.danger(datedStr)
-            }
-            if daysAgo == 0 {
-                datedStr = VxdayColor.warning(datedStr)
-            }
-            else {
-                datedStr = VxdayColor.happy(datedStr)
-            }
+            datedStr = timeBucketToColor($0.deadline.date, string: datedStr)
             
             let hash = hashView($0.hash)
             let listName = listNameView($0.list)
@@ -315,11 +374,21 @@ class VxdayView {
         }
     }
     
-    func oneLiners() -> [String] {
-        if let listName = allLists().first?.name  {
-            return listName
+    /*
+    func bucketed() -> [ListName: (overdue: [Item], today: [Item], future: [Item])] {
+     //   var result : [ListName: (overdue: [Item], today: [Item], future: [Item])] = [:]
+        items.forEach { item in
+            let list = item.vxItem().list
         }
-        return "TODO ONE LINER"
+    }
+ 
+ */
+    func oneLiners() -> [String] {
+        let buckets = toBuckets()
+        return buckets.map  { summary in
+             " \(summary.list.name) has \(summary.past.count) overdue jobs, \(summary.present.count) today jobs, and \(summary.future.count) upcoming jobs, and \(summary.taskCount) tasks"
+        }
+        
     }
     
     func renderAll() -> [String] {

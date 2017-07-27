@@ -31,6 +31,8 @@ class VxdayInstruction {
                 VxdayExec.all()
             case .what:
                 VxdayExec.what()
+            case let .x(hash):
+                VxdayExec.x(hash)
             
            // case let .x(hash):
            //     VxdayExec.x(hash)

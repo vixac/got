@@ -104,61 +104,6 @@ struct IntOffset {
 }
 
 
-extension Date {
-    static func daysOffsetString(_ days: Int) -> String {
-        switch days {
-            case let x where x == -1:
-                return "Yesterday"
-            case let x where x == 0:
-                return "Today"
-            case let x where x == 1:
-                return "Tomorrow"
-            case let x where x < 0:
-                return "\(abs(days)) days ago"
-            default:
-                return "In \(days) days"
-        }
-    }
-    
-    func daysAgoInt() -> Int {
-        return Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
-    }
-    
-    func daysAgo() -> String {
-        return Date.daysOffsetString(self.daysAgoInt())
-    }
-    
-    func ago() -> String {
-        let SECONDS_IN_A_DAY = 86400
-        let SECONDS_IN_AN_HOUR = 60 * 60
-        let SECONDS_IN_A_MINUTE = 60
-        let now = VxdayUtil.now()
-        
-
-        let interval =  Int(self.timeIntervalSince(now))
-        let absInterval = abs(interval)
-        if absInterval > SECONDS_IN_A_DAY {
-            return Date.daysOffsetString(interval / SECONDS_IN_A_DAY)
-        }
-        else if absInterval > SECONDS_IN_AN_HOUR {
-            let hours = interval / SECONDS_IN_AN_HOUR
-            if hours > 0 {
-                return "In \(hours) hours."
-            }
-            
-            return "\(abs(hours)) hours ago"
-        }
-        else if absInterval > SECONDS_IN_A_MINUTE {
-            let mins = interval / SECONDS_IN_A_MINUTE
-            if mins > 0 {
-                return "In \(mins) mins."
-            }
-            return "\(abs(mins)) mins ago."
-        }
-        return "Just now."
-    }
-}
-
 enum Verb : String {
     case add = "add"
     case all = "all"

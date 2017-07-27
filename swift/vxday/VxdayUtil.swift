@@ -11,6 +11,12 @@ import Foundation
 
 class VxdayUtil {
     
+    enum TimeBucket {
+        case past
+        case present
+        case future
+    }
+    
     private static let datetimeFormat = "yyyy-MM-dd'T'HH:mm:ss"
     private static let dateFormat = "yyyy-MM-dd"
     
@@ -39,6 +45,8 @@ class VxdayUtil {
         let endWords = array.suffix(array.count - start)
         return endWords.flatMap({$0 + " " }).joined()
     }
+    
+    
     
     
     class func nowDay() -> Date {
@@ -78,5 +86,72 @@ class VxdayUtil {
         return string.components(separatedBy: "_").first ?? ""
     }
     
+}
+
+
+extension Date {
+    static func daysOffsetString(_ days: Int) -> String {
+        switch days {
+        case let x where x == -1:
+            return "Yesterday"
+        case let x where x == 0:
+            return "Today"
+        case let x where x == 1:
+            return "Tomorrow"
+        case let x where x < 0:
+            return "\(abs(days)) days ago"
+        default:
+            return "In \(days) days"
+        }
+    }
+    
+    func daysAgoInt() -> Int {
+        return Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
+    }
+    
+    func daysAgo() -> String {
+        return Date.daysOffsetString(self.daysAgoInt())
+    }
+    
+    func bucket() -> VxdayUtil.TimeBucket {
+        let daysAgo = self.daysAgoInt()
+        if daysAgo < 0 {
+            return .past
+        }
+        if daysAgo == 0 {
+            return .present
+        }
+        return .future
+    }
+    
+    func ago() -> String {
+        let SECONDS_IN_A_DAY = 86400
+        let SECONDS_IN_AN_HOUR = 60 * 60
+        let SECONDS_IN_A_MINUTE = 60
+        let now = VxdayUtil.now()
+        
+        
+        let interval =  Int(self.timeIntervalSince(now))
+        let absInterval = abs(interval)
+        if absInterval > SECONDS_IN_A_DAY {
+            return Date.daysOffsetString(interval / SECONDS_IN_A_DAY)
+        }
+        else if absInterval > SECONDS_IN_AN_HOUR {
+            let hours = interval / SECONDS_IN_AN_HOUR
+            if hours > 0 {
+                return "In \(hours) hours."
+            }
+            
+            return "\(abs(hours)) hours ago"
+        }
+        else if absInterval > SECONDS_IN_A_MINUTE {
+            let mins = interval / SECONDS_IN_A_MINUTE
+            if mins > 0 {
+                return "In \(mins) mins."
+            }
+            return "\(abs(mins)) mins ago."
+        }
+        return "Just now."
+    }
 }
 
