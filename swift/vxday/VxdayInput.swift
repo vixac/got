@@ -13,6 +13,10 @@ struct Hash {
     init(_ hash: String) {
         self.hash = hash
     }
+    
+    func isValid() -> Bool {
+        return hash.characters.first == "0" && hash.characters.count == 9
+    }
 }
 
 struct Description {

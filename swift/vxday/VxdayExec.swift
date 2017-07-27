@@ -21,6 +21,7 @@ enum Script : String {
     case removeLine = "remove_line.sh"
     case note = "note.sh"
     case wait = "wait.sh"
+    case lookForHash = "look_for_hash.sh"
 }
 
 class VxdayFile {
@@ -35,6 +36,10 @@ class VxdayFile {
     
     static let retiredDir: String = {
         VxdayExec.getEnvironmentVar("VXDAY2_RETIRED_DIR")!
+    }()
+    
+    static let outputFile : String = {
+        VxdayExec.getEnvironmentVar("VXDAY2_OUTPUT_FILE")!
     }()
     
     static func getScriptPath(_ script: Script) -> String {
@@ -53,7 +58,7 @@ class VxdayFile {
     static func getTokenFilename(_ list: ListName) -> String {
         return VxdayFile.activeDir + "/" + list.name + "_tokens.vxday"
     }
- 
+
 }
 
 class VxdayExec {
@@ -80,6 +85,29 @@ class VxdayExec {
         let files = VxdayFile.activeDir + "/" + list.name + "_*.vxday"
         VxdayExec.shell("cat", files)
     }
+    
+    static func hashToListName(_ hash: Hash) -> ListName? {
+        guard hash.isValid() else {
+            print("This isn't a valid hash: \(hash)")
+            return nil
+        }
+        let findHashScript = VxdayFile.getScriptPath(.lookForHash)
+        VxdayExec.shell(findHashScript, hash.hash)
+        guard let listFile = getOutput() else {
+            print("This hash is not active: \(hash.hash)")
+            return nil
+        }
+        guard let listName =  VxdayUtil.beforeUnderscore(VxdayUtil.afterHyphen(listFile)) else {
+            print("Error reading the list summary file: \(listFile)")
+            return nil
+        }
+        return ListName(listName)
+    }
+    
+    static func getOutput() -> String? {
+        return VxdayReader.readFile(VxdayFile.outputFile).first
+    }
+    
     static func what() {
         let lists = VxdayReader.allLists()
         var allItemsEver: [Item] = []
@@ -97,7 +125,12 @@ class VxdayExec {
     }
     
     static func x(_ hash: Hash) {
-        print("TODO X THIS HASH: \(hash)")
+        
+        guard let list = hashToListName(hash) else {
+            return
+        }
+        print("TODO X THIS HASH: \(hash), in list: \(list.name)")
+        
     }
     
     static func all() {

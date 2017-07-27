@@ -420,7 +420,6 @@ class VxdayView {
             let listName = listNameView(summary.list)
             return "\(listName) \(overdue) \(present) \(upcoming) \(tasks) \(total)"
         }
-        
     }
     
     func renderAll() -> [String] {

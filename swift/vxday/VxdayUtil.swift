@@ -82,8 +82,12 @@ class VxdayUtil {
         
     }
     
-    class func beforeUnderscore(_ string: String) -> String {
-        return string.components(separatedBy: "_").first ?? ""
+    class func afterHyphen(_ string: String) -> String {
+        return string.components(separatedBy: "/").last ?? string
+    }
+    
+    class func beforeUnderscore(_ string: String) -> String? {
+        return string.components(separatedBy: "_").first 
     }
     
 }

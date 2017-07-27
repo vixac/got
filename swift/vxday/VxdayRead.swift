@@ -25,7 +25,7 @@ class VxdayReader {
         var lists: Set<String> = Set()
         while  let file  = enumerator.nextObject() as? String  {
             if file.characters.first != "." {
-                lists.insert(VxdayUtil.beforeUnderscore(file))
+                lists.insert(VxdayUtil.beforeUnderscore(file)!)
             }
             
         }
