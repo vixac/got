@@ -13,12 +13,21 @@ class VxdayInstruction {
     static func executeInstruction(_ instruction : Instruction) {
         switch instruction {
             case let .add(list, offset, description):
-                let string = VxdayInstruction.makeAddString(description: description, offset: offset)
-                VxdayExec.append(list, content: string)
+                let now = VxdayUtil.now()
+                let created = CreationDate(now)
+                let deadline = DeadlineDate(VxdayUtil.increment(date: now, byDays: offset.offset))
+                let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
+                let item = VxJob(list: list, hash: hash, creation: created, deadline: deadline, description: description , completion: nil)
+                
+                VxdayExec.storeItem(item)
+            
             
             case let .doIt(list, description):
-                let string = VxdayInstruction.makeAddString(description: description , offset: nil)
-                VxdayExec.append(list, content: string)
+                let now = VxdayUtil.now()
+                let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
+                let created = CreationDate(now)
+                let item = VxTask(list: list, hash: hash, creation: created, description: description, completion: nil)
+                VxdayExec.storeItem(item)
             case let .retire(list):
                 VxdayExec.retire(list)
             case let .unretire(list):
@@ -43,6 +52,9 @@ class VxdayInstruction {
         }
     }
 
+    
+    //TODO RM
+    /*
     static func makeAddString(description: Description, offset: IntOffset?) -> String {
         
         let now = VxdayUtil.now()
@@ -59,5 +71,5 @@ class VxdayInstruction {
             return " \(ItemType.task.rawValue) \(hash) \(created) \(description.text)"
         }
     }
-    
+    */
 }

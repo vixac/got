@@ -18,10 +18,10 @@ enum Script : String {
     case retire = "retire.sh"
     case unretire = "unretire.sh"
     case append = "append.sh"
-    case removeLine = "remove_line.sh"
     case note = "note.sh"
     case wait = "wait.sh"
     case lookForHash = "look_for_hash.sh"
+    case removeLine = "remove_line.sh"
 }
 
 class VxdayFile {
@@ -55,6 +55,9 @@ class VxdayFile {
         return VxdayFile.activeDir + "/" + list.name + end
     }
     
+    static func getCompleteFilename(_ list: ListName) -> String  {
+        return VxdayFile.activeDir + "/" + list.name + "_complete.vxday"
+    }
     static func getTokenFilename(_ list: ListName) -> String {
         return VxdayFile.activeDir + "/" + list.name + "_tokens.vxday"
     }
@@ -67,7 +70,6 @@ class VxdayExec {
     
     @discardableResult
     static func shell(_ args: String...) -> Int32 {
-        print("about to do this: \(args)")
         let task = Process()
         task.launchPath = "/usr/bin/env"
         task.arguments = args
@@ -107,6 +109,15 @@ class VxdayExec {
     static func getOutput() -> String? {
         return VxdayReader.readFile(VxdayFile.outputFile).first
     }
+    static func removeActiveHash(_ hash: Hash, list: ListName?) {
+        guard let l = getListIfNeeded(hash, list: list) else {
+            print("Error: Can't find list for hash: \(hash.hash)")
+            return
+        }
+        let summaryFileName = VxdayFile.getSummaryFilename(l)
+        let scriptFile = VxdayFile.getScriptPath(.removeLine)
+        VxdayExec.shell(scriptFile, hash.hash, summaryFileName)
+    }
     
     static func what() {
         let lists = VxdayReader.allLists()
@@ -124,12 +135,43 @@ class VxdayExec {
         print((global) )
     }
     
-    static func x(_ hash: Hash) {
+    static func getListIfNeeded(_ hash: Hash,  list: ListName?) -> ListName? {
+        if let _ = list {
+            return list
+        }
+        return hashToListName(hash)
+    }
+    
+    static func hashToJobOrTask(_ hash: Hash, list: ListName?) ->  Item? {
+        var theList = list
+        if theList == nil {
+            theList  = hashToListName(hash)
+        }
+        guard let l = theList else {
+            print("Error finding list for hash: \(hash.hash)")
+            return nil
+        }
         
+        // that job or task thing is just in case we have token or notes in the same file
+        let items = VxdayReader.itemsInList(l).filter { $0.vxItem().hash.hash == hash.hash && ( $0.vxItem().itemType() == .job || $0.vxItem().itemType() == .task) }
+        guard let item  = items.first  else {
+            print("Dev Error finding hash \(hash.hash) in list \(l.name)")
+            return nil
+        }
+        return item
+    }
+    
+    static func x(_ hash: Hash) {
         guard let list = hashToListName(hash) else {
             return
         }
-        print("TODO X THIS HASH: \(hash), in list: \(list.name)")
+        guard let item = hashToJobOrTask(hash, list: list)?.vxItem() else {
+            print("Error extracting job from hash: \(hash)")
+            return
+        }
+        removeActiveHash(hash, list: list)
+        let completeItem = item.complete()
+        storeItem(completeItem)
         
     }
     
@@ -163,10 +205,21 @@ class VxdayExec {
         VxdayExec.shell(script, list.name)
     }
     
-    static func append(_ list: ListName, content: String ) {
+    
+    static func storeItem(_ item: VxItem) {
         let script = VxdayFile.getScriptPath(.append)
-        let filename = VxdayFile.getSummaryFilename(list)
-        print("about to run \(script) on \(filename) with content: \(content)")
+        let list  = item.list
+        var filename : String = ""
+        if item.itemType() == ItemType.token {
+            print("TODO write this token somewhere.")
+        }
+        else if item.isComplete() {
+            filename = VxdayFile.getCompleteFilename(list)
+        }
+        else {
+            filename = VxdayFile.getSummaryFilename(list)
+        }
+        let content = item.toVxday()
         VxdayExec.shell(script, content, filename)
     }
     

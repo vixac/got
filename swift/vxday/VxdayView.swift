@@ -13,6 +13,9 @@ protocol VxItem {
     var hash: Hash {get}
     var creation: CreationDate {get}
     func toVxday() -> String
+    func itemType() -> ItemType
+    func complete() -> VxItem
+    func isComplete() -> Bool
 }
 
 struct VxJob : VxItem {
@@ -27,13 +30,26 @@ struct VxJob : VxItem {
         return completion != nil
     }
     
+    
+    func complete()  -> VxItem {
+        return VxJob(list: list, hash: hash, creation: creation, deadline: deadline, description: description, completion: CompletionDate(VxdayUtil.now()))
+    }
+    
     func toVxday() -> String {
         let symbolStr = ItemType.job.rawValue + " "
         let hashStr = hash.hash + " "
         let creationStr = creation.toString() + " "
         let deadlineStr = deadline.toString() + " "
         let descriptionStr = description.text + " "
-        return symbolStr + hashStr + creationStr + deadlineStr + descriptionStr
+        let completionStr = completion != nil  ? (VxdayUtil.datetimeFormatter.string(from: completion!.date) + " ") : ""
+        return symbolStr + hashStr + creationStr + deadlineStr + completionStr + descriptionStr
+    }
+    
+    func itemType() -> ItemType {
+        if isComplete() {
+            return .completeJob
+        }
+        return .job
     }
     
 }
@@ -44,6 +60,10 @@ struct VxTask : VxItem {
     let description: Description
     let completion : CompletionDate?
     
+    func complete() -> VxItem {
+        return VxTask(list: list, hash: hash, creation: creation, description: description, completion: CompletionDate(VxdayUtil.now()))
+    }
+    
     func isComplete() -> Bool {
         return completion != nil
     }
@@ -52,7 +72,14 @@ struct VxTask : VxItem {
         let hashStr = hash.hash + " "
         let creationStr = creation.toString() + " "
         let descriptionStr = description.text + " "
-        return symbolStr + hashStr + creationStr + descriptionStr
+        let completionStr = completion != nil ? (VxdayUtil.datetimeFormatter.string(from: completion!.date) + " ") : ""
+        return symbolStr + hashStr + creationStr + completionStr +  descriptionStr
+    }
+    func itemType() -> ItemType {
+        if isComplete() {
+            return .completeTask
+        }
+        return .task
     }
 }
 
@@ -61,8 +88,20 @@ struct VxToken : VxItem {
     let hash: Hash
     let creation: CreationDate
     let completion: CompletionDate
+    
+    func complete()  -> VxItem{
+        return self
+    }
+    
     func toVxday() -> String  {
         return "TODO"
+    }
+    
+    func isComplete() -> Bool {
+        return true
+    }
+    func itemType() -> ItemType {
+        return .token
     }
 }
 
@@ -118,7 +157,7 @@ enum Item {
                 }
                 return "\(ItemType.task.rawValue) \(task.hash.hash) \(task.creation.toString()) \(completion)\(task.description.text)"
             case let .token(token):
-                return "\(ItemType.tokenEntry.rawValue) \(token.hash.hash) \(token.creation.toString()) \(token.completion.toString())"
+                return "\(ItemType.token.rawValue) \(token.hash.hash) \(token.creation.toString()) \(token.completion.toString())"
         }
     }
     
@@ -162,7 +201,7 @@ enum Item {
                 return nil
             }
             return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: nil ))
-        case .tokenEntry:
+        case .token:
             guard let creationDate = ArgParser.creation(args: array, index: 2) else {
                 print("Error: could not extract creation date from: \(array)")
                 return nil

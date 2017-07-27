@@ -10,9 +10,9 @@ import Foundation
 
 //TODO make this config
 enum ItemType : String {
-    case complete = "x."
+    case completeTask = "x."
     case completeJob = "X."
-    case tokenEntry = "->."
+    case token = "->."
     case job = "=."
     case task = "-."
 }

@@ -58,7 +58,7 @@ class VxdayUtil {
         return Date()
     }
     
-    class func hash(_ string: String) -> String {
+    class func hash(_ string: String) -> Hash {
         let time = now().timeIntervalSince1970.hashValue
         let hashable = "\(time)" + string
         var hashed = "0" + String(format: "%2X", hashable).lowercased()
@@ -68,7 +68,7 @@ class VxdayUtil {
                 hashed += "0"
             }
         }
-        return hashed
+        return Hash(hashed)
     }
     
     class func increment(date: Date, byDays days : Int) -> Date {

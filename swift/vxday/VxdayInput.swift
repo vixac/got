@@ -45,6 +45,7 @@ struct CompletionDate {
         return VxdayUtil.datetimeFormatter.string(from: self.date)
     }
 }
+
 struct CreationDate {
     let date: Date
     init(_ date: Date) {
