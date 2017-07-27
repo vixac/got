@@ -188,7 +188,8 @@ class VxdayColor {
     static let happyColor: String = ANSIColors.green.rawValue
     static let titleColor :String = ANSIColors.white.rawValue
     static let info2Color: String = ANSIColors.test.rawValue
-    static let infoColor :String = ANSIColors.cyan.rawValue
+    static let infoColor: String = ANSIColors.cyan.rawValue
+    static let whiteColor : String = ANSIColors.white.rawValue
     
     static func danger(_ string: String) -> String {
         return dangerColor + string + baseColor
@@ -207,6 +208,9 @@ class VxdayColor {
     }
     static func info2(_ string: String) -> String {
         return info2Color + string + baseColor
+    }
+    static func boldInfo(_ string: String) -> String {
+        return whiteColor + string + baseColor
     }
     
     static func putBack() {
@@ -228,6 +232,14 @@ enum ANSIColors: String {
 }
 
 
+class Spaces {
+    static let List = 9
+    static let WhatOverdue = 13
+    static let WhatPresent = 13
+    static let WhatFuture = 13
+    static let WhatTasks = 9
+    
+}
 
 class ListSummary {
     let list: ListName
@@ -262,7 +274,7 @@ class VxdayView {
         self.items = items
     }
     
-    private func toBuckets() -> [ListSummary] {
+    func toBuckets() -> [ListSummary] {
         var dict : [ListName: ListSummary] = [:]
         for item in items {
             if let job = item.getJob() {
@@ -339,7 +351,7 @@ class VxdayView {
     }
     
     func listNameView(_ list: ListName) -> String {
-        return VxdayColor.info(pad(list.name, toLength: 9))
+        return VxdayColor.info(pad(list.name, toLength: Spaces.List))
     }
     
 
@@ -374,19 +386,39 @@ class VxdayView {
         }
     }
     
-    /*
-    func bucketed() -> [ListName: (overdue: [Item], today: [Item], future: [Item])] {
-     //   var result : [ListName: (overdue: [Item], today: [Item], future: [Item])] = [:]
-        items.forEach { item in
-            let list = item.vxItem().list
+    
+    func noStringForZero(_ prefix: String, number: Int, toLength : Int) -> String {
+        if number == 0 {
+            return pad("", toLength: toLength)
         }
+        let str = "\(prefix) \(number)"
+        return pad(str, toLength: toLength)
     }
- 
- */
-    func oneLiners() -> [String] {
-        let buckets = toBuckets()
+    func globalOneLiner(buckets: [ListSummary]) -> String {
+        let listCount = buckets.count
+        let overdueCount = buckets.map { $0.past.count}.reduce(0, { $0 + $1})
+        let todayCount = buckets.map { $0.present.count}.reduce(0, { $0 + $1})
+        let futureCount = buckets.map { $0.future.count}.reduce(0 , {$0 + $1})
+        let taskCount = buckets.map {$0.taskCount}.reduce(0, {$0 + $1})
+        let totalLists = VxdayColor.boldInfo(pad("Lists: \(listCount)", toLength: Spaces.List))
+        let overdue = VxdayColor.danger(noStringForZero("Overdue:", number: overdueCount, toLength:  Spaces.WhatOverdue))
+        let present = VxdayColor.warning(noStringForZero("Today:", number: todayCount, toLength: Spaces.WhatPresent))
+        let future = VxdayColor.happy(noStringForZero("Upcoming:", number: futureCount, toLength: Spaces.WhatFuture))
+        let tasks  = VxdayColor.warning(noStringForZero("Tasks:", number: taskCount, toLength: Spaces.WhatTasks))
+        let total = VxdayColor.boldInfo("Total: \(overdueCount + todayCount + futureCount)")
+        return "\(totalLists) \(overdue) \(present) \(future) \(tasks) \(total)"
+    }
+    
+    
+    func oneLiners(_ buckets: [ListSummary]) -> [String] {
         return buckets.map  { summary in
-             " \(summary.list.name) has \(summary.past.count) overdue jobs, \(summary.present.count) today jobs, and \(summary.future.count) upcoming jobs, and \(summary.taskCount) tasks"
+            let overdue = VxdayColor.danger(noStringForZero("Overdue:", number: summary.past.count, toLength: Spaces.WhatOverdue))
+            let present = VxdayColor.warning(noStringForZero("Today:", number: summary.present.count, toLength: Spaces.WhatPresent))
+            let upcoming = VxdayColor.happy(noStringForZero("Upcoming:", number: summary.future.count, toLength: Spaces.WhatFuture))
+            let tasks = VxdayColor.warning(noStringForZero("Tasks:", number: summary.taskCount, toLength: Spaces.WhatTasks))
+            let total = "Total: \(summary.past.count + summary.present.count + summary.future.count + summary.taskCount)"
+            let listName = listNameView(summary.list)
+            return "\(listName) \(overdue) \(present) \(upcoming) \(tasks) \(total)"
         }
         
     }

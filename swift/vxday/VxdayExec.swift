@@ -87,7 +87,13 @@ class VxdayExec {
             allItemsEver += VxdayReader.itemsInList(list)
         }
         let view = VxdayView(allItemsEver)
-        view.oneLiners().forEach {print($0)}
+        let buckets = view.toBuckets()
+        
+        view.oneLiners(buckets).forEach {print($0)}
+        
+        let global = view.globalOneLiner(buckets: buckets)
+        print("-----------------------------------------------------------------------")
+        print((global) )
     }
     
     static func x(_ hash: Hash) {
