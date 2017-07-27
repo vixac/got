@@ -36,13 +36,14 @@ struct VxJob : VxItem {
     }
     
     func toVxday() -> String {
-        let symbolStr = ItemType.job.rawValue + " "
+        let symbolStr = itemType().rawValue + " "
         let hashStr = hash.hash + " "
         let creationStr = creation.toString() + " "
         let deadlineStr = deadline.toString() + " "
         let descriptionStr = description.text + " "
         let completionStr = completion != nil  ? (VxdayUtil.datetimeFormatter.string(from: completion!.date) + " ") : ""
-        return symbolStr + hashStr + creationStr + deadlineStr + completionStr + descriptionStr
+        let str = symbolStr + hashStr + creationStr + deadlineStr + completionStr + descriptionStr
+        return str
     }
     
     func itemType() -> ItemType {
@@ -68,7 +69,7 @@ struct VxTask : VxItem {
         return completion != nil
     }
     func toVxday() -> String  {
-        let symbolStr = ItemType.task.rawValue + " "
+        let symbolStr = itemType().rawValue + " "
         let hashStr = hash.hash + " "
         let creationStr = creation.toString() + " "
         let descriptionStr = description.text + " "
@@ -211,9 +212,39 @@ enum Item {
                 return nil
             }
             return Item.token(VxToken(list: list, hash: hash, creation: creationDate, completion: completionDate))
-        default:
-            print("TODO unhandled vxday line: \(line).")
-            return nil
+            
+        case .completeJob:
+            guard let creationDate = ArgParser.creation(args: array, index: 2) else {
+                print("Error: could not extract creation date from: \(array)")
+                return nil
+            }
+            guard let deadlineDate = ArgParser.deadline(args: array, index: 3) else {
+                print("Error: could not extract deadline from: \(array)")
+                return nil
+            }
+            guard let completionDate = ArgParser.completion(args: array, index: 4) else {
+                print("Error: could not extract completion date from : \(array)")
+                return nil
+            }
+            guard let description = ArgParser.description(args: array, start: 5) else {
+                print("Error: could not get description from: \(array)")
+                return nil
+            }
+            return Item.job(VxJob(list: list, hash: hash, creation: creationDate, deadline: deadlineDate, description: description, completion: completionDate))
+        case .completeTask:
+            guard let creationDate = ArgParser.creation(args: array, index: 2) else {
+                print("Error: could not extract creation date from: \(array)")
+                return nil
+            }
+            guard let completionDate = ArgParser.completion(args: array, index: 3) else {
+                print("Error: could not extract completion date from : \(array)")
+                return nil
+            }
+            guard let description = ArgParser.description(args: array, start: 4) else {
+                print("Error: could not get description from: \(array)")
+                return nil
+            }
+            return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: completionDate))
         }
     }
 }
@@ -273,10 +304,13 @@ enum ANSIColors: String {
 
 class Spaces {
     static let List = 9
+    static let Timeliness = 14
     static let WhatOverdue = 13
     static let WhatPresent = 13
     static let WhatFuture = 13
     static let WhatTasks = 9
+    static let DaysString = 15
+    static let Hash = 11
     
 }
 
@@ -386,7 +420,7 @@ class VxdayView {
     }
     
     func hashView(_ hash: Hash) -> String {
-        return VxdayColor.info2(pad(hash.hash, toLength: 11))
+        return VxdayColor.info2(pad(hash.hash, toLength: Spaces.Hash))
     }
     
     func listNameView(_ list: ListName) -> String {
@@ -414,7 +448,7 @@ class VxdayView {
 
     func showJobs() -> [String] {
         return self.getDeadlines().map {
-            let timeStr =  pad( $0.deadline.pretty(), toLength: 15)
+            let timeStr =  pad( $0.deadline.pretty(), toLength: Spaces.DaysString)
             var datedStr = timeStr +  VxdayUtil.dateFormatter.string(from: $0.deadline.date) + space()
             datedStr = timeBucketToColor($0.deadline.date, string: datedStr)
             
@@ -461,6 +495,56 @@ class VxdayView {
         }
     }
     
+    func renderComplete() -> [String] {
+        var strings: [String] = []
+        items.forEach { item in
+            var completed : CompletionDate? = nil
+            var description : Description = Description("")
+            var offsetFromDeadline : Int? = nil
+            if let job = item.getJob() {
+                completed = job.completion
+                
+                description = job.description
+                if let c = completed {
+                    offsetFromDeadline = VxdayUtil.timeliness(deadline: job.deadline, completion: c)
+                }
+            }
+            else if let task = item.getTask() {
+                completed = task.completion
+                description = task.description
+            }
+            
+            if let c = completed {
+                //let overdue = VxdayColor.danger(noStringForZero("Overdue:", number: overdueCount, toLength:  Spaces.WhatOverdue))
+                let completed = VxdayColor.boldInfo( pad(c.pretty(), toLength: Spaces.DaysString))
+                let d = description.text
+                
+                var timelinessStr = ""
+                if let o = offsetFromDeadline {
+                    timelinessStr = VxdayUtil.timelinessToString(offsetFromDeadline!)
+                    timelinessStr = pad(timelinessStr, toLength:  Spaces.Timeliness)
+                    if o < 0 {
+                        timelinessStr = VxdayColor.danger(timelinessStr)
+                    }
+                    else if o == 0 {
+                        timelinessStr = VxdayColor.warning(timelinessStr)
+                    }
+                    else {
+                        timelinessStr = VxdayColor.happy(timelinessStr)
+                    }
+                }
+                else {
+                    timelinessStr =  pad("", toLength: Spaces.Timeliness)
+                }
+                
+                let hash = hashView(item.vxItem().hash)
+                let list = listNameView(item.vxItem().list)
+                strings.append("\(completed) \(timelinessStr) \(hash) \(list) \(d)")
+            }
+        }
+        return strings
+    }
+    
     func renderAll() -> [String] {
         var output : [String] = []
         let lists = self.allLists()
@@ -484,6 +568,9 @@ class VxdayView {
         }
         var spaces = ""
         let needed = length - string.characters.count
+        if needed < 1 {
+            return string
+        }
         for _ in 1...needed {
             spaces = spaces +  " "
         }

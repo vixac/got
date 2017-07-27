@@ -71,16 +71,31 @@ class VxdayUtil {
         return Hash(hashed)
     }
     
+    class func timelinessToString(_ daysOffset: Int) -> String {
+        if daysOffset == -1 {
+            return "1 day late"
+        }
+        if daysOffset < 0 {
+            return "\(abs(daysOffset)) days late"
+        }
+        if daysOffset == 0 {
+            return "On time"
+        }
+        if daysOffset == 1 {
+            return "1 day early"
+        }
+        return "\(daysOffset) days early"
+    }
+    class func timeliness(deadline: DeadlineDate, completion: CompletionDate) -> Int {
+        return  deadline.date.daysSince(completion.date)
+        
+    }
     class func increment(date: Date, byDays days : Int) -> Date {
         var comp = DateComponents()
         comp.day = days
         return  Calendar.current.date(byAdding: comp, to: date )!
     }
-    
-    class func humanDuration(between start: Date, and end: Date) -> String {
-        return "TODO"
-        
-    }
+
     
     class func afterHyphen(_ string: String) -> String {
         return string.components(separatedBy: "/").last ?? string
@@ -89,11 +104,10 @@ class VxdayUtil {
     class func beforeUnderscore(_ string: String) -> String? {
         return string.components(separatedBy: "_").first 
     }
-    
 }
 
-
 extension Date {
+    static let SECONDS_IN_A_DAY = 86400
     static func daysOffsetString(_ days: Int) -> String {
         switch days {
         case let x where x == -1:
@@ -108,9 +122,11 @@ extension Date {
             return "In \(days) days"
         }
     }
-    
+    func daysSince(_ date: Date) -> Int {
+        return Int(self.timeIntervalSince(date)) / Date.SECONDS_IN_A_DAY
+    }
     func daysAgoInt() -> Int {
-        return Int(self.timeIntervalSince(VxdayUtil.nowDay())) / 86400
+        return self.daysSince(VxdayUtil.now())
     }
     
     func daysAgo() -> String {

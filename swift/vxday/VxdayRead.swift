@@ -38,7 +38,7 @@ class VxdayReader {
     static func itemsInList(_ list: ListName) -> [Item] {
         let filename = VxdayFile.getSummaryFilename(list)
         let contents = VxdayReader.readFile(filename)
-        let items = VxdayReader.readSummary(contents, list: list)
+        let items = VxdayReader.linesToItems(contents, list: list)
         return items
     }
     
@@ -51,7 +51,7 @@ class VxdayReader {
     }
     
     
-    static func readSummary(_ lines: [String], list: ListName) -> [Item] {
+    static func linesToItems(_ lines: [String], list: ListName) -> [Item] {
         return lines.flatMap{ Item.create($0, list: list)}
     }
 

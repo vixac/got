@@ -161,6 +161,19 @@ class VxdayExec {
         return item
     }
     
+    static func showComplete(_ list: ListName?) {
+        if let l = list {
+            let completeFile = VxdayFile.getCompleteFilename(l)
+            let contents = VxdayReader.readFile(completeFile)
+            let items = VxdayReader.linesToItems(contents, list: l)
+            
+            let view = VxdayView(items)
+            let lines = view.renderComplete()
+            lines.forEach { print($0)}
+            
+        }
+    }
+    
     static func x(_ hash: Hash) {
         guard let list = hashToListName(hash) else {
             return

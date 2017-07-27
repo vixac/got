@@ -38,6 +38,8 @@ class VxdayInstruction {
                 VxdayExec.allList(list)
             case .all:
                 VxdayExec.all()
+        case let .complete(list):
+            VxdayExec.showComplete(list)
             case .what:
                 VxdayExec.what()
             case let .x(hash):

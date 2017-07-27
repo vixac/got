@@ -126,6 +126,7 @@ enum Verb : String {
     case what = "what"
     case x = "x"
     case jot = "jot"
+    case complete = "complete"
     
 }
 
@@ -140,7 +141,7 @@ enum Instruction {
     case allList(ListName)
     case trackList(ListName)
     case top(ListName)
-    
+    case complete(ListName?)
     
     //hash actions
     case x(Hash)
@@ -281,7 +282,14 @@ enum Instruction {
                 }
                 return .unretire(listName)
                 
-                
+            
+            case .complete:
+                if let listName = ArgParser.listName(args: args, index: 1) {
+                    return .complete(listName)
+                }
+                else {
+                    return .complete(nil)
+                }
             case .what:
                 return .what
                 
