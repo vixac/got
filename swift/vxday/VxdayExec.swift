@@ -8,12 +8,6 @@
 
 import Foundation
 
-enum FileType : String {
-    case summary = "summary"
-    case tokens  = "tokens"
-    case note = "note"
-}
-
 enum Script : String {
     case retire = "retire.sh"
     case unretire = "unretire.sh"
@@ -49,10 +43,8 @@ class VxdayFile {
     static func getSummaryFilename(_ list: ListName) -> String {
         return VxdayFile.activeDir + "/" + list.name + "_summary.vxday"
     }
-    
     static func getNoteFilename(_ list: ListName, hash: Hash) -> String {
-        let end = "_" + hash.hash + ".vxday"
-        return VxdayFile.activeDir + "/" + list.name + end
+        return VxdayFile.activeDir + "/" + list.name + "_" + hash.hash + "_notes.vxday"
     }
     
     static func getCompleteFilename(_ list: ListName) -> String  {
@@ -170,10 +162,82 @@ class VxdayExec {
             let view = VxdayView(items)
             let lines = view.renderComplete()
             lines.forEach { print($0)}
+        }
+        else {
+            var allCompleteItems: [Item] = []
             
+            let all = VxdayReader.allLists()
+            all.forEach { list in
+                allCompleteItems += VxdayReader.completeItemsInList(list)
+            }
+            let view = VxdayView(allCompleteItems)
+
+            let lines = view.renderComplete()
+            lines.forEach { print($0)}
         }
     }
     
+    static func waitForUser() -> (start: Date, end: Date) {
+        let start = VxdayUtil.now()
+        
+        if let _ = readLine(strippingNewline: true) {
+            let end = VxdayUtil.now()
+            return (start: start, end: end)
+        }
+        return (start, start)
+    }
+    
+    static func startTokenSession(_ hash: Hash) {
+        guard let list = hashToListName(hash) else {
+            print("Error finding this hash in an active list: \(hash.hash)")
+            return
+        }
+        let sessionTimes = waitForUser()
+        let token = VxToken(list: list, hash: hash, creation: CreationDate(sessionTimes.start), completion: CompletionDate(sessionTimes.end))
+        self.storeItem(token)
+        let view = VxdayView(Item.token(token))
+        view.renderAll().forEach { print($0)}
+        
+    }
+    static func remove(_ hash: Hash) {
+        guard let list = hashToListName(hash) else {
+            return
+        }
+        removeActiveHash(hash, list: list)
+    }
+    
+    static func createTask(_ list: ListName, description: Description ) {
+        let now = VxdayUtil.now()
+        let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
+        let created = CreationDate(now)
+        let vxtask = VxTask(list: list, hash: hash, creation: created, description: description, completion: nil)
+        VxdayExec.storeItem(vxtask)
+        let view = VxdayView(Item.task(vxtask))
+        view.renderAll().forEach { print($0)}
+        //TODO rm rendertItesmstoresummary
+        //
+        //let summary = view.renderItemStoredSummary()
+        //print(summary)
+        
+    }
+    
+    static func createJob(_ list: ListName, offset: IntOffset, description: Description ) {
+        let now = VxdayUtil.now()
+        let created = CreationDate(now)
+        let deadline = DeadlineDate(VxdayUtil.increment(date: now, byDays: offset.offset))
+        let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
+        let vxjob = VxJob(list: list, hash: hash, creation: created, deadline: deadline, description: description , completion: nil)
+        
+        VxdayExec.storeItem(vxjob)
+        let view = VxdayView(Item.job(vxjob))
+        view.renderAll().forEach { print($0)}
+//
+//        let summary = view.renderItemStoredSummary()
+ //       print(summary)
+        
+    }
+    
+ 
     static func x(_ hash: Hash) {
         guard let list = hashToListName(hash) else {
             return
@@ -224,7 +288,7 @@ class VxdayExec {
         let list  = item.list
         var filename : String = ""
         if item.itemType() == ItemType.token {
-            print("TODO write this token somewhere.")
+            filename = VxdayFile.getTokenFilename(list)
         }
         else if item.isComplete() {
             filename = VxdayFile.getCompleteFilename(list)
@@ -234,6 +298,7 @@ class VxdayExec {
         }
         let content = item.toVxday()
         VxdayExec.shell(script, content, filename)
+        
     }
     
     static func note(_ list: ListName, hash: Hash) {

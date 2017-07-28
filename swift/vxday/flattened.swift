@@ -127,6 +127,7 @@ enum Verb : String {
     case x = "x"
     case jot = "jot"
     case complete = "complete"
+    case remove = "remove"
     
 }
 
@@ -149,6 +150,7 @@ enum Instruction {
     case note(Hash)
     case lessHash(Hash)
     case trackHash(Hash)
+    case remove(Hash)
     
     //global actions
     
@@ -241,7 +243,13 @@ enum Instruction {
                     return nil
                 }
                 return .note(hash)
-                
+            
+            case .remove:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash name in \(args)")
+                    return nil
+                }
+                return .remove(hash)
             case .retired:
                 return .retired
                 
@@ -713,7 +721,7 @@ class Spaces {
     static let WhatOverdue = 13
     static let WhatPresent = 13
     static let WhatFuture = 13
-    static let WhatTasks = 9
+    static let WhatTasks = 12
     static let DaysString = 15
     static let Hash = 11
     
@@ -741,6 +749,9 @@ class ListSummary {
     }
      func addTask(_ task: VxTask) {
         taskCount += 1
+    }
+    func total() -> Int {
+        return past.count + present.count + future.count + taskCount
     }
 }
 
@@ -781,7 +792,7 @@ class VxdayView {
             }
             //tokens aren't part of the summary yet.
         }
-        return dict.map { return $0.value }
+        return dict.map { return $0.value }.sorted( by: { $0.total() < $1.total()})
     }
     private func getDeadlines() -> [VxJob] {
         let jobs : [VxJob] = items.flatMap {
@@ -883,7 +894,7 @@ class VxdayView {
         let present = VxdayColor.warning(noStringForZero("Today:", number: todayCount, toLength: Spaces.WhatPresent))
         let future = VxdayColor.happy(noStringForZero("Upcoming:", number: futureCount, toLength: Spaces.WhatFuture))
         let tasks  = VxdayColor.warning(noStringForZero("Tasks:", number: taskCount, toLength: Spaces.WhatTasks))
-        let total = VxdayColor.boldInfo("Total: \(overdueCount + todayCount + futureCount)")
+        let total = VxdayColor.boldInfo("Total: \(overdueCount + todayCount + futureCount + taskCount)")
         return "\(totalLists) \(overdue) \(present) \(future) \(tasks) \(total)"
     }
     
@@ -1032,6 +1043,8 @@ class VxdayInstruction {
                 VxdayExec.what()
             case let .x(hash):
                 VxdayExec.x(hash)
+        case let .remove(hash):
+                VxdayExec.remove(hash)
             
            // case let .x(hash):
            //     VxdayExec.x(hash)
@@ -1235,10 +1248,26 @@ class VxdayExec {
             let view = VxdayView(items)
             let lines = view.renderComplete()
             lines.forEach { print($0)}
+        }
+        else {
+            var allCompleteItems: [Item] = []
             
+            let all = VxdayReader.allLists()
+            all.forEach { list in
+                allCompleteItems += VxdayReader.completeItemsInList(list)
+            }
+            let view = VxdayView(allCompleteItems)
+            let lines = view.renderComplete()
+            lines.forEach { print($0)}
         }
     }
     
+    static func remove(_ hash: Hash) {
+        guard let list = hashToListName(hash) else {
+            return
+        }
+        removeActiveHash(hash, list: list)
+    }
     static func x(_ hash: Hash) {
         guard let list = hashToListName(hash) else {
             return
@@ -1535,7 +1564,12 @@ class VxdayReader {
         let items = VxdayReader.linesToItems(contents, list: list)
         return items
     }
-    
+    static func completeItemsInList(_ list: ListName) -> [Item] {
+        let filename = VxdayFile.getCompleteFilename(list)
+        let contents = VxdayReader.readFile(filename)
+        let items = VxdayReader.linesToItems(contents, list: list)
+        return items
+    }
     static func readFile(_ path: String) -> [String] {
         guard let contents =  try? String(contentsOfFile: path) else {
             print("Error reading file: \(path)")
@@ -1607,16 +1641,23 @@ VxdayExec.append(ListName("wehey"), content: str)
 
 //print("waiting: \(now)")
 //VxdayExec.wait(ListName("me"), hash: Hash("abcdefg"))
-/*
+var now = VxdayUtil.now()
+
+print("started on blah.")
+now.addTimeInterval(-88000)
 if let x = readLine(strippingNewline: true) {
     print("Read line \(x)")
 }
 
 
 let finish = VxdayUtil.now()
-print("done waiting. \(finish)")
+let interval = Int(finish.timeIntervalSince(now))
+let hours = interval / 3600
+let mins = (interval - hours * 3600) / 60
+let seconds = (Int(interval)) % 60
+print("thats \(hours), \(mins), \(seconds)")
+print("done waiting. \(finish), thats \(interval)")
 
- */
 
 /*
  let location = "/Users/vic/Desktop/test.txt"
@@ -1630,8 +1671,8 @@ let allLists = VxdayReader.allLists()
 print("all Lists: \(allLists)")
 */
 
-let list = ListName("vic")
-VxdayExec.allList(list)
+//let list = ListName("vic")
+//VxdayExec.allList(list)
 
 /*
 let summaryPath = VxdayFile.getSummaryFilename(list)

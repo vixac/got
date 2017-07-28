@@ -8,99 +8,7 @@
 
 import Foundation
 
-struct Hash {
-    let hash: String
-    init(_ hash: String) {
-        self.hash = hash
-    }
-    
-    func isValid() -> Bool {
-        return hash.characters.first == "0" && hash.characters.count == 9
-    }
-}
 
-struct Description {
-    let text: String
-    init(_ text: String) {
-        self.text = text
-    }
-}
-
-struct CompletionDate {
-    let date: Date
-    init(_ date: Date) {
-        self.date = date
-    }
-    init?(from string: String) {
-        guard let d = VxdayUtil.datetimeFormatter.date(from: string) else {
-            return nil
-        }
-        self.date = d
-    }
-    
-    func pretty() -> String {
-        return self.date.ago()
-    }
-    func toString() -> String {
-        return VxdayUtil.datetimeFormatter.string(from: self.date)
-    }
-}
-
-struct CreationDate {
-    let date: Date
-    init(_ date: Date) {
-        self.date = date
-    }
-    init?(from string: String) {
-        guard let d = VxdayUtil.datetimeFormatter.date(from: string) else {
-            return nil
-        }
-        self.date = d
-    }
-    
-    func pretty() -> String {
-        return self.date.ago()
-    }
-    
-    func toString() -> String {
-        return VxdayUtil.datetimeFormatter.string(from: self.date)
-    }
-}
-
-struct DeadlineDate {
-    let date: Date
-    init(_ date: Date) {
-        self.date = date
-    }
-    init?(from string: String) {
-        guard let d = VxdayUtil.dateFormatter.date(from: string) else {
-            return nil
-        }
-        self.date = d
-    }
-    func pretty() -> String {
-        return self.date.daysAgo() 
-    }
-    
-    func toString() -> String {
-        return VxdayUtil.dateFormatter.string(from: self.date)
-    }
-}
-
-struct ListName : Hashable {
-    let name: String
-    init(_ name: String) {
-        self.name = name
-    }
-    
-    var hashValue: Int {
-        return name.hashValue
-    }
-    
-    static func == (lhs: ListName, rhs: ListName) -> Bool {
-        return lhs.name == rhs.name
-    }
-}
 struct IntOffset {
     let offset: Int
     init(_ offset: Int) {
@@ -127,6 +35,8 @@ enum Verb : String {
     case x = "x"
     case jot = "jot"
     case complete = "complete"
+    case remove = "remove"
+    case start = "start"
     
 }
 
@@ -149,6 +59,8 @@ enum Instruction {
     case note(Hash)
     case lessHash(Hash)
     case trackHash(Hash)
+    case remove(Hash)
+    case start(Hash)
     
     //global actions
     
@@ -241,7 +153,19 @@ enum Instruction {
                     return nil
                 }
                 return .note(hash)
-                
+            
+            case .start:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash name in \(args)")
+                    return nil
+                }
+                return .start(hash)
+            case .remove:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash name in \(args)")
+                    return nil
+                }
+                return .remove(hash)
             case .retired:
                 return .retired
                 

@@ -13,21 +13,11 @@ class VxdayInstruction {
     static func executeInstruction(_ instruction : Instruction) {
         switch instruction {
             case let .add(list, offset, description):
-                let now = VxdayUtil.now()
-                let created = CreationDate(now)
-                let deadline = DeadlineDate(VxdayUtil.increment(date: now, byDays: offset.offset))
-                let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
-                let item = VxJob(list: list, hash: hash, creation: created, deadline: deadline, description: description , completion: nil)
-                
-                VxdayExec.storeItem(item)
+                VxdayExec.createJob(list, offset: offset, description: description)
             
             
             case let .doIt(list, description):
-                let now = VxdayUtil.now()
-                let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
-                let created = CreationDate(now)
-                let item = VxTask(list: list, hash: hash, creation: created, description: description, completion: nil)
-                VxdayExec.storeItem(item)
+                VxdayExec.createTask(list, description: description)
             case let .retire(list):
                 VxdayExec.retire(list)
             case let .unretire(list):
@@ -44,6 +34,10 @@ class VxdayInstruction {
                 VxdayExec.what()
             case let .x(hash):
                 VxdayExec.x(hash)
+            case let .start(hash):
+                VxdayExec.startTokenSession(hash)
+        case let .remove(hash):
+                VxdayExec.remove(hash)
             
            // case let .x(hash):
            //     VxdayExec.x(hash)

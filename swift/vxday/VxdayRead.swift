@@ -8,14 +8,6 @@
 
 import Foundation
 
-//TODO make this config
-enum ItemType : String {
-    case completeTask = "x."
-    case completeJob = "X."
-    case token = "->."
-    case job = "=."
-    case task = "-."
-}
 
 class VxdayReader {
     
@@ -31,9 +23,7 @@ class VxdayReader {
         }
         return lists.map {return ListName($0)}
     }
-    static func hashToList(_ hash: Hash) -> ListName {
-        return ListName("TODO")
-    }
+    
     
     static func itemsInList(_ list: ListName) -> [Item] {
         let filename = VxdayFile.getSummaryFilename(list)
@@ -41,7 +31,12 @@ class VxdayReader {
         let items = VxdayReader.linesToItems(contents, list: list)
         return items
     }
-    
+    static func completeItemsInList(_ list: ListName) -> [Item] {
+        let filename = VxdayFile.getCompleteFilename(list)
+        let contents = VxdayReader.readFile(filename)
+        let items = VxdayReader.linesToItems(contents, list: list)
+        return items
+    }
     static func readFile(_ path: String) -> [String] {
         guard let contents =  try? String(contentsOfFile: path) else {
             print("Error reading file: \(path)")

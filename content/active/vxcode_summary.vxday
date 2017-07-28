@@ -1,0 +1,2 @@
+-. 078e0fa70 2017-07-28T10:36:42 Rethink responsibilities and layers in the app. Exec for external interactions, view for rendering array of strings, read for reading from the store etc
+-. 0ed503d00 2017-07-28T10:39:51 Consider Vxday Injection, day do rm star or something might do something terrible

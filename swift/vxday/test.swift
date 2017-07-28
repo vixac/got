@@ -55,16 +55,8 @@ VxdayExec.append(ListName("wehey"), content: str)
 
 //print("waiting: \(now)")
 //VxdayExec.wait(ListName("me"), hash: Hash("abcdefg"))
-/*
-if let x = readLine(strippingNewline: true) {
-    print("Read line \(x)")
-}
 
 
-let finish = VxdayUtil.now()
-print("done waiting. \(finish)")
-
- */
 
 /*
  let location = "/Users/vic/Desktop/test.txt"
@@ -78,8 +70,8 @@ let allLists = VxdayReader.allLists()
 print("all Lists: \(allLists)")
 */
 
-let list = ListName("vic")
-VxdayExec.allList(list)
+//let list = ListName("vic")
+//VxdayExec.allList(list)
 
 /*
 let summaryPath = VxdayFile.getSummaryFilename(list)
