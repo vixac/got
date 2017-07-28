@@ -131,11 +131,20 @@ struct  TimeBreakdown {
     let hours: Int
     let mins: Int
     let seconds : Int
+    let totalSeconds: Int
     init(start: Date, end: Date) {
-        let interval = Int(end.timeIntervalSince(start))
-        hours = interval / 3600
-        mins = (interval - hours * 3600) / 60
-        seconds = interval % 60
+        
+        totalSeconds = Int(end.timeIntervalSince(start))
+        hours = totalSeconds / 3600
+        mins = (totalSeconds - hours * 3600) / 60
+        seconds = totalSeconds % 60
+    }
+    init(_ seconds: IntOffset) {
+        totalSeconds = seconds.offset
+        hours = totalSeconds / 3600
+        mins = (totalSeconds - hours * 3600) / 60
+        self.seconds = totalSeconds % 60
+        
     }
 }
 
@@ -237,6 +246,10 @@ struct VxToken : VxItem {
     }
     func itemType() -> ItemType {
         return .token
+    }
+    // TODO make lazy propery
+    func timeBreakdown() -> TimeBreakdown {
+        return TimeBreakdown(start: creation.date, end: completion.date)
     }
 }
 

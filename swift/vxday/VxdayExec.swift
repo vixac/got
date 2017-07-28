@@ -56,8 +56,15 @@ class VxdayFile {
 
 }
 
+
+struct VxdayExecSessionGlobals {
+    let start: CreationDate
+    let hash: Hash
+    let list : ListName
+}
 class VxdayExec {
     
+    static var globals : VxdayExecSessionGlobals? = nil
     private static let starVxday = "_*.vxday"
     
     @discardableResult
@@ -177,14 +184,54 @@ class VxdayExec {
         }
     }
     
-    static func waitForUser() -> (start: Date, end: Date) {
-        let start = VxdayUtil.now()
-        
+    static func waitForUser(cb:( (CreationDate,CompletionDate) -> Void)) {
+        let start  = VxdayUtil.now()
+        Trap.handle(signal: Trap.Signal.interrupt) { signal in
+            VxdayExec.bypassCPointerContextIssueByUsingStaticStateToSaveToken()
+        }
         if let _ = readLine(strippingNewline: true) {
             let end = VxdayUtil.now()
-            return (start: start, end: end)
+            cb(CreationDate(start), CompletionDate(end))
         }
-        return (start, start)
+    }
+    
+    static func bypassCPointerContextIssueByUsingStaticStateToSaveToken() {
+        guard let g = VxdayExec.globals else {
+            print("Dev error: It appears an interuption doesnt have the static globals in place")
+            return
+        }
+        VxdayExec.saveToken(g.list, hash: g.hash, creation: g.start, completion: CompletionDate(VxdayUtil.now()))
+    }
+    
+    static func saveToken(_ list: ListName, hash: Hash, creation: CreationDate, completion: CompletionDate) {
+        let token = VxToken(list: list, hash: hash, creation: creation, completion: completion)
+        self.storeItem(token)
+        let view = VxdayView(Item.token(token))
+        view.renderAll().forEach { print($0)}
+    }
+    
+    static func report(_ days: IntOffset) {
+        let allLists =  VxdayReader.allLists()
+        
+        let date = VxdayUtil.now().startOfDay().incrementByDays(abs(days.offset) * -1)
+        let reportIntervalStart = date.timeIntervalSince1970
+        let report = TokenReport()
+        allLists.forEach { list in
+            VxdayReader.tokensForList(list)
+                                    .filter { $0.creation.date.timeIntervalSince1970 >  reportIntervalStart}
+                                    .forEach {
+                                        report.addToken($0)
+                                    }
+            
+        }
+        print("Ive created a report, now to print it: \(report.days)")
+        for(day, oneDaySummary) in report.days {
+            print("day: \(CreationDate(day).pretty())")
+            for (list, duration) in oneDaySummary.listSummaries {
+                let breakdown = TimeBreakdown(duration)
+                print("List: \(list) total: \(breakdown.hours) hours, \(breakdown.mins) mins, \(breakdown.seconds) seconds")
+            }
+        }
     }
     
     static func startTokenSession(_ hash: Hash) {
@@ -192,11 +239,12 @@ class VxdayExec {
             print("Error finding this hash in an active list: \(hash.hash)")
             return
         }
-        let sessionTimes = waitForUser()
-        let token = VxToken(list: list, hash: hash, creation: CreationDate(sessionTimes.start), completion: CompletionDate(sessionTimes.end))
-        self.storeItem(token)
-        let view = VxdayView(Item.token(token))
-        view.renderAll().forEach { print($0)}
+        let now = VxdayUtil.now()
+        VxdayExec.globals = VxdayExecSessionGlobals(start: CreationDate(now), hash: hash, list: list)
+        print("timer started for \(list) at \(now), for hash: \(hash)")
+        waitForUser { start, end in
+            saveToken(list, hash: hash , creation: start , completion: end)
+        }
         
     }
     static func remove(_ hash: Hash) {

@@ -72,12 +72,15 @@ class Spaces {
     
 }
 
+
+
 class ListSummary {
     let list: ListName
     var past: [VxJob] = []
     var present: [VxJob] = []
     var future: [VxJob] = []
     var taskCount: Int = 0
+    var timeWorked: Int = 0
     init(_ list: ListName) {
         self.list = list
     }
@@ -95,11 +98,81 @@ class ListSummary {
      func addTask(_ task: VxTask) {
         taskCount += 1
     }
+    
+    func addToken(_ token: VxToken) {
+        let breakdown = token.timeBreakdown()
+        timeWorked += breakdown.totalSeconds
+    }
     func total() -> Int {
         return past.count + present.count + future.count + taskCount
     }
 }
 
+
+class DaySummary {
+    let date: CreationDate
+    var listSummaries: [ListName: IntOffset] = [:]
+    var totalSeconds: Int = 0
+    init(_ date: CreationDate ) {
+        self.date = date
+    }
+
+    func addSomeSecondsTo(_ list: ListName, seconds: IntOffset) {
+        totalSeconds += seconds.offset
+        if let current = listSummaries[list] {
+            listSummaries[list] = IntOffset(current.offset + seconds.offset)
+        }
+        else {
+            listSummaries[list] = seconds
+        }
+    }
+    func getSorted() -> [(list: ListName, duration: IntOffset)] {
+        var tuples: [(list: ListName, duration: IntOffset)] = []
+        for (list, duration) in listSummaries {
+            tuples.append((list: list, duration:duration))
+        }
+        return tuples.sorted(by: {$0.duration.offset < $1.duration.offset})
+    }
+}
+
+class TokenReport {
+    
+    //TODO make CreationDate hashable
+    var days: [Date : DaySummary] = [:]
+    
+    func addToken(_ token: VxToken) {
+        let seconds = IntOffset(token.timeBreakdown().totalSeconds)
+        let day = token.creation.date.startOfDay()
+        if let _ = days[day] {
+            days[day]?.addSomeSecondsTo(token.list, seconds: seconds)
+        }
+        else {
+            let summary = DaySummary(CreationDate(day))
+            summary.addSomeSecondsTo(token.list, seconds: seconds)
+            days[day] = summary
+        }
+    }
+    
+}
+//TODO not used this yet:
+class HashSummary {
+    var hash: Hash
+    var list: ListName
+    var tokens: [VxToken] = []
+    var totalSeconds : Int = 0
+    init(_ list: ListName, hash: Hash) {
+        self.list = list
+        self.hash = hash
+    }
+    func addToken(_ token: VxToken) {
+        guard hash.hash ==  token.hash.hash else {
+            print("Dev error adding wrong token to Hash Summary. :\(hash.hash) isnt this tokens hash: \(token.hash.hash)")
+            return
+        }
+        totalSeconds += token.timeBreakdown().totalSeconds
+        tokens.append(token)
+    }
+}
 class VxdayView {
     
     let items: [Item]
@@ -127,7 +200,7 @@ class VxdayView {
             }
             else if let task = item.getTask() {
                 let list = task.list
-                if dict[task.list] == nil {
+                if dict[list] == nil {
                     let summary =  ListSummary(list)
                     summary.addTask(task)
                     dict[list] = summary
@@ -137,10 +210,23 @@ class VxdayView {
                 }
                 
             }
+            else if let token = item.getToken() {
+                let list = token.list
+                if dict[list] == nil {
+                    let summary =  ListSummary(list)
+                    summary.addToken(token)
+                    dict[list] = summary
+                }
+                else {
+                    dict[list]?.addToken(token)
+                }
+                
+            }
             //tokens aren't part of the summary yet.
         }
         return dict.map { return $0.value }.sorted( by: { $0.total() < $1.total()})
     }
+    
     private func getDeadlines() -> [VxJob] {
         let jobs : [VxJob] = items.flatMap {
             if case let Item.job(job) = $0 {
@@ -166,8 +252,6 @@ class VxdayView {
         items.map { $0.vxItem().list}.forEach { set.insert($0) }
         return Array(set)
     }
-    
-    
 
     func showTasks() -> [String] {
         return self.getTasks().map {
@@ -177,8 +261,6 @@ class VxdayView {
             return dateStr + hash + listName +  $0.description.text
         }
     }
-    
-
 
     func timeBucketToColor(_ date: Date, string: String)  -> String {
         let bucket = date.bucket()
@@ -191,8 +273,7 @@ class VxdayView {
                 return  VxdayColor.happy(string)
             }
     }
-    
-    
+
 
     func showJobs() -> [String] {
         return self.getDeadlines().map {
@@ -206,8 +287,7 @@ class VxdayView {
             
         }
     }
-    
-    
+
     func noStringForZero(_ prefix: String, number: Int, toLength : Int) -> String {
         if number == 0 {
             return pad("", toLength: toLength)
@@ -215,6 +295,7 @@ class VxdayView {
         let str = "\(prefix) \(number)"
         return pad(str, toLength: toLength)
     }
+    
     func globalOneLiner(buckets: [ListSummary]) -> String {
         let listCount = buckets.count
         let overdueCount = buckets.map { $0.past.count}.reduce(0, { $0 + $1})
@@ -229,7 +310,6 @@ class VxdayView {
         let total = VxdayColor.boldInfo("Total: \(overdueCount + todayCount + futureCount + taskCount)")
         return "\(totalLists) \(overdue) \(present) \(future) \(tasks) \(total)"
     }
-    
     
     func oneLiners(_ buckets: [ListSummary]) -> [String] {
         return buckets.map  { summary in
@@ -305,12 +385,14 @@ class VxdayView {
         let listStr = listNameView(vxItem.list)
         var due = ""
         if case ItemType.job = vxItem.itemType() {
-            
+     
             due = ", due \(daysView(item.getJob()!.deadline.date))"
         }
         return "\(noun) created with hash \(hashStr) for list \(listStr) \(due)"
     }
  */
+    
+    
     
     func renderAll() -> [String] {
         var output : [String] = []
@@ -346,7 +428,6 @@ class VxdayView {
     private  func listNameView(_ list: ListName) -> String {
         return VxdayColor.info(pad(list.name, toLength: Spaces.List))
     }
-    
     
     private  func pad(_ string: String, toLength length: Int) -> String {
         if string.characters.count > length {

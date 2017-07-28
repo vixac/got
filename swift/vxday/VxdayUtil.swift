@@ -46,9 +46,6 @@ class VxdayUtil {
         return endWords.flatMap({$0 + " " }).joined()
     }
     
-    
-    
-    
     class func nowDay() -> Date {
         let c = Calendar.current
         return c.startOfDay(for: now())
@@ -175,3 +172,90 @@ extension Date {
     }
 }
 
+
+
+extension Date {
+    static public func from(year:Int, month:Int, day:Int) -> Date {
+        var c = DateComponents()
+        c.year = year
+        c.month = month
+        c.day = day
+        
+        let gregorian = Calendar(identifier:Calendar.Identifier.gregorian)
+        let date = gregorian.date(from: c)
+        return date!
+    }
+    
+    public func isSameDayAs(_ date: Date) -> Bool {
+        
+        let dateComps = (Calendar.current as NSCalendar).components([.day, .month, .year], from: self)
+        let otherDateComps = (Calendar.current as NSCalendar).components([.day, .month, .year], from: date)
+        
+        return dateComps.day == otherDateComps.day
+            && dateComps.month == otherDateComps.month
+            && dateComps.year  == otherDateComps.year
+        
+    }
+    public func monthsToDate(_ date:Date) -> Int {
+        let calendar = Calendar.current
+        let components = (calendar as NSCalendar).components([.year, .month],
+                                                             from: self,
+                                                             to: date,
+                                                             options: [])
+        
+        var months = 0
+        months = components.year! * 12
+        months = months + components.month!
+        
+        return components.month!
+    }
+    public func incrementByDays(_ numberOfDays:Int) -> Date {
+        
+        let calendar = Calendar(identifier: Calendar.Identifier.gregorian)
+        var components = DateComponents()
+        components.day = numberOfDays
+        
+        return (calendar as NSCalendar).date(byAdding: components,to:self, options: [])!
+    }
+    public func midnightsToDate(_ date:Date) -> Int {
+        let calendar = Calendar.current
+        let unitFlags : NSCalendar.Unit = [NSCalendar.Unit.year, NSCalendar.Unit.month, NSCalendar.Unit.day]
+        let selfComponents = (calendar as NSCalendar).components(unitFlags, from: self)
+        let selfMidnight = calendar.date(from: selfComponents)
+        
+        let dateComponents = (calendar as NSCalendar).components(unitFlags, from: date)
+        let dateMidnight = calendar.date(from: dateComponents)
+        
+        let diffComponents = (calendar as NSCalendar).components( .day, from: selfMidnight!, to: dateMidnight!, options: [])
+        return diffComponents.day!
+    }
+    public func daysToDate(_ date:Date) -> Int {
+        let calendar = Calendar.current
+        let unit:NSCalendar.Unit = .day
+        let components = (calendar as NSCalendar).components(unit, from: self, to: date, options: [])
+        return components.day!
+    }
+    
+    public func maxoutDay() -> Date { //set the given time to 23:59:59
+        let calendar = Calendar(identifier: Calendar.Identifier.gregorian)
+        var components = (calendar as NSCalendar).components([NSCalendar.Unit.day, NSCalendar.Unit.month, NSCalendar.Unit.year],
+                                                             from: self)
+        
+        components.hour = 23
+        components.minute = 59
+        components.second = 59
+        
+        return calendar.date(from: components)!
+    }
+    public func startOfDay() -> Date {
+        let calendar = Calendar(identifier: Calendar.Identifier.gregorian)
+        var components = (calendar as NSCalendar).components([NSCalendar.Unit.day, NSCalendar.Unit.month, NSCalendar.Unit.year],
+                                                             from: self)
+        
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        return calendar.date(from: components)!
+    }
+}

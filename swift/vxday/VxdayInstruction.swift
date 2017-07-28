@@ -38,6 +38,8 @@ class VxdayInstruction {
                 VxdayExec.startTokenSession(hash)
         case let .remove(hash):
                 VxdayExec.remove(hash)
+        case let .report(days):
+                VxdayExec.report(days)
             
            // case let .x(hash):
            //     VxdayExec.x(hash)

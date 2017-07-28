@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1C1208301F2B5DDB004A2CDA /* VxdayTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C12082F1F2B5DDB004A2CDA /* VxdayTypes.swift */; };
+		1C1208321F2B9C50004A2CDA /* Trap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1208311F2B9C50004A2CDA /* Trap.swift */; };
 		1C38CA2F1F267C220034028E /* VxdayInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA2E1F267C220034028E /* VxdayInput.swift */; };
 		1C38CA311F2684060034028E /* VxdayExec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA301F2684060034028E /* VxdayExec.swift */; };
 		1C38CA331F268A850034028E /* VxdayInstruction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA321F268A850034028E /* VxdayInstruction.swift */; };
@@ -33,6 +34,7 @@
 
 /* Begin PBXFileReference section */
 		1C12082F1F2B5DDB004A2CDA /* VxdayTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayTypes.swift; sourceTree = "<group>"; };
+		1C1208311F2B9C50004A2CDA /* Trap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trap.swift; sourceTree = "<group>"; };
 		1C38CA2E1F267C220034028E /* VxdayInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayInput.swift; sourceTree = "<group>"; };
 		1C38CA301F2684060034028E /* VxdayExec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayExec.swift; sourceTree = "<group>"; };
 		1C38CA321F268A850034028E /* VxdayInstruction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayInstruction.swift; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 				1C38CA361F28A9570034028E /* VxdayView.swift */,
 				1C5875681F28B42400110695 /* VxdayRead.swift */,
 				1C12082F1F2B5DDB004A2CDA /* VxdayTypes.swift */,
+				1C1208311F2B9C50004A2CDA /* Trap.swift */,
 			);
 			path = vxday;
 			sourceTree = "<group>";
@@ -206,6 +209,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C1208321F2B9C50004A2CDA /* Trap.swift in Sources */,
 				1C38CA311F2684060034028E /* VxdayExec.swift in Sources */,
 				1C1208301F2B5DDB004A2CDA /* VxdayTypes.swift in Sources */,
 				1C38CA371F28A9570034028E /* VxdayView.swift in Sources */,

@@ -1,4 +1,4 @@
 
-cat VxdayTypes.swift VxdayInput.swift VxdayView.swift VxdayInstruction.swift VxdayExec.swift VxdayUtil.swift VxdayRead.swift test.swift  > flattened.swift
+cat Trap.swiftVxdayTypes.swift VxdayInput.swift VxdayView.swift VxdayInstruction.swift VxdayExec.swift VxdayUtil.swift VxdayRead.swift test.swift  > flattened.swift
 
 swift flattened.swift $0

@@ -37,6 +37,7 @@ enum Verb : String {
     case complete = "complete"
     case remove = "remove"
     case start = "start"
+    case report = "report"
     
 }
 
@@ -70,6 +71,7 @@ enum Instruction {
     case what
     case track
     case week(IntOffset?)
+    case report(IntOffset)
     case help
     
     
@@ -214,6 +216,11 @@ enum Instruction {
                 else {
                     return .complete(nil)
                 }
+            case .report:
+                if let offset = ArgParser.offset(args: args, index: 1) {
+                    return .report(offset)
+                }
+                return .report(IntOffset(7))
             case .what:
                 return .what
                 

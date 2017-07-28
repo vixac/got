@@ -25,6 +25,7 @@ class VxdayReader {
     }
     
     
+    
     static func itemsInList(_ list: ListName) -> [Item] {
         let filename = VxdayFile.getSummaryFilename(list)
         let contents = VxdayReader.readFile(filename)
@@ -36,6 +37,12 @@ class VxdayReader {
         let contents = VxdayReader.readFile(filename)
         let items = VxdayReader.linesToItems(contents, list: list)
         return items
+    }
+    static func tokensForList(_ list: ListName) -> [VxToken] {
+        let filename = VxdayFile.getTokenFilename(list)
+        let contents = VxdayReader.readFile(filename)
+        //danger we might get silent errors here with the flat map if getToken fails.
+        return VxdayReader.linesToItems(contents, list: list).flatMap { $0.getToken()}
     }
     static func readFile(_ path: String) -> [String] {
         guard let contents =  try? String(contentsOfFile: path) else {
