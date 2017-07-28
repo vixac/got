@@ -238,7 +238,7 @@ struct VxToken : VxItem {
     
     func toVxday() -> String  {
         let times = TimeBreakdown(start: creation.date, end: completion.date)
-        return "\(ItemType.token.rawValue) \(creation.toString()) \(hash.hash) \(times.hours) \(times.mins) \(times.seconds)"
+        return "\(ItemType.token.rawValue) \(hash.hash) \(creation.toString()) \(times.hours) \(times.mins) \(times.seconds)"
     }
     
     func isComplete() -> Bool {
@@ -354,11 +354,23 @@ enum Item {
                 print("Error: could not extract creation date from: \(array)")
                 return nil
             }
-            guard let completionDate = ArgParser.completion(args: array, index: 2) else {
-                print("Error: could not extract completion date from: \(array)")
+            guard let hours = ArgParser.offset(args: array, index: 3) else {
+                print("error getting hours from : \(array)")
                 return nil
             }
-            return Item.token(VxToken(list: list, hash: hash, creation: creationDate, completion: completionDate))
+            guard let mins = ArgParser.offset(args: array, index: 4) else {
+                print("error getting minutes from : \(array)")
+                return nil
+            }
+            guard let seconds = ArgParser.offset(args: array, index: 5) else {
+                print("error getting seconds from : \(array)")
+                return nil
+            }
+            var date = creationDate.date
+            date = date.addingTimeInterval(TimeInterval(seconds.offset))
+            date = date.addingTimeInterval(TimeInterval(mins.offset * 60))
+            date = date.addingTimeInterval(TimeInterval(hours.offset * 3600))
+            return Item.token(VxToken(list: list, hash: hash, creation: creationDate, completion: CompletionDate(date)))
             
         case .completeJob:
             guard let creationDate = ArgParser.creation(args: array, index: 2) else {

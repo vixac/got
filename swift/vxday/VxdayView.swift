@@ -151,6 +151,7 @@ class TokenReport {
             summary.addSomeSecondsTo(token.list, seconds: seconds)
             days[day] = summary
         }
+        print("adding token: \(token.toVxday()) to day: \(day)")
     }
     
 }
