@@ -151,9 +151,25 @@ class ListSummary {
 
 
 
+class HashSummary {
+    var hash: Hash
+    var description: Description?
+    var tokens: [VxToken] = []
+    var totalSeconds: Int = 0
+    
+    init(_ hash: Hash, description : Description?) {
+        self.hash = hash
+        self.description = description
+    }
+    func addToken(_ token: VxToken) {
+        tokens.append(token)
+        totalSeconds += token.breakdown.totalSeconds
+    }
+}
+
 class ListTokensSummary {
     var list: ListName
-    var tokens: [VxToken] = []
+    var hashes: [Hash: HashSummary] = [:]
     var totalSeconds : Int = 0
     init(_ list: ListName) {
         self.list = list
@@ -163,8 +179,14 @@ class ListTokensSummary {
             print("Dev error, adding list: \(token.list) to listTokenSummary for list: \(list)")
             return
         }
-        totalSeconds += token.timeBreakdown().totalSeconds
-        tokens.append(token)
+        totalSeconds += token.breakdown.totalSeconds
+        if let summary = hashes[token.hash] {
+            summary.addToken(token)
+        }
+        else {
+            let description = Description("TODO get description for: \(token.hash)")
+            hashes[token.hash] = HashSummary(token.hash, description: description )
+        }
     }
 }
 

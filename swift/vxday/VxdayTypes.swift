@@ -33,7 +33,7 @@ enum ItemType : String {
     }
 }
 
-struct Hash {
+struct Hash : Hashable {
     let hash: String
     init(_ hash: String) {
         self.hash = hash
@@ -41,6 +41,13 @@ struct Hash {
     
     func isValid() -> Bool {
         return hash.characters.first == "0" && hash.characters.count == 9
+    }
+    var hashValue: Int {
+        return hash.hashValue
+    }
+    
+    static func == (lhs: Hash, rhs: Hash) -> Bool {
+        return lhs.hash == rhs.hash
     }
 }
 
@@ -245,17 +252,20 @@ struct VxToken : VxItem {
     let creation: CreationDate
     let completion: CompletionDate
     
+    let breakdown: TimeBreakdown
     // this is a bit suspect. We're allowing cross referencing to populate tokens with descrptions but keeping it out the type system
     // alternatives: VxFullToken which has a description, and keep VxToken without,
     // just create a lookup class that knows how to get the description of any hash. But thats lazy. I dont want the view commanding lookups. or do i?
     var description: Description? = nil
     
     
+    //TODO initalise with breakdown too, and infer the completion
     init(list: ListName, hash: Hash, creation: CreationDate, completion: CompletionDate) {
         self.list = list
         self.hash = hash
         self.creation = creation
         self.completion = completion
+        self.breakdown = TimeBreakdown(start: creation.date, end: completion.date)
     }
     
     func complete()  -> VxItem{
