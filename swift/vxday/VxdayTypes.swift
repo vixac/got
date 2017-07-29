@@ -245,6 +245,19 @@ struct VxToken : VxItem {
     let creation: CreationDate
     let completion: CompletionDate
     
+    // this is a bit suspect. We're allowing cross referencing to populate tokens with descrptions but keeping it out the type system
+    // alternatives: VxFullToken which has a description, and keep VxToken without,
+    // just create a lookup class that knows how to get the description of any hash. But thats lazy. I dont want the view commanding lookups. or do i?
+    var description: Description? = nil
+    
+    
+    init(list: ListName, hash: Hash, creation: CreationDate, completion: CompletionDate) {
+        self.list = list
+        self.hash = hash
+        self.creation = creation
+        self.completion = completion
+    }
+    
     func complete()  -> VxItem{
         return self
     }

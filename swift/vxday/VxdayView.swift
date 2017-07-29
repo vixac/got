@@ -150,14 +150,46 @@ class ListSummary {
 }
 
 
+
+class ListTokensSummary {
+    var list: ListName
+    var tokens: [VxToken] = []
+    var totalSeconds : Int = 0
+    init(_ list: ListName) {
+        self.list = list
+    }
+    func addToken(_ token: VxToken) {
+        if list != token.list {
+            print("Dev error, adding list: \(token.list) to listTokenSummary for list: \(list)")
+            return
+        }
+        totalSeconds += token.timeBreakdown().totalSeconds
+        tokens.append(token)
+    }
+}
+
 class DaySummary {
     let date: CreationDate
-    var listSummaries: [ListName: IntOffset] = [:]
+    var listSummaries: [ListName: ListTokensSummary] = [:]
     var totalSeconds: Int = 0
+    
     init(_ date: CreationDate ) {
         self.date = date
     }
 
+    func addToken(_ token: VxToken) {
+        totalSeconds += TimeBreakdown(start: token.creation.date, end: token.completion.date).totalSeconds
+        if let current = listSummaries[token.list] {
+            print("adding to existing for list: \(token.list)")
+            current.addToken(token)
+        }
+        else {
+            print("adding to new for list: \(token.list)")
+            let listTokenSummary = ListTokensSummary(token.list)
+            listTokenSummary.addToken(token)
+            listSummaries[token.list] = listTokenSummary
+        }
+    }/*
     func addSomeSecondsTo(_ list: ListName, seconds: IntOffset) {
         totalSeconds += seconds.offset
         if let current = listSummaries[list] {
@@ -166,11 +198,11 @@ class DaySummary {
         else {
             listSummaries[list] = seconds
         }
-    }
+    }*/
     func getSorted() -> [(list: ListName, duration: IntOffset)] {
         var tuples: [(list: ListName, duration: IntOffset)] = []
-        for (list, duration) in listSummaries {
-            tuples.append((list: list, duration:duration))
+        for (list, hashSummary) in listSummaries {
+            tuples.append((list: list, duration:IntOffset(hashSummary.totalSeconds)))
         }
         return tuples.sorted(by: {$0.duration.offset < $1.duration.offset})
     }
@@ -180,22 +212,19 @@ class DaySummary {
 class TokenDayView {
     
     //TODO make CreationDate hashable
-    
-    
     var days: [Date : DaySummary] = [:]
-    var grandTotalSeconds: Int = 0
     func addToken(_ token: VxToken) {
-        let seconds = IntOffset(token.timeBreakdown().totalSeconds)
+        //let seconds = IntOffset(token.timeBreakdown().totalSeconds)
         let day = token.creation.date.startOfDay()
         if let _ = days[day] {
-            days[day]?.addSomeSecondsTo(token.list, seconds: seconds)
+            days[day]?.addToken(token) //addSomeSecondsTo(token.list, seconds: seconds)
         }
         else {
             let summary = DaySummary(CreationDate(day))
-            summary.addSomeSecondsTo(token.list, seconds: seconds)
+            summary.addToken(token)
+//            summary.addSomeSecondsTo(token.list, seconds: seconds)
             days[day] = summary
         }
-        grandTotalSeconds += seconds.offset
     }
     
     
@@ -225,14 +254,12 @@ class TokenDayView {
         let summaries = self.createSummaries(numDays: days)
         let sortedKeys = summaries.keys.sorted()
 
+        
+        var grandTotalSeconds : Int = 0
         sortedKeys.forEach { date in
             let summary = summaries[date]!
+            grandTotalSeconds += summary.totalSeconds
             let listInfo = summary.getSorted()
-            
-            //table.addHeading("\(date.daysAgo())", char: ".", color: VxColor.base())
-            
-            //table.addHeading("", char: "-", color: VxColor.black())
-            //table.addHeading("    \(date.daysAgo())    ", char: " ", color: VxColor.base())
             let daysAgoCell = Cell.text("\(date.daysAgo())", VxColor.base())
             let yyyymmddCell = Cell.text("\(VxdayUtil.dateFormatter.string(from: date))", VxColor.base())
             table.addRow([yyyymmddCell, daysAgoCell ])
@@ -256,30 +283,13 @@ class TokenDayView {
         }
         table.addHeading("", char: "=", color: VxColor.base())
         
-        table.addRow([Cell.text("Total: ", VxColor.happy()), Cell.text(TimeBreakdown(IntOffset(self.grandTotalSeconds)).toString(), VxColor.happy())])
+        table.addRow([Cell.text("Total: ", VxColor.happy()), Cell.text(TimeBreakdown(IntOffset(grandTotalSeconds)).toString(), VxColor.happy())])
         return table
     }
 }
 
-//TODO not used this yet:
-class HashSummary {
-    var hash: Hash
-    var list: ListName
-    var tokens: [VxToken] = []
-    var totalSeconds : Int = 0
-    init(_ list: ListName, hash: Hash) {
-        self.list = list
-        self.hash = hash
-    }
-    func addToken(_ token: VxToken) {
-        guard hash.hash ==  token.hash.hash else {
-            print("Dev error adding wrong token to Hash Summary. :\(hash.hash) isnt this tokens hash: \(token.hash.hash)")
-            return
-        }
-        totalSeconds += token.timeBreakdown().totalSeconds
-        tokens.append(token)
-    }
-}
+
+
 class ItemView {
     
     let items: [Item]
