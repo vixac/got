@@ -71,7 +71,7 @@ enum Instruction {
     case what
     case track
     case week(IntOffset?)
-    case report(IntOffset)
+    case report(IntOffset, ListName?)
     case help
     
     
@@ -217,10 +217,12 @@ enum Instruction {
                     return .complete(nil)
                 }
             case .report:
-                if let offset = ArgParser.offset(args: args, index: 1) {
-                    return .report(offset)
+                guard let offset = ArgParser.offset(args: args, index: 1) else {
+                    print("Error: report couldn't extract number of days: day report 7 <list>")
+                    return nil
                 }
-                return .report(IntOffset(7))
+                return .report(offset, ArgParser.listName(args: args, index: 2))
+            
             case .what:
                 return .what
                 

@@ -210,8 +210,9 @@ class VxdayExec {
         view.renderAll().forEach { print($0)}
     }
     
-    static func report(_ days: IntOffset) {
-        let allLists =  VxdayReader.allLists()
+    static func report(_ days: IntOffset, list: ListName?) {
+        
+        let allLists = list == nil ? VxdayReader.allLists() : [list!]
         
         let date = TokenDayView.dateOfStart(daysAgo: days)
         let reportIntervalStart = date.timeIntervalSince1970
