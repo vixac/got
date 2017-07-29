@@ -101,6 +101,20 @@ class VxdayUtil {
     class func beforeUnderscore(_ string: String) -> String? {
         return string.components(separatedBy: "_").first 
     }
+    class func pad(_ string: String, toLength length: Int) -> String {
+        if string.characters.count > length {
+            return string
+        }
+        var spaces = ""
+        let needed = length - string.characters.count
+        if needed < 1 {
+            return string
+        }
+        for _ in 1...needed {
+            spaces = spaces +  " "
+        }
+        return string +  spaces
+    }
 }
 
 extension Date {
@@ -141,7 +155,7 @@ extension Date {
         return .future
     }
     
-    func ago() -> String {
+    func ago(dailyResolution: Bool = false) -> String {
         let SECONDS_IN_A_DAY = 86400
         let SECONDS_IN_AN_HOUR = 60 * 60
         let SECONDS_IN_A_MINUTE = 60
@@ -170,6 +184,8 @@ extension Date {
         }
         return "Just now."
     }
+    
+
 }
 
 
@@ -258,4 +274,6 @@ extension Date {
         
         return calendar.date(from: components)!
     }
+    
+    
 }

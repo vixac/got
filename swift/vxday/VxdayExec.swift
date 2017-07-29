@@ -124,7 +124,7 @@ class VxdayExec {
         lists.forEach { list in
             allItemsEver += VxdayReader.itemsInList(list)
         }
-        let view = VxdayView(allItemsEver)
+        let view = ItemView(allItemsEver)
         let buckets = view.toBuckets()
         
         view.oneLiners(buckets).forEach {print($0)}
@@ -166,7 +166,7 @@ class VxdayExec {
             let contents = VxdayReader.readFile(completeFile)
             let items = VxdayReader.linesToItems(contents, list: l)
             
-            let view = VxdayView(items)
+            let view = ItemView(items)
             let lines = view.renderComplete()
             lines.forEach { print($0)}
         }
@@ -177,7 +177,7 @@ class VxdayExec {
             all.forEach { list in
                 allCompleteItems += VxdayReader.completeItemsInList(list)
             }
-            let view = VxdayView(allCompleteItems)
+            let view = ItemView(allCompleteItems)
 
             let lines = view.renderComplete()
             lines.forEach { print($0)}
@@ -206,16 +206,17 @@ class VxdayExec {
     static func saveToken(_ list: ListName, hash: Hash, creation: CreationDate, completion: CompletionDate) {
         let token = VxToken(list: list, hash: hash, creation: creation, completion: completion)
         self.storeItem(token)
-        let view = VxdayView(Item.token(token))
+        let view = ItemView(Item.token(token))
         view.renderAll().forEach { print($0)}
     }
     
     static func report(_ days: IntOffset) {
         let allLists =  VxdayReader.allLists()
         
-        let date = VxdayUtil.now().startOfDay().incrementByDays(abs(days.offset) * -1)
+        let date = TokenDayView.dateOfStart(daysAgo: days)
         let reportIntervalStart = date.timeIntervalSince1970
-        let report = TokenReport()
+        let report = TokenDayView()
+        
         allLists.forEach { list in
             VxdayReader.tokensForList(list)
                                     .filter { $0.creation.date.timeIntervalSince1970 >  reportIntervalStart}
@@ -225,13 +226,38 @@ class VxdayExec {
             
         }
         print("Ive created a report, now to print it: \(report.days)")
-        for(day, oneDaySummary) in report.days {
-            print("day: \(CreationDate(day).pretty())")
-            for (list, duration) in oneDaySummary.listSummaries {
-                let breakdown = TimeBreakdown(duration)
-                print("List: \(list) total: \(breakdown.hours) hours, \(breakdown.mins) mins, \(breakdown.seconds) seconds")
+        
+        
+        // heres the rendering part. Should be in a view.
+        let table = VxdayTable(title: "Token summary")
+        let summaries = report.createSummaries(numDays: days)
+        let sortedKeys = summaries.keys.sorted()
+        
+        
+        
+        sortedKeys.forEach { date in
+          let summary = summaries[date]!
+            let listInfo = summary.getSorted()
+            
+            table.addHeading("\(date.daysAgo())", char: ".", color: VxColor.danger())
+            
+            
+            //let daysAgoCell = Cell.text(date.daysAgo(), VxColor.danger())
+            //let emptyCell = Cell.timeliness(nil)
+            //table.addRow([daysAgoCell, emptyCell])
+            
+            for (list, duration) in listInfo {
+                let listCell = Cell.list(list)
+                let breakdown = Cell.timeliness(TimeBreakdown(duration))
+                table.addRow([listCell, breakdown])
             }
+            
         }
+        table.addHeading("", char: "=", color: VxColor.white())
+        table.addRow([Cell.text("Total hours: ", VxColor.info2()), Cell.timeliness(TimeBreakdown(IntOffset(report.grandTotalSeconds)))])
+        
+        table.render().forEach { print($0)}
+        //report.render(days).forEach {print($0)}
     }
     
     static func startTokenSession(_ hash: Hash) {
@@ -260,7 +286,7 @@ class VxdayExec {
         let created = CreationDate(now)
         let vxtask = VxTask(list: list, hash: hash, creation: created, description: description, completion: nil)
         VxdayExec.storeItem(vxtask)
-        let view = VxdayView(Item.task(vxtask))
+        let view = ItemView(Item.task(vxtask))
         view.renderAll().forEach { print($0)}
         //TODO rm rendertItesmstoresummary
         //
@@ -277,7 +303,7 @@ class VxdayExec {
         let vxjob = VxJob(list: list, hash: hash, creation: created, deadline: deadline, description: description , completion: nil)
         
         VxdayExec.storeItem(vxjob)
-        let view = VxdayView(Item.job(vxjob))
+        let view = ItemView(Item.job(vxjob))
         view.renderAll().forEach { print($0)}
 //
 //        let summary = view.renderItemStoredSummary()
@@ -307,13 +333,13 @@ class VxdayExec {
         lists.forEach { list in
             allItemsEver += VxdayReader.itemsInList(list)
         }
-        let view = VxdayView(allItemsEver)
+        let view = ItemView(allItemsEver)
         view.renderAll().forEach { print($0) }
     }
     
     static func allList(_ list: ListName) {
         let items = VxdayReader.itemsInList(list)
-        let view  = VxdayView(items)
+        let view  = ItemView(items)
         let jobsStrings = view.renderAll()
         jobsStrings.forEach { print($0)}
     }

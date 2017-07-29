@@ -9,44 +9,88 @@
 import Foundation
 
 
-class VxdayColor {
-    static let dangerColor : String = ANSIColors.red.rawValue
-    static let warningColor : String = ANSIColors.yellow.rawValue
-    static let baseColor : String = ANSIColors.reset.rawValue
-    static let happyColor: String = ANSIColors.green.rawValue
-    static let titleColor :String = ANSIColors.white.rawValue
-    static let info2Color: String = ANSIColors.test.rawValue
-    static let infoColor: String = ANSIColors.cyan.rawValue
-    static let whiteColor : String = ANSIColors.white.rawValue
-    
-    static func danger(_ string: String) -> String {
-        return dangerColor + string + baseColor
+struct VxColor {
+    let ansi: ANSIColor
+
+    init(_ ansi: ANSIColor) {
+        self.ansi = ansi
     }
-    static func warning(_ string: String) -> String {
-        return warningColor + string + baseColor
+    static func danger() -> VxColor {
+        return VxColor(.red)
     }
-    static func title(_ string: String) -> String {
-        return titleColor + string + baseColor
+    static func warning() -> VxColor {
+        return VxColor(.yellow)
     }
-    static func happy(_ string: String) -> String {
-        return happyColor + string + baseColor
+    static func base() -> VxColor {
+        return VxColor(.reset)
     }
-    static func info(_ string: String) -> String {
-        return infoColor + string + baseColor
+    static func happy() -> VxColor {
+        return VxColor(.green)
     }
-    static func info2(_ string: String) -> String {
-        return info2Color + string + baseColor
+    static func title() -> VxColor {
+        return VxColor(.white)
     }
-    static func boldInfo(_ string: String) -> String {
-        return whiteColor + string + baseColor
+    static func info2() -> VxColor {
+        return VxColor(.test)
+    }
+    static func info() -> VxColor {
+        return VxColor(.cyan)
+    }
+    static func white() -> VxColor {
+        return VxColor(.white)
+    }
+    static func boldInfo() -> VxColor {
+        return VxColor(.white)
+    }
+    func colorThis(_ string: String) -> String {
+        return ansi.rawValue + string + ANSIColor.reset.rawValue
     }
     
     static func putBack() {
-        print(ANSIColors.reset.rawValue)
+        print(ANSIColor.reset.rawValue)
     }
 }
 
-enum ANSIColors: String {
+
+//TODO RM
+class VxdayColor {
+    static let dangerColor : ANSIColor = ANSIColor.red
+    static let warningColor : ANSIColor = ANSIColor.yellow
+    static let baseColor : ANSIColor = ANSIColor.reset
+    static let happyColor: ANSIColor = ANSIColor.green
+    static let titleColor :ANSIColor = ANSIColor.white
+    static let info2Color: ANSIColor = ANSIColor.test
+    static let infoColor: ANSIColor = ANSIColor.cyan
+    static let whiteColor : ANSIColor = ANSIColor.white
+    
+    static func danger(_ string: String) -> String {
+        return dangerColor.rawValue + string + baseColor.rawValue
+    }
+    static func warning(_ string: String) -> String {
+        return warningColor.rawValue + string + baseColor.rawValue
+    }
+    static func title(_ string: String) -> String {
+        return titleColor.rawValue + string + baseColor.rawValue
+    }
+    static func happy(_ string: String) -> String {
+        return happyColor.rawValue + string + baseColor.rawValue
+    }
+    static func info(_ string: String) -> String {
+        return infoColor.rawValue + string + baseColor.rawValue
+    }
+    static func info2(_ string: String) -> String {
+        return info2Color.rawValue + string + baseColor.rawValue
+    }
+    static func boldInfo(_ string: String) -> String {
+        return whiteColor.rawValue + string + baseColor.rawValue
+    }
+    
+    static func putBack() {
+        print(ANSIColor.reset.rawValue)
+    }
+}
+
+enum ANSIColor: String {
     case black = "\u{001B}[0;30m"
     case red = "\u{001B}[0;31m"
     case green = "\u{001B}[0;32m"
@@ -60,17 +104,6 @@ enum ANSIColors: String {
 }
 
 
-class Spaces {
-    static let List = 9
-    static let Timeliness = 14
-    static let WhatOverdue = 13
-    static let WhatPresent = 13
-    static let WhatFuture = 13
-    static let WhatTasks = 12
-    static let DaysString = 15
-    static let Hash = 11
-    
-}
 
 
 
@@ -135,11 +168,11 @@ class DaySummary {
     }
 }
 
-class TokenReport {
+class TokenDayView {
     
     //TODO make CreationDate hashable
     var days: [Date : DaySummary] = [:]
-    
+    var grandTotalSeconds: Int = 0
     func addToken(_ token: VxToken) {
         let seconds = IntOffset(token.timeBreakdown().totalSeconds)
         let day = token.creation.date.startOfDay()
@@ -151,10 +184,71 @@ class TokenReport {
             summary.addSomeSecondsTo(token.list, seconds: seconds)
             days[day] = summary
         }
+        grandTotalSeconds += seconds.offset
         print("adding token: \(token.toVxday()) to day: \(day)")
     }
     
+    
+    static func dateOfStart(daysAgo: IntOffset) -> Date {
+        return  VxdayUtil.now().startOfDay().incrementByDays(abs(daysAgo.offset) * -1)
+    }
+    
+    
+    func createSummaries(numDays: IntOffset) -> [Date: DaySummary] {
+        let todayStart = VxdayUtil.now().startOfDay()
+        let absDays = abs(numDays.offset)
+        var result: [Date: DaySummary] = [:]
+        for i in 0...absDays {
+            print("day \(i)")
+            let date = todayStart.addingTimeInterval(TimeInterval(i * Date.SECONDS_IN_A_DAY * -1))
+            if let summary = days[date] {
+                result[date] = summary
+            }
+            else {
+                result[date] = DaySummary(CreationDate(date))
+            }
+        }
+        return result
+        /*
+        var strings : [String] = []
+        for(day, oneDaySummary) in self.days {
+            print("day: \(CreationDate(day).pretty())")
+            for (list, duration) in oneDaySummary.listSummaries {
+                let breakdown = TimeBreakdown(duration)
+                print("List: \(list) total: \(breakdown.hours) hours, \(breakdown.mins) mins, \(breakdown.seconds) seconds")
+                
+            }
+        }
+        return strings
+         */
+    }
+    
+    //for oldschool stdout
+    func render(_ days: IntOffset) -> [String] {
+        let absDays = abs(days.offset)
+        for i in 0...absDays {
+            print("day \(i)")
+        }
+        
+        var strings : [String] = []
+        for(day, oneDaySummary) in self.days {
+            print("day: \(CreationDate(day).pretty())")
+            for (list, duration) in oneDaySummary.listSummaries {
+                let breakdown = TimeBreakdown(duration)
+                strings.append("List: \(list) total: \(breakdown.hours) hours, \(breakdown.mins) mins, \(breakdown.seconds) seconds")
+                
+            }
+        }
+        return strings
+    }
+    
 }
+
+//helps convert vxday objects into strings for the console
+class VxTerminalView {
+    
+}
+
 //TODO not used this yet:
 class HashSummary {
     var hash: Hash
@@ -174,7 +268,7 @@ class HashSummary {
         tokens.append(token)
     }
 }
-class VxdayView {
+class ItemView {
     
     let items: [Item]
     init(_ item : Item) {
@@ -256,13 +350,14 @@ class VxdayView {
 
     func showTasks() -> [String] {
         return self.getTasks().map {
-            let dateStr = daysView($0.creation.date)
+            let dateStr = taskDaysView($0.creation.date)
             let hash = hashView($0.hash)
             let listName = listNameView($0.list)
             return dateStr + hash + listName +  $0.description.text
         }
     }
 
+    //TODO RM
     func timeBucketToColor(_ date: Date, string: String)  -> String {
         let bucket = date.bucket()
         switch bucket {
@@ -416,8 +511,14 @@ class VxdayView {
         return "   "
     }
     
+    func taskDaysView(_ date: Date) -> String {
+        let agoStr = pad(date.daysAgo(), toLength: Spaces.DaysAgo)
+        let datedStr = agoStr + VxdayUtil.dateFormatter.string(from: date) + spaces()
+        return VxdayColor.warning(datedStr)
+    }
+    
     func daysView(_ date: Date) -> String {
-        let agoStr = pad(date.daysAgo(), toLength: 14)
+        let agoStr = pad(date.daysAgo(), toLength: Spaces.DaysAgo)
         let datedStr = agoStr + VxdayUtil.dateFormatter.string(from: date) + spaces()
         return timeBucketToColor(date, string: datedStr)
     }
@@ -430,6 +531,7 @@ class VxdayView {
         return VxdayColor.info(pad(list.name, toLength: Spaces.List))
     }
     
+    //TODO RM
     private  func pad(_ string: String, toLength length: Int) -> String {
         if string.characters.count > length {
             return string

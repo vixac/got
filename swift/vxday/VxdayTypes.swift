@@ -63,8 +63,8 @@ struct CompletionDate {
         self.date = d
     }
     
-    func pretty() -> String {
-        return self.date.ago()
+    func pretty(dailyResolution: Bool = false ) -> String {
+        return self.date.ago(dailyResolution: dailyResolution)
     }
     func toString() -> String {
         return VxdayUtil.datetimeFormatter.string(from: self.date)
@@ -83,8 +83,8 @@ struct CreationDate {
         self.date = d
     }
     
-    func pretty() -> String {
-        return self.date.ago()
+    func pretty(dailyResolution: Bool = false ) -> String {
+        return self.date.ago(dailyResolution: dailyResolution)
     }
     
     func toString() -> String {
@@ -145,6 +145,19 @@ struct  TimeBreakdown {
         mins = (totalSeconds - hours * 3600) / 60
         self.seconds = totalSeconds % 60
         
+    }
+    func toString() -> String {
+        var str = ""
+        if hours > 0 {
+            str += "\(hours) hrs "
+        }
+        if mins > 0 {
+            str += "\(mins) mins "
+        }
+        if seconds > 0 && !(hours > 0  && mins == 0) { //because 3 hrs 20 seconds is confusing on the eye face.
+            str += "\(seconds) seconds"
+        }
+        return str
     }
 }
 

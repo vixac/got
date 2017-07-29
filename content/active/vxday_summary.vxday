@@ -10,6 +10,9 @@
 -. 063c111a0 2017-07-28T13:40:22 get VxdayExec.shell to return success or failure so we can report correctly on user actions
 -. 09d511c60 2017-07-28T15:11:32 when i start a token, i want some starting now, maybe the occasional output for how long ive been at it.
 =. 09b424940 2017-07-28T16:23:10 2017-07-28 Nice titles for every command, and column names.
--. 0b160fcf0 2017-07-28T17:27:56 get command c working on token session
 -. 081427b60 2017-07-28T17:30:35 get command c working on token session
 =. 013f14790 2017-07-28T20:16:13 2017-07-28 get some kind of token view going
+-. 0b421d400 2017-07-29T10:43:20 support multiple spaces in vxday files
+-. 07e9026d0 2017-07-29T10:46:51 all needs a summary
+=. 0694362e0 2017-07-29T11:46:01 2017-07-29 give Tasks their own colour.
+-. 028612e30 2017-07-29T11:45:14 I just wanted to degrade a task to a note, but I cant. The note was: If hashes are too much trouble, consider text match on description and return numbered list of matches

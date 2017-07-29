@@ -20,7 +20,7 @@ func main() {
         return
     }
     VxdayInstruction.executeInstruction(instruction)
-    VxdayColor.putBack()
+    VxColor.putBack()
 }
 
 main()
