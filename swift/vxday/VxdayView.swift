@@ -42,9 +42,16 @@ struct VxColor {
     static func boldInfo() -> VxColor {
         return VxColor(.white)
     }
+    static func bright() -> VxColor {
+        return VxColor(.magenta)
+    }
+    static func black() -> VxColor {
+        return VxColor(.black)
+    }
     func colorThis(_ string: String) -> String {
         return ansi.rawValue + string + ANSIColor.reset.rawValue
     }
+    
     
     static func putBack() {
         print(ANSIColor.reset.rawValue)
@@ -84,6 +91,7 @@ class VxdayColor {
     static func boldInfo(_ string: String) -> String {
         return whiteColor.rawValue + string + baseColor.rawValue
     }
+    
     
     static func putBack() {
         print(ANSIColor.reset.rawValue)
@@ -168,9 +176,12 @@ class DaySummary {
     }
 }
 
+
 class TokenDayView {
     
     //TODO make CreationDate hashable
+    
+    
     var days: [Date : DaySummary] = [:]
     var grandTotalSeconds: Int = 0
     func addToken(_ token: VxToken) {
@@ -185,7 +196,6 @@ class TokenDayView {
             days[day] = summary
         }
         grandTotalSeconds += seconds.offset
-        print("adding token: \(token.toVxday()) to day: \(day)")
     }
     
     
@@ -199,7 +209,6 @@ class TokenDayView {
         let absDays = abs(numDays.offset)
         var result: [Date: DaySummary] = [:]
         for i in 0...absDays {
-            print("day \(i)")
             let date = todayStart.addingTimeInterval(TimeInterval(i * Date.SECONDS_IN_A_DAY * -1))
             if let summary = days[date] {
                 result[date] = summary
@@ -209,44 +218,47 @@ class TokenDayView {
             }
         }
         return result
-        /*
-        var strings : [String] = []
-        for(day, oneDaySummary) in self.days {
-            print("day: \(CreationDate(day).pretty())")
-            for (list, duration) in oneDaySummary.listSummaries {
-                let breakdown = TimeBreakdown(duration)
-                print("List: \(list) total: \(breakdown.hours) hours, \(breakdown.mins) mins, \(breakdown.seconds) seconds")
-                
-            }
-        }
-        return strings
-         */
     }
-    
-    //for oldschool stdout
-    func render(_ days: IntOffset) -> [String] {
-        let absDays = abs(days.offset)
-        for i in 0...absDays {
-            print("day \(i)")
-        }
-        
-        var strings : [String] = []
-        for(day, oneDaySummary) in self.days {
-            print("day: \(CreationDate(day).pretty())")
-            for (list, duration) in oneDaySummary.listSummaries {
-                let breakdown = TimeBreakdown(duration)
-                strings.append("List: \(list) total: \(breakdown.hours) hours, \(breakdown.mins) mins, \(breakdown.seconds) seconds")
-                
-            }
-        }
-        return strings
-    }
-    
-}
 
-//helps convert vxday objects into strings for the console
-class VxTerminalView {
-    
+    func toTable(_ days: IntOffset) -> VxdayTable {
+        let table = VxdayTable(title: "Token summary")
+        let summaries = self.createSummaries(numDays: days)
+        let sortedKeys = summaries.keys.sorted()
+
+        sortedKeys.forEach { date in
+            let summary = summaries[date]!
+            let listInfo = summary.getSorted()
+            
+            //table.addHeading("\(date.daysAgo())", char: ".", color: VxColor.base())
+            
+            //table.addHeading("", char: "-", color: VxColor.black())
+            //table.addHeading("    \(date.daysAgo())    ", char: " ", color: VxColor.base())
+            let daysAgoCell = Cell.text("\(date.daysAgo())", VxColor.base())
+            let yyyymmddCell = Cell.text("\(VxdayUtil.dateFormatter.string(from: date))", VxColor.base())
+            table.addRow([yyyymmddCell, daysAgoCell ])
+            //let daysAgoCell = Cell.text(date.daysAgo(), VxColor.white())
+            
+            var listTotalSeconds: Int = 0
+            for (list, duration) in listInfo {
+                listTotalSeconds += duration.offset
+                let listCell = Cell.list(list)
+                let breakdown = Cell.timeliness(TimeBreakdown(duration))
+                table.addRow([listCell, breakdown])
+                
+            }
+            //table.addHeading("", char: "-", color: VxColor.black())
+            let listBreakdown = TimeBreakdown(IntOffset(listTotalSeconds))
+            if listInfo.count > 1 {
+                table.addRow([Cell.text("Total: ", VxColor.happy()), Cell.text(listBreakdown.toString(), VxColor.happy())])
+            }
+            table.addHeading("", char: " ", color: VxColor.black())
+            
+        }
+        table.addHeading("", char: "=", color: VxColor.base())
+        
+        table.addRow([Cell.text("Total: ", VxColor.happy()), Cell.text(TimeBreakdown(IntOffset(self.grandTotalSeconds)).toString(), VxColor.happy())])
+        return table
+    }
 }
 
 //TODO not used this yet:
@@ -468,28 +480,6 @@ class ItemView {
         }
         return strings
     }
-    
-    
-    /*
-    func renderItemStoredSummary() -> String {
-        guard let item = items.first else {
-            return ""
-        }
-        let vxItem = item.vxItem()
-        let noun = vxItem.itemType().english()
-        let hashStr =  hashView(vxItem.hash)
-        let listStr = listNameView(vxItem.list)
-        var due = ""
-        if case ItemType.job = vxItem.itemType() {
-     
-            due = ", due \(daysView(item.getJob()!.deadline.date))"
-        }
-        return "\(noun) created with hash \(hashStr) for list \(listStr) \(due)"
-    }
- */
-    
-    
-    
     func renderAll() -> [String] {
         var output : [String] = []
         let lists = self.allLists()

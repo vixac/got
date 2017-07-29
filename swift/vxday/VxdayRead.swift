@@ -11,6 +11,9 @@ import Foundation
 
 class VxdayReader {
     
+    
+    
+    
     static func allLists() -> [ListName] {
         let fm = FileManager.default
         let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
@@ -46,12 +49,24 @@ class VxdayReader {
     }
     static func readFile(_ path: String) -> [String] {
         guard let contents =  try? String(contentsOfFile: path) else {
-            print("Error reading file: \(path)")
+            //print("Error reading file: \(path)")
             return []
         }
         return contents.components(separatedBy: "\n").filter{ $0 != ""}
     }
     
+    static func allTokensAfter(_ date: Date, lists: [ListName]) -> [VxToken] {
+        var tokens: [VxToken] = []
+        let intervalStart = date.timeIntervalSinceNow
+        lists.forEach { list in
+            VxdayReader.tokensForList(list)
+                .filter { $0.creation.date.timeIntervalSince1970 >  intervalStart}
+                .forEach {
+                    tokens.append($0)
+            }
+        }
+        return tokens
+    }
     
     static func linesToItems(_ lines: [String], list: ListName) -> [Item] {
         return lines.flatMap{ Item.create($0, list: list)}

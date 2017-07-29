@@ -215,50 +215,12 @@ class VxdayExec {
         let allLists = list == nil ? VxdayReader.allLists() : [list!]
         
         let date = TokenDayView.dateOfStart(daysAgo: days)
-        let reportIntervalStart = date.timeIntervalSince1970
         let report = TokenDayView()
-        
-        allLists.forEach { list in
-            VxdayReader.tokensForList(list)
-                                    .filter { $0.creation.date.timeIntervalSince1970 >  reportIntervalStart}
-                                    .forEach {
-                                        report.addToken($0)
-                                    }
-            
+        VxdayReader.allTokensAfter(date, lists: allLists).forEach {
+            report.addToken($0)
         }
-        print("Ive created a report, now to print it: \(report.days)")
-        
-        
-        // heres the rendering part. Should be in a view.
-        let table = VxdayTable(title: "Token summary")
-        let summaries = report.createSummaries(numDays: days)
-        let sortedKeys = summaries.keys.sorted()
-        
-        
-        
-        sortedKeys.forEach { date in
-          let summary = summaries[date]!
-            let listInfo = summary.getSorted()
-            
-            table.addHeading("\(date.daysAgo())", char: ".", color: VxColor.danger())
-            
-            
-            //let daysAgoCell = Cell.text(date.daysAgo(), VxColor.danger())
-            //let emptyCell = Cell.timeliness(nil)
-            //table.addRow([daysAgoCell, emptyCell])
-            
-            for (list, duration) in listInfo {
-                let listCell = Cell.list(list)
-                let breakdown = Cell.timeliness(TimeBreakdown(duration))
-                table.addRow([listCell, breakdown])
-            }
-            
-        }
-        table.addHeading("", char: "=", color: VxColor.white())
-        table.addRow([Cell.text("Total hours: ", VxColor.info2()), Cell.timeliness(TimeBreakdown(IntOffset(report.grandTotalSeconds)))])
-        
-        table.render().forEach { print($0)}
-        //report.render(days).forEach {print($0)}
+     
+        report.toTable(days).render().forEach { print($0)}
     }
     
     static func startTokenSession(_ hash: Hash) {

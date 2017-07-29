@@ -67,6 +67,8 @@ enum Cell {
             return VxColor.boldInfo()
         case let .text(_, color):
             return color
+        case .timeliness:
+            return VxColor.info2()
         
         default:
             return VxColor.base()
@@ -170,16 +172,21 @@ class VxdayTable {
         if totalLength <  textLen {
             return text
         }
-        guard char.characters.count == 1 else {
-            print("Error, your section divider char must be a single character that will get repeated.")
-            return ""
-        }
         let repeatingSymbol = char
         let firstBitLength = (totalLength - textLen) / 2
-        let firstBit = String(repeating: repeatingSymbol, count: firstBitLength)
+        let firstBit = String(repeating: repeatingSymbol, count: firstBitLength / char.characters.count )
         var str = firstBit + text
+        
+        
+        //padding here to keep the repeating pattern in sync.
+        let repeatingLength = char.characters.count
+        while str.characters.count % repeatingLength != 0 {
+            str += " "
+        }
+        
+        
         let remainingLength = totalLength - str.characters.count
-        str += String(repeating: repeatingSymbol, count: remainingLength)
+        str += String(repeating: repeatingSymbol, count: remainingLength / char.characters.count )
         return color.colorThis(str)
     }
     
@@ -225,7 +232,6 @@ class VxdayTable {
     
     func render() -> [String] {
         let tableWidth = columnWidths.map {$0.value}.reduce(0, {$0 + $1})
-        print("thats a table width of \(tableWidth)")
         
         var rendered: [String] = []
         if self.title != "" {
