@@ -30,6 +30,9 @@ struct VxColor {
     static func title() -> VxColor {
         return VxColor(.white)
     }
+    static func neutral() -> VxColor {
+        return VxColor(.reset)
+    }
     static func info2() -> VxColor {
         return VxColor(.test)
     }
@@ -213,16 +216,8 @@ class DaySummary {
             listTokenSummary.addToken(token)
             listSummaries[token.list] = listTokenSummary
         }
-    }/*
-    func addSomeSecondsTo(_ list: ListName, seconds: IntOffset) {
-        totalSeconds += seconds.offset
-        if let current = listSummaries[list] {
-            listSummaries[list] = IntOffset(current.offset + seconds.offset)
-        }
-        else {
-            listSummaries[list] = seconds
-        }
-    }*/
+    }
+    
     func getSorted() -> [(list: ListName, duration: IntOffset)] {
         var tuples: [(list: ListName, duration: IntOffset)] = []
         for (list, hashSummary) in listSummaries {
@@ -239,15 +234,13 @@ class TokenDayView {
     //TODO make CreationDate hashable
     var days: [Date : DaySummary] = [:]
     func addToken(_ token: VxToken) {
-        //let seconds = IntOffset(token.timeBreakdown().totalSeconds)
         let day = token.creation.date.startOfDay()
         if let _ = days[day] {
-            days[day]?.addToken(token) //addSomeSecondsTo(token.list, seconds: seconds)
+            days[day]?.addToken(token)
         }
         else {
             let summary = DaySummary(CreationDate(day))
             summary.addToken(token)
-//            summary.addSomeSecondsTo(token.list, seconds: seconds)
             days[day] = summary
         }
     }
@@ -285,10 +278,6 @@ class TokenDayView {
             let summary = daySummaries[date]!
             grandTotalSeconds += summary.totalSeconds
 
-            //let daysAgoCell = Cell.text("\(date.daysAgo())", VxColor.base())
-            //let yyyymmddCell = Cell.text("\(VxdayUtil.dateFormatter.string(from: date))", VxColor.base())
-            //table.addRow([yyyymmddCell, daysAgoCell ])
-            
             table.addHeading("  \(date.daysAgo()) \(VxdayUtil.dateFormatter.string(from: date))  ", char: "-", color: VxColor.base())
             
             var listTotalSeconds: Int = 0
@@ -330,6 +319,160 @@ class TokenDayView {
 
 
 
+class ItemTableView {
+    let items: [Item]
+    init(_ item : Item) {
+        items = [item]
+    }
+    init(_ items: [Item]) {
+        self.items = items
+    }
+    
+    private func getJobs() -> [VxJob] {
+        let jobs : [VxJob] = items.flatMap {
+            if case let Item.job(job) = $0 {
+                return job
+            }
+            return nil
+            }.sorted { $0.deadline.date < $1.deadline.date}
+        return jobs
+    }
+    
+    private func getTasks() -> [VxTask] {
+        let tasks: [VxTask] = items.flatMap {
+            if case let Item.task(task) = $0 {
+                return task
+            }
+            return nil
+            }.sorted {$0.creation.date < $1.creation.date}
+        return tasks
+    }
+    
+    func toTable() -> VxdayTable {
+        let sections = self.separate()
+        
+        let tasks = sections.tasks
+        let overdue = sections.overdue
+        let today = sections.today
+        let upcoming = sections.upcoming
+        
+        let table = VxdayTable(title: "")
+        
+        
+        if tasks.count > 0 {
+            table.addRow([Cell.empty, Cell.text("Tasks", VxColor.white())])
+            table.addRow([Cell.text(" Created", VxColor.base())])
+            //table.addHeading("Tasks", char: "-", color: VxColor.bright())
+            //created hash, list, description
+            tasks.forEach { task in
+                let daysAgoCell = Cell.text(task.creation.date.daysAgo(), VxColor.bright())
+                let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: task.creation.date), VxColor.neutral())
+                let hashCell = Cell.hash(task.hash)
+                let listCell = Cell.list(task.list)
+                let descCell = Cell.description(task.description)
+                //table.addRow([daysAgoCell, yyyymmddCell, hashCell, listCell, descCell])
+                table.addRow([ yyyymmddCell, Cell.empty, hashCell, listCell, descCell])
+            }
+
+        }
+        if upcoming.count > 0 {
+            table.addRow([Cell.empty])
+            table.addRow([Cell.empty, Cell.text("Upcoming", VxColor.white())])
+            table.addRow([Cell.empty])
+            
+            //table.addHeading("Upcoming", char: "-", color: VxColor.happy())
+            upcoming.forEach { job in
+                table.addRow(self.jobToCells(job, dateColor:  VxColor.happy()))
+            }
+        }
+        if overdue.count > 0 {
+            table.addRow([Cell.empty])
+            table.addRow([Cell.empty, Cell.text("Overdue", VxColor.white())])
+            table.addRow([Cell.empty])
+          //  table.addHeading("Overdue", char: "-", color: VxColor.base())
+            overdue.forEach { job in
+                table.addRow(self.jobToCells(job, dateColor:  VxColor.danger()))
+            }
+        }
+        if today.count > 0 {
+            table.addRow([Cell.empty])
+            table.addRow([Cell.empty, Cell.text("Today", VxColor.white())])
+            table.addRow([Cell.empty])
+           // table.addHeading("Today", char: "-", color: VxColor.base())
+            today.forEach { job in
+                table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
+            }
+        }
+        
+        table.addRow([Cell.empty, Cell.text("Totals:", VxColor.white())])
+        table.addRow([Cell.empty])
+        table.addRow([Cell.text("Tasks:", VxColor.neutral()), Cell.text("\(tasks.count)", VxColor.neutral())])
+        table.addRow([Cell.text("Upcoming:", VxColor.happy()), Cell.text("\(upcoming.count)", VxColor.happy())])
+        table.addRow([Cell.text("Overdue:", VxColor.danger()), Cell.text("\(overdue.count)", VxColor.danger())])
+        table.addRow([Cell.text("Today:", VxColor.warning()), Cell.text("\(today.count)", VxColor.warning())])
+        
+        
+    /*    let totalStrCell = Cell.text("Upcoming:", VxColor.happy())
+        let numStrCell = Cell.text("\(upcoming.count)", VxColor.happy())
+        table.addRow([totalStrCell, numStrCell])
+        
+        let totalStrCell = Cell.text("Tasks:", VxColor.bright())
+        let numStrCell = Cell.text("\(tasks.count)", VxColor.bright())
+        table.addRow([totalStrCell, numStrCell])
+        
+        let totalStrCell = Cell.text("Tasks:", VxColor.bright())
+        let numStrCell = Cell.text("\(tasks.count)", VxColor.bright())
+ 
+        table.addRow([totalStrCell, numStrCell])
+ */
+        
+        return table
+    }
+    
+    private func jobToCells(_ job: VxJob, dateColor: VxColor) -> [Cell] {
+        let dueDate = job.deadline.date
+        let daysAgoCell = Cell.text(dueDate.daysAgo(), dateColor)
+        let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: job.creation.date), dateColor)
+        let hashCell = Cell.hash(job.hash)
+        let listCell = Cell.list(job.list)
+        let descCell = Cell.description(job.description)
+        return [daysAgoCell, yyyymmddCell, hashCell, listCell, descCell]
+    }
+    private func separate() -> (tasks: [VxTask], overdue: [VxJob], today: [VxJob], upcoming: [VxJob]) {
+        var tasks: [VxTask] = []
+        var overdue: [VxJob] = []
+        var today: [VxJob] = []
+        var upcoming: [VxJob] = []
+        
+        items.forEach { item in
+            if let t = item.getTask() {
+                tasks.append(t)
+            }
+            else if let j = item.getJob() {
+                let deadline = j.deadline
+                switch deadline.date.bucket() {
+                    case .past:
+                        overdue.append(j)
+                    case .present:
+                        today.append(j)
+                    case .future:
+                        upcoming.append(j)
+                    }
+            }
+        }
+        return (tasks: tasks.sorted(by: {$0.creation.date < $1.creation.date}),
+                overdue: overdue.sorted( by: {$0.deadline.date < $1.deadline.date}),
+                today: today.sorted( by: {$0.deadline.date < $1.deadline.date}),
+                upcoming: upcoming.sorted( by: {$0.deadline.date < $1.deadline.date}))
+    }
+    
+    
+    
+}
+
+
+//TODO rm once replaced with ItemTableView (although toBuckets)
+
 class ItemView {
     
     let items: [Item]
@@ -340,7 +483,9 @@ class ItemView {
         self.items = items
     }
     
-    func toBuckets() -> [ListSummary] {
+    
+    //TODO move toBuckets to the what view.
+    static func toBuckets(_ items: [Item]) -> [ListSummary] {
         var dict : [ListName: ListSummary] = [:]
         for item in items {
             if let job = item.getJob() {
@@ -431,6 +576,7 @@ class ItemView {
                 return  VxdayColor.happy(string)
             }
     }
+    
 
 
     func showJobs() -> [String] {

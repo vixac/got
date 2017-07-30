@@ -41,10 +41,6 @@ class VxdayInstruction {
         case let .report(days, list):
             VxdayExec.report(days, list: list )
             
-           // case let .x(hash):
-           //     VxdayExec.x(hash)
-            
-            
         default:
              print("TODO handle instruction: \(instruction)")
         }

@@ -7,10 +7,6 @@
 //  Copyright © 2017 vixac. All rights reserved.
 //
 
-
-
-
-
 func main() {
     var args = CommandLine.arguments
     

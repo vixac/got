@@ -38,6 +38,7 @@ enum Cell {
     case total(Int?)
     case text(String?, VxColor)
     case totalTime(TimeBreakdown?) //1 hour, 20mins, etc
+    case empty
     
     func color() -> VxColor {
         switch self {
@@ -107,6 +108,8 @@ enum Cell {
             return emptyOrPrefix("Total", v)
         case let .text(text, _):
             return text ?? ""
+        case .empty:
+            return ""
         default:
             return "TODO Text: \(self)"
         }

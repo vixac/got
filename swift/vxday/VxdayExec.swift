@@ -125,7 +125,7 @@ class VxdayExec {
             allItemsEver += VxdayReader.itemsInList(list)
         }
         let view = ItemView(allItemsEver)
-        let buckets = view.toBuckets()
+        let buckets = ItemView.toBuckets(view.items)
         
         view.oneLiners(buckets).forEach {print($0)}
         
@@ -294,6 +294,17 @@ class VxdayExec {
     }
     
     static func all() {
+        
+        let lists = VxdayReader.allLists()
+        var allItemsEver: [Item] = []
+        lists.forEach { list in
+            allItemsEver += VxdayReader.itemsInList(list)
+        }
+        
+        let view  = ItemTableView(allItemsEver)
+        let table = view.toTable()
+        table.render().forEach { print($0) }
+        /* OLD WAY
         //all lists and their summaries.
         let lists = VxdayReader.allLists()
         var allItemsEver: [Item] = []
@@ -302,6 +313,7 @@ class VxdayExec {
         }
         let view = ItemView(allItemsEver)
         view.renderAll().forEach { print($0) }
+ */
     }
     
     static func allList(_ list: ListName) {

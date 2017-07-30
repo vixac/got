@@ -14,3 +14,5 @@
 =. 0694362e0 2017-07-29T11:46:01 2017-07-29 give Tasks their own colour.
 -. 028612e30 2017-07-29T11:45:14 I just wanted to degrade a task to a note, but I cant. The note was: If hashes are too much trouble, consider text match on description and return numbered list of matches
 -. 02b408ce0 2017-07-29T19:04:29 migrate all and what to use Vxtable because omg so awesome
+-. 0e4810c30 2017-07-30T17:50:38 This is great for day all, same as report, 4 tasks, then the rundown, 3 overdue, then the rundown, 4 jobs today etc
+-. 0e6706550 2017-07-30T18:45:28 truncate descriptions in report so that the table doesnt get huge
