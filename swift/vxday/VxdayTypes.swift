@@ -164,6 +164,9 @@ struct  TimeBreakdown {
         if seconds > 0 && !(hours > 0  && mins == 0) && !(hours > 0 && mins > 0) { //because 3 hrs 20 seconds is confusing on the eye face, and because if you have hrs and mins, you dont really care about seconds.
             str += "\(seconds) seconds"
         }
+        else {
+            //str += ":\(hours)m:\(mins):\(seconds)"
+        }
         return str
     }
 }

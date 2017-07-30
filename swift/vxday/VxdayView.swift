@@ -184,8 +184,10 @@ class ListTokensSummary {
             summary.addToken(token)
         }
         else {
-            let description = Description("TODO get description for: \(token.hash)")
-            hashes[token.hash] = HashSummary(token.hash, description: description )
+            
+            let hashSummary = HashSummary(token.hash, description: token.description )
+            hashSummary.addToken(token)
+            hashes[token.hash] = hashSummary
         }
     }
 }
@@ -228,6 +230,7 @@ class DaySummary {
         }
         return tuples.sorted(by: {$0.duration.offset < $1.duration.offset})
     }
+    
 }
 
 
@@ -273,33 +276,48 @@ class TokenDayView {
 
     func toTable(_ days: IntOffset) -> VxdayTable {
         let table = VxdayTable(title: "Token summary")
-        let summaries = self.createSummaries(numDays: days)
-        let sortedKeys = summaries.keys.sorted()
+        let daySummaries = self.createSummaries(numDays: days)
+        let sortedDayKeys = daySummaries.keys.sorted()
 
         
         var grandTotalSeconds : Int = 0
-        sortedKeys.forEach { date in
-            let summary = summaries[date]!
+        sortedDayKeys.forEach { date in
+            let summary = daySummaries[date]!
             grandTotalSeconds += summary.totalSeconds
-            let listInfo = summary.getSorted()
-            let daysAgoCell = Cell.text("\(date.daysAgo())", VxColor.base())
-            let yyyymmddCell = Cell.text("\(VxdayUtil.dateFormatter.string(from: date))", VxColor.base())
-            table.addRow([yyyymmddCell, daysAgoCell ])
-            //let daysAgoCell = Cell.text(date.daysAgo(), VxColor.white())
+
+            //let daysAgoCell = Cell.text("\(date.daysAgo())", VxColor.base())
+            //let yyyymmddCell = Cell.text("\(VxdayUtil.dateFormatter.string(from: date))", VxColor.base())
+            //table.addRow([yyyymmddCell, daysAgoCell ])
+            
+            table.addHeading("  \(date.daysAgo()) \(VxdayUtil.dateFormatter.string(from: date))  ", char: "-", color: VxColor.base())
             
             var listTotalSeconds: Int = 0
-            for (list, duration) in listInfo {
-                listTotalSeconds += duration.offset
+            
+            let listSummaries = summary.listSummaries
+            for(list, listSummary) in listSummaries {
+                let duration = listSummary.totalSeconds
+                listTotalSeconds += duration
                 let listCell = Cell.list(list)
-                let breakdown = Cell.timeliness(TimeBreakdown(duration))
+                let breakdown = Cell.text(TimeBreakdown(IntOffset(duration)).toString(), VxColor.info())
                 table.addRow([listCell, breakdown])
-                
+                let hashSummaries = listSummary.hashes
+                for (hash, hashSummary) in hashSummaries {
+                    let total = hashSummary.totalSeconds
+                    let emptyCell = Cell.hash(nil)
+                    let hashCell = Cell.hash(hash)
+                    let timeCell = Cell.timeliness(TimeBreakdown(IntOffset(total)))
+                    let descriptionCell = Cell.text(hashSummary.description?.text, VxColor.base())
+                    table.addRow([emptyCell, emptyCell, hashCell, timeCell, descriptionCell])
+                }
             }
+            
             //table.addHeading("", char: "-", color: VxColor.black())
-            let listBreakdown = TimeBreakdown(IntOffset(listTotalSeconds))
-            if listInfo.count > 1 {
+            
+          //  if listSummaries.count > 1 {
+                let listBreakdown = TimeBreakdown(IntOffset(listTotalSeconds))
                 table.addRow([Cell.text("Total: ", VxColor.happy()), Cell.text(listBreakdown.toString(), VxColor.happy())])
-            }
+//            }
+            
             table.addHeading("", char: " ", color: VxColor.black())
             
         }

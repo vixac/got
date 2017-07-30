@@ -9,10 +9,26 @@
 import Foundation
 
 
+class Cache {
+    
+    var descriptions: [Hash: Description] = [:]
+    
+    func addItems(_ items: [Item]) {
+        items.forEach {
+            if let j = $0.getJob() {
+                descriptions[j.hash] = j.description
+            }
+            else if let t = $0.getTask() {
+                descriptions[t.hash] = t.description
+            }
+        }
+    }
+}
+
 class VxdayReader {
     
-    
-    
+    //ugly.
+    static var cache : Cache = Cache()
     
     static func allLists() -> [ListName] {
         let fm = FileManager.default
@@ -26,19 +42,19 @@ class VxdayReader {
         }
         return lists.map {return ListName($0)}
     }
-    
-    
-    
+
     static func itemsInList(_ list: ListName) -> [Item] {
         let filename = VxdayFile.getSummaryFilename(list)
         let contents = VxdayReader.readFile(filename)
         let items = VxdayReader.linesToItems(contents, list: list)
+        cache.addItems(items)
         return items
     }
     static func completeItemsInList(_ list: ListName) -> [Item] {
         let filename = VxdayFile.getCompleteFilename(list)
         let contents = VxdayReader.readFile(filename)
         let items = VxdayReader.linesToItems(contents, list: list)
+        cache.addItems(items)
         return items
     }
     static func tokensForList(_ list: ListName) -> [VxToken] {
@@ -66,6 +82,28 @@ class VxdayReader {
             }
         }
         return tokens
+    }
+    
+    static func descriptionForHash(_ hash: Hash, list: ListName) -> Description? {
+        if let d = cache.descriptions[hash] {
+            return d
+        }
+        else {
+            //cache up active tokens
+            let _ = self.itemsInList(list)
+        }
+        if let d = cache.descriptions[hash] {
+            return d
+        }
+        else {
+            //cache up completed tokens (this is slower so we procrastinate doing this)
+            let _ = self.completeItemsInList(list)
+        }
+        guard  let d = cache.descriptions[hash] else {
+            print("Error, looked in summary and complete but couldnt find any description for hash: \(hash.hash)")
+            return nil
+        }
+        return d
     }
     
     static func linesToItems(_ lines: [String], list: ListName) -> [Item] {

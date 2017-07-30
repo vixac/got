@@ -217,7 +217,11 @@ class VxdayExec {
         let date = TokenDayView.dateOfStart(daysAgo: days)
         let report = TokenDayView()
         VxdayReader.allTokensAfter(date, lists: allLists).forEach {
-            report.addToken($0)
+            //TODO dont actually need to do this for each token, because its per hash per day that we need it but oh well.
+            let description = VxdayReader.descriptionForHash($0.hash, list: $0.list)
+            var t = $0
+            t.description = description
+            report.addToken(t)
         }
      
         report.toTable(days).render().forEach { print($0)}
