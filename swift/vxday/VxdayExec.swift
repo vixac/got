@@ -317,10 +317,15 @@ class VxdayExec {
     }
     
     static func allList(_ list: ListName) {
+        
         let items = VxdayReader.itemsInList(list)
-        let view  = ItemView(items)
-        let jobsStrings = view.renderAll()
-        jobsStrings.forEach { print($0)}
+        
+        let view  = ItemTableView(items)
+        let table = view.toTable()
+        table.render().forEach { print($0) }
+        //let view  = ItemView(items)
+        //let jobsStrings = view.renderAll()
+        //jobsStrings.forEach { print($0)}
     }
     
     //TODO try to write these using mv

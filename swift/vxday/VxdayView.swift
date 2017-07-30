@@ -365,7 +365,7 @@ class ItemTableView {
             //table.addHeading("Tasks", char: "-", color: VxColor.bright())
             //created hash, list, description
             tasks.forEach { task in
-                let daysAgoCell = Cell.text(task.creation.date.daysAgo(), VxColor.bright())
+               // let daysAgoCell = Cell.text(task.creation.date.daysAgo(), VxColor.bright())
                 let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: task.creation.date), VxColor.neutral())
                 let hashCell = Cell.hash(task.hash)
                 let listCell = Cell.list(task.list)
@@ -377,7 +377,7 @@ class ItemTableView {
         }
         if upcoming.count > 0 {
             table.addRow([Cell.empty])
-            table.addRow([Cell.empty, Cell.text("Upcoming", VxColor.white())])
+            table.addRow([Cell.empty, Cell.text("Upcoming", VxColor.happy())])
             table.addRow([Cell.empty])
             
             //table.addHeading("Upcoming", char: "-", color: VxColor.happy())
@@ -385,33 +385,51 @@ class ItemTableView {
                 table.addRow(self.jobToCells(job, dateColor:  VxColor.happy()))
             }
         }
+        if today.count > 0 {
+            table.addRow([Cell.empty])
+            table.addRow([Cell.empty, Cell.text("Today", VxColor.warning())])
+            table.addRow([Cell.empty])
+            // table.addHeading("Today", char: "-", color: VxColor.base())
+            today.forEach { job in
+                table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
+            }
+        }
         if overdue.count > 0 {
             table.addRow([Cell.empty])
-            table.addRow([Cell.empty, Cell.text("Overdue", VxColor.white())])
+            table.addRow([Cell.empty, Cell.text("Overdue", VxColor.danger())])
             table.addRow([Cell.empty])
           //  table.addHeading("Overdue", char: "-", color: VxColor.base())
             overdue.forEach { job in
                 table.addRow(self.jobToCells(job, dateColor:  VxColor.danger()))
             }
         }
-        if today.count > 0 {
-            table.addRow([Cell.empty])
-            table.addRow([Cell.empty, Cell.text("Today", VxColor.white())])
-            table.addRow([Cell.empty])
-           // table.addHeading("Today", char: "-", color: VxColor.base())
-            today.forEach { job in
-                table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
-            }
-        }
+
         
-        table.addRow([Cell.empty, Cell.text("Totals:", VxColor.white())])
+     //   table.addRow([Cell.empty, Cell.text("Totals:", VxColor.white())])
         table.addRow([Cell.empty])
+        
+        
+        /*
         table.addRow([Cell.text("Tasks:", VxColor.neutral()), Cell.text("\(tasks.count)", VxColor.neutral())])
         table.addRow([Cell.text("Upcoming:", VxColor.happy()), Cell.text("\(upcoming.count)", VxColor.happy())])
         table.addRow([Cell.text("Overdue:", VxColor.danger()), Cell.text("\(overdue.count)", VxColor.danger())])
         table.addRow([Cell.text("Today:", VxColor.warning()), Cell.text("\(today.count)", VxColor.warning())])
+        */
         
         
+        
+        let totalCount = today.count + tasks.count + upcoming.count + overdue.count
+        table.addRow([
+            Cell.text("Upcoming: \(upcoming.count)", VxColor.happy()),
+            Cell.text("Overdue: \(overdue.count)", VxColor.danger()),
+            Cell.text("Today: \(today.count)", VxColor.warning()),
+            Cell.text("Total: \(totalCount)", VxColor.white())])
+        
+        //table.addRow([Cell.text("Total:", VxColor.white()), Cell.text("\()", VxColor.white())])
+            
+        //table.addRow([Cell.text("Upcoming:", VxColor.happy()), Cell.text("\(upcoming.count)", VxColor.happy())])
+        //table.addRow([Cell.text("Overdue:", VxColor.danger()), Cell.text("\(overdue.count)", VxColor.danger())])
+        //table.addRow([Cell.text("Today:", VxColor.warning()), Cell.text("\(today.count)", VxColor.warning())])
     /*    let totalStrCell = Cell.text("Upcoming:", VxColor.happy())
         let numStrCell = Cell.text("\(upcoming.count)", VxColor.happy())
         table.addRow([totalStrCell, numStrCell])
