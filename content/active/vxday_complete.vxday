@@ -1,5 +1,0 @@
-X. 0ce177500 2017-07-28T13:16:54 2017-07-28 2017-07-28T16:09:55 Implement Token.
-X. 033c23260 2017-07-28T13:17:17 2017-07-28 2017-07-28T16:10:04 print the hash of created vxitems
-X. 09b424940 2017-07-28T16:23:10 2017-07-28 2017-07-29T19:04:03 Nice titles for every command, and column names.
-X. 013f14790 2017-07-28T20:16:13 2017-07-28 2017-07-29T19:04:11 get some kind of token view going
-x. 081427b60 2017-07-28T17:30:35 2017-07-29T19:05:00 get command c working on token session

@@ -1,5 +1,5 @@
 echo "loading up vxday2 env variables."
-export VXDAY2_SRC_DIR=$VIC_PROJECT/vxday
+export VXDAY2_SRC_DIR=$VX_PROJECT/vxday
 export VXDAY2_BASE_DIR=$VXDAY2_SRC_DIR/content
 export VXDAY2_ACTIVE_DIR=$VXDAY2_BASE_DIR/active
 export VXDAY2_RETIRED_DIR=$VXDAY2_BASE_DIR/retired
