@@ -48,6 +48,7 @@ enum Instruction {
     case unretire(ListName)
     case add(ListName, IntOffset, Description)
     case doIt(ListName, Description)
+    
     case lessList(ListName)
     case allList(ListName)
     case trackList(ListName)
@@ -64,8 +65,7 @@ enum Instruction {
     case start(Hash)
     
     //global actions
-    
-    case today(IntOffset?)
+
     case all
     case retired
     case what
@@ -108,7 +108,16 @@ enum Instruction {
                 else {
                     return .all
                 }
-                
+            case .today:
+                guard let listName = ArgParser.listName(args: args, index: 1) else {
+                    print("Error: Do couldn't find list name in \(args)")
+                    return nil
+                }
+                guard let description = ArgParser.description(args: args, start: 2) else {
+                    print("Error: Do couldn't find a description in args: \(args)")
+                    return nil
+                }
+                return .add(listName, IntOffset(0), description)
             case .doIt:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Do couldn't find list name in \(args)")
@@ -177,10 +186,6 @@ enum Instruction {
                     return nil
                 }
                 return .retire(listName)
-                
-                
-            case .today:
-                return .today(ArgParser.offset(args: args, index: 1)) // nil is ok.
                 
             case .top:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {

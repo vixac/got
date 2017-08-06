@@ -166,9 +166,13 @@ class VxdayExec {
             let contents = VxdayReader.readFile(completeFile)
             let items = VxdayReader.linesToItems(contents, list: l)
             
-            let view = ItemView(items)
-            let lines = view.renderComplete()
-            lines.forEach { print($0)}
+            
+            let view = CompleteTableView(items)
+            let table = view.toTable()
+            table.render().forEach {
+                print("rendering $0 which is \($0)")
+                print($0)}
+        
         }
         else {
             var allCompleteItems: [Item] = []
@@ -177,10 +181,10 @@ class VxdayExec {
             all.forEach { list in
                 allCompleteItems += VxdayReader.completeItemsInList(list)
             }
-            let view = ItemView(allCompleteItems)
-
-            let lines = view.renderComplete()
-            lines.forEach { print($0)}
+            
+            let view = CompleteTableView(allCompleteItems)
+            let table = view.toTable()
+            table.render().forEach {print($0)}
         }
     }
     

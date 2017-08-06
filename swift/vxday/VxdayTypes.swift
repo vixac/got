@@ -171,8 +171,6 @@ struct  TimeBreakdown {
     }
 }
 
-
-
 protocol VxItem {
     var list: ListName {get}
     var hash: Hash {get}
@@ -298,6 +296,7 @@ enum Item {
     case job(VxJob)
     case task(VxTask)
     case token(VxToken)
+    
     
     func getJob() -> VxJob? {
         if case let Item.job(job) = self  {

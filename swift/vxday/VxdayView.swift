@@ -268,7 +268,7 @@ class TokenDayView {
     }
 
     func toTable(_ days: IntOffset) -> VxdayTable {
-        let table = VxdayTable(title: "Token summary")
+        let table = VxdayTable(title: "Token summary", width: 150)
         let daySummaries = self.createSummaries(numDays: days)
         let sortedDayKeys = daySummaries.keys.sorted()
 
@@ -318,6 +318,72 @@ class TokenDayView {
 }
 
 
+class CompleteTableView {
+    let items: [Item]
+    init(_ items : [Item]) {
+        self.items = items 
+    }
+    
+    func toTable() -> VxdayTable {
+        
+        let table = VxdayTable(title: "", width: 150)
+
+        var rows: [TimeInterval : [Cell]] = [:]
+        items.filter { $0.getJob() != nil || $0.getTask() != nil }.forEach { item in
+            var offsetFromDeadline: Int? = nil
+            if let j = item.getJob() {
+                guard let completion = j.completion else {
+                    print("Error missing completion: \(j)")
+                    return
+                }
+                offsetFromDeadline = VxdayUtil.timeliness(deadline: j.deadline, completion: completion)
+                let completedCell = Cell.text(j.completion!.date.daysAgo(), VxColor.base())
+                let dateCell = Cell.text(VxdayUtil.dateFormatter.string(from: completion.date), VxColor.base())
+                let timelinessStr = VxdayUtil.timelinessToString(VxdayUtil.timeliness(deadline: j.deadline, completion: completion))
+                var color: VxColor = VxColor.base()
+                if let o = offsetFromDeadline {
+                    if o < 0 {
+                        color = VxColor.danger()
+                    }
+                    else if o == 0 {
+                        color = VxColor.warning()
+                    }
+                    else {
+                        color = VxColor.happy()
+                    }
+                }
+                let timelinessCell = Cell.text(timelinessStr, color )
+                let descriptionCell = Cell.text(j.description.text, VxColor.base())
+                rows[j.creation.date.timeIntervalSince1970] = [completedCell, dateCell, timelinessCell, descriptionCell]
+                
+            }
+            else if let t = item.getTask() {
+                guard let completion = t.completion else {
+                    print("Error missing completion: \(t)")
+                    return
+                }
+                let completedCell = Cell.text(completion.date.daysAgo(), VxColor.base())
+                let dateCell = Cell.text(VxdayUtil.dateFormatter.string(from: completion.date), VxColor.base())
+                let emptyCell = Cell.empty
+                let descriptionCell = Cell.text(t.description.text, VxColor.base())
+                rows[t.creation.date.timeIntervalSince1970] = [completedCell, dateCell, emptyCell, descriptionCell]
+            }
+            
+            
+            
+            
+        }
+        
+        let sortedKeys = Array(rows.keys).sorted(by: <)
+        sortedKeys.forEach { key in
+            table.addRow(rows[key]!)
+        }
+        return table
+        
+        //                strings.append("\(completed) \(timelinessStr) \(hash) \(list) \(d)")
+    }
+}
+
 
 class ItemTableView {
     let items: [Item]
@@ -356,7 +422,7 @@ class ItemTableView {
         let today = sections.today
         let upcoming = sections.upcoming
         
-        let table = VxdayTable(title: "")
+        let table = VxdayTable(title: "", width: 150)
         
         
         if tasks.count > 0 {
@@ -516,8 +582,8 @@ class ItemView {
                 else  {
                     dict[list]?.addJob(job)
                 }
-                
             }
+                
             else if let task = item.getTask() {
                 let list = task.list
                 if dict[list] == nil {
@@ -665,7 +731,6 @@ class ItemView {
             }
             
             if let c = completed {
-                //let overdue = VxdayColor.danger(noStringForZero("Overdue:", number: overdueCount, toLength:  Spaces.WhatOverdue))
                 let completed = VxdayColor.boldInfo( pad(c.pretty(), toLength: Spaces.DaysString))
                 let d = description.text
                 
