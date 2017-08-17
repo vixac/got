@@ -14,8 +14,6 @@ class VxdayInstruction {
         switch instruction {
             case let .add(list, offset, description):
                 VxdayExec.createJob(list, offset: offset, description: description)
-            
-            
             case let .doIt(list, description):
                 VxdayExec.createTask(list, description: description)
             case let .retire(list):
@@ -40,30 +38,11 @@ class VxdayInstruction {
                 VxdayExec.remove(hash)
         case let .report(days, list):
             VxdayExec.report(days, list: list )
-            
+        case let .note(hash):
+            VxdayExec.note(hash)
         default:
              print("TODO handle instruction: \(instruction)")
         }
     }
 
-    
-    //TODO RM
-    /*
-    static func makeAddString(description: Description, offset: IntOffset?) -> String {
-        
-        let now = VxdayUtil.now()
-        let created = VxdayUtil.datetimeFormatter.string(from: now)
-        
-        let hash = VxdayUtil.hash(created + description.text)
-        
-        if let o = offset {
-            let deadline = VxdayUtil.dateFormatter.string(from: VxdayUtil.increment(date: now, byDays: o.offset))
-            
-            return "\(ItemType.job.rawValue) \(hash) \(created) \(deadline) \(description.text)"
-        }
-        else {
-            return " \(ItemType.task.rawValue) \(hash) \(created) \(description.text)"
-        }
-    }
-    */
 }

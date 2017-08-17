@@ -77,8 +77,22 @@ class VxdayExec {
         return task.terminationStatus
     }
     
+    
+    @discardableResult
+    static func shellNoWait(_ args: String...) -> Int32 {
+        let task = Process()
+        task.launchPath = "/usr/bin/env"
+        task.arguments = args
+        task.launch()
+        return task.terminationStatus
+    }
+    
     static func getEnvironmentVar(_ name: String) -> String? {
-        guard let rawValue = getenv(name) else { return nil }
+	print("getting env: \(name)")
+        guard let rawValue = getenv(name) else { 
+           print("Error, can't find environment variable: \(name). You've probably not set GOT_SRC or GOT_BASE, or not sourced the got_env file")
+           return nil
+        }
         return String(utf8String: rawValue)
     }
  
@@ -160,15 +174,29 @@ class VxdayExec {
         return item
     }
     
+    static func note(_ hash: Hash) {
+        guard let list = hashToListName(hash) else {
+            print("Error finding list name for hash: \(hash)")
+            return
+        }
+        let script = VxdayFile.getScriptPath(.note)
+        let filename = VxdayFile.getNoteFilename(list, hash: hash)
+       // VxdayExec.shellNoWait ("vim", filename)doesnt work.
+        
+    }
     static func showComplete(_ list: ListName?) {
         if let l = list {
             let completeFile = VxdayFile.getCompleteFilename(l)
             let contents = VxdayReader.readFile(completeFile)
             let items = VxdayReader.linesToItems(contents, list: l)
             
-            let view = ItemView(items)
-            let lines = view.renderComplete()
-            lines.forEach { print($0)}
+            
+            let view = CompleteTableView(items)
+            let table = view.toTable()
+            table.render().forEach {
+                print("rendering $0 which is \($0)")
+                print($0)}
+        
         }
         else {
             var allCompleteItems: [Item] = []
@@ -177,10 +205,10 @@ class VxdayExec {
             all.forEach { list in
                 allCompleteItems += VxdayReader.completeItemsInList(list)
             }
-            let view = ItemView(allCompleteItems)
-
-            let lines = view.renderComplete()
-            lines.forEach { print($0)}
+            
+            let view = CompleteTableView(allCompleteItems)
+            let table = view.toTable()
+            table.render().forEach {print($0)}
         }
     }
     
@@ -365,12 +393,7 @@ class VxdayExec {
         
     }
     
-    static func note(_ list: ListName, hash: Hash) {
-        let script = VxdayFile.getScriptPath(.note)
-        let filename = VxdayFile.getNoteFilename(list, hash: hash)
-        VxdayExec.shell(script, filename)
-        
-    }
+    
     
     static func wait(_ list: ListName, hash: Hash) {
         let script = VxdayFile.getScriptPath(.wait)

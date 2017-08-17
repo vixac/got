@@ -184,13 +184,7 @@ extension Date {
         }
         return "Just now."
     }
-    
 
-}
-
-
-
-extension Date {
     static public func from(year:Int, month:Int, day:Int) -> Date {
         var c = DateComponents()
         c.year = year
