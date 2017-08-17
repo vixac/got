@@ -206,12 +206,12 @@ class VxdayTable {
         var bufferCells: [ReadyCell] = []
         for (i , cell) in cells.enumerated() {
             bufferCells = []
-            var ready = ReadyCell(cell)
+            let ready = ReadyCell(cell)
             
+            /*
             //TODO move this over to render time.
             if rowWidth + ready.width > self.width {
                 let diff = rowWidth + ready.width - self.width
-                print("TODO truncate this: \(ready.plainText) because: diff:\(diff), rowWidth: \(rowWidth)")
                 //TODO make recursive, can have multiple overflow rows, also
                 let truncated = strPrefix(ready.plainText, index: diff)
                 let leftover =  strSuffix(ready.plainText, index: diff)
@@ -224,8 +224,10 @@ class VxdayTable {
                     bufferCells.append(spaceCell)
                 }
                 bufferCells.append(overflowCell)
+ */
                 
-            }
+           // }
+        //TODO clean up remnants
             rowWidth += ready.width
             self.newCellOnColumn(ready, column: i)
             readies.append(ready)
@@ -287,13 +289,27 @@ class VxdayTable {
             rendered.append(renderTitle(length: tableWidth))
         }
         rendered.append(renderColumnNames())
+        var bufferedText = ""
         rows.forEach { row in
-            
+            bufferedText = ""
             var rowText = ""
             switch row {
                 case let .cells(cells):
+                    var rowWidthSoFar = 0
                     for (i, cell) in cells.enumerated() {
-                        rowText += VxdayTable.renderText(cell.plainText, width: columnWidths[i]!, color: cell.color)
+                        var rendered = VxdayTable.renderText(cell.plainText, width: columnWidths[i]!, color: cell.color)
+                        
+                        if rowWidthSoFar + cell.width > self.width {
+                            print("TODO truncate this: ")
+                            let diff = rowWidthSoFar + cell.width - self.width
+                            let truncated = strPrefix(cell.plainText, index: diff)
+                            let leftover =  strSuffix(cell.plainText, index: diff)
+                            rendered = VxdayTable.renderText(truncated, width: columnWidths[i]!, color: cell.color)
+                            let leftoverPadding = VxdayUtil.pad("", toLength: rowWidthSoFar)
+                            bufferedText = leftoverPadding + VxdayTable.renderText(leftover, width: columnWidths[i]!, color: cell.color)
+                        }
+                        rowWidthSoFar += cell.plainText.characters.count
+                        rowText += rendered
                 }
                 case let .heading(title, char, color):
                     rowText =  renderSectionDivider(title, char: char, totalLength: tableWidth, color: color)
@@ -301,6 +317,9 @@ class VxdayTable {
             }
 
             rendered.append(rowText)
+            if bufferedText != "" {
+                rendered.append(rowText)
+            }
         }
         return rendered
     }

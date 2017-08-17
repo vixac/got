@@ -77,6 +77,16 @@ class VxdayExec {
         return task.terminationStatus
     }
     
+    
+    @discardableResult
+    static func shellNoWait(_ args: String...) -> Int32 {
+        let task = Process()
+        task.launchPath = "/usr/bin/env"
+        task.arguments = args
+        task.launch()
+        return task.terminationStatus
+    }
+    
     static func getEnvironmentVar(_ name: String) -> String? {
         guard let rawValue = getenv(name) else { return nil }
         return String(utf8String: rawValue)
@@ -160,6 +170,16 @@ class VxdayExec {
         return item
     }
     
+    static func note(_ hash: Hash) {
+        guard let list = hashToListName(hash) else {
+            print("Error finding list name for hash: \(hash)")
+            return
+        }
+        let script = VxdayFile.getScriptPath(.note)
+        let filename = VxdayFile.getNoteFilename(list, hash: hash)
+       // VxdayExec.shellNoWait ("vim", filename)doesnt work.
+        
+    }
     static func showComplete(_ list: ListName?) {
         if let l = list {
             let completeFile = VxdayFile.getCompleteFilename(l)
@@ -363,12 +383,7 @@ class VxdayExec {
         
     }
     
-    static func note(_ list: ListName, hash: Hash) {
-        let script = VxdayFile.getScriptPath(.note)
-        let filename = VxdayFile.getNoteFilename(list, hash: hash)
-        VxdayExec.shell(script, filename)
-        
-    }
+    
     
     static func wait(_ list: ListName, hash: Hash) {
         let script = VxdayFile.getScriptPath(.wait)

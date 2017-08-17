@@ -38,6 +38,7 @@ enum Verb : String {
     case remove = "remove"
     case start = "start"
     case report = "report"
+    case keep = "keep"
     
 }
 
@@ -73,6 +74,7 @@ enum Instruction {
     case week(IntOffset?)
     case report(IntOffset, ListName?)
     case help
+    case keep(ListName)
     
     
     static func create(_ args:[String]) -> Instruction? {
@@ -164,7 +166,12 @@ enum Instruction {
                     return nil
                 }
                 return .note(hash)
-            
+        case .keep:
+            guard let listName = ArgParser.listName(args: args, index: 1) else {
+                print("Error: Do couldn't find list name in \(args)")
+                return nil
+            }
+            return .keep(listName)
             case .start:
                 guard let hash = ArgParser.hash(args: args, index: 1) else {
                     print("Error: Couldn't find hash name in \(args)")

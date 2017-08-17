@@ -38,7 +38,8 @@ class VxdayInstruction {
                 VxdayExec.remove(hash)
         case let .report(days, list):
             VxdayExec.report(days, list: list )
-            
+        case let .note(hash):
+            VxdayExec.note(hash)
         default:
              print("TODO handle instruction: \(instruction)")
         }
