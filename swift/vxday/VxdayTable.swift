@@ -163,7 +163,7 @@ class VxdayTable {
     
     var title: String
     var columnNames: [String] = []
-    init(title: String) {
+    init(_ title: String) {
         self.title = title
     }
     func addColumnTitles(_ titles: [String]) {

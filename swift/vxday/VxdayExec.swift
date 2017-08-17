@@ -21,19 +21,19 @@ enum Script : String {
 class VxdayFile {
     
     static let bashDir: String = {
-        VxdayExec.getEnvironmentVar("VXDAY2_SRC_DIR")! + "/bash"
+        VxdayExec.getEnvironmentVar("GOT_SRC")! + "/bash"
     }()
     
     static let activeDir: String = {
-        VxdayExec.getEnvironmentVar("VXDAY2_ACTIVE_DIR")!
+        VxdayExec.getEnvironmentVar("GOT_ACTIVE")!
     }()
     
     static let retiredDir: String = {
-        VxdayExec.getEnvironmentVar("VXDAY2_RETIRED_DIR")!
+        VxdayExec.getEnvironmentVar("GOT_RETIRED")!
     }()
     
     static let outputFile : String = {
-        VxdayExec.getEnvironmentVar("VXDAY2_OUTPUT_FILE")!
+        VxdayExec.getEnvironmentVar("GOT_OUTPUT_FILE")!
     }()
     
     static func getScriptPath(_ script: Script) -> String {
@@ -248,21 +248,28 @@ class VxdayExec {
     }
     
     static func createTask(_ list: ListName, description: Description ) {
+        if !VxdayReader.isListPresent(list) {
+            OneLinerView.showNewList(list).render().forEach { print($0)}
+        }
+        
         let now = VxdayUtil.now()
         let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
         let created = CreationDate(now)
+        
         let vxtask = VxTask(list: list, hash: hash, creation: created, description: description, completion: nil)
         VxdayExec.storeItem(vxtask)
-        let view = ItemView(Item.task(vxtask))
-        view.renderAll().forEach { print($0)}
-        //TODO rm rendertItesmstoresummary
-        //
-        //let summary = view.renderItemStoredSummary()
-        //print(summary)
+
+        OneLinerView.showItemCreatedOneLiner(vxtask).render().forEach {print($0)}
+        
+        
         
     }
     
     static func createJob(_ list: ListName, offset: IntOffset, description: Description ) {
+        
+        if !VxdayReader.isListPresent(list) {
+            OneLinerView.showNewList(list).render().forEach { print($0)}
+        }
         let now = VxdayUtil.now()
         let created = CreationDate(now)
         let deadline = DeadlineDate(VxdayUtil.increment(date: now, byDays: offset.offset))
@@ -270,9 +277,8 @@ class VxdayExec {
         let vxjob = VxJob(list: list, hash: hash, creation: created, deadline: deadline, description: description , completion: nil)
         
         VxdayExec.storeItem(vxjob)
-        let view = ItemView(Item.job(vxjob))
-        view.renderAll().forEach { print($0)}
-//
+        OneLinerView.showItemCreatedOneLiner(vxjob).render().forEach {print($0)}
+        
 //        let summary = view.renderItemStoredSummary()
  //       print(summary)
         

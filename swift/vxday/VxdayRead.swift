@@ -43,6 +43,9 @@ class VxdayReader {
         return lists.map {return ListName($0)}
     }
 
+    static func isListPresent(_ list: ListName) -> Bool {
+        return allLists().filter{ $0.name == list.name}.count > 0
+    }
     static func itemsInList(_ list: ListName) -> [Item] {
         let filename = VxdayFile.getSummaryFilename(list)
         let contents = VxdayReader.readFile(filename)

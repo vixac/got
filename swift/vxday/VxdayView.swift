@@ -268,7 +268,7 @@ class TokenDayView {
     }
 
     func toTable(_ days: IntOffset) -> VxdayTable {
-        let table = VxdayTable(title: "Token summary")
+        let table = VxdayTable( "Token summary")
         let daySummaries = self.createSummaries(numDays: days)
         let sortedDayKeys = daySummaries.keys.sorted()
 
@@ -356,7 +356,7 @@ class ItemTableView {
         let today = sections.today
         let upcoming = sections.upcoming
         
-        let table = VxdayTable(title: "")
+        let table = VxdayTable( "")
         
         
         if tasks.count > 0 {
@@ -488,6 +488,39 @@ class ItemTableView {
     
 }
 
+
+class OneLinerView {
+    static func showNewList(_ list: ListName) -> VxdayTable {
+        let table = VxdayTable("")
+        let firstCell = Cell.text("New List started:", VxColor.white())
+        let secondCell = Cell.list(list)
+        
+        table.addRow([firstCell, secondCell])
+        return table
+    }
+    
+    static func showItemCreatedOneLiner(_ item: VxTask)-> VxdayTable {
+        let list = Cell.list(item.list)
+        let desc = Cell.description(item.description)
+        let summary = Cell.text("Item added:", VxColor.white())
+        let hashCell = Cell.hash(item.hash)
+        let table = VxdayTable("")
+        table.addRow([summary, hashCell,list, desc])
+        return table
+        
+    }
+    static func showItemCreatedOneLiner(_ item: VxJob)-> VxdayTable {
+        let list = Cell.list(item.list)
+        let desc = Cell.description(item.description)
+        let summary = Cell.text("Item added, due:", VxColor.white())
+        let deadline = Cell.deadline(item.deadline)
+        let hashCell = Cell.hash(item.hash)
+        let table = VxdayTable("")
+        table.addRow([ summary, deadline, hashCell, list, desc])
+        return table
+        
+    }
+}
 
 //TODO rm once replaced with ItemTableView (although toBuckets)
 

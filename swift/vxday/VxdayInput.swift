@@ -18,10 +18,10 @@ struct IntOffset {
 
 
 enum Verb : String {
-    case add = "add"
-    case all = "all"
-    case doIt = "do"
-    case go = "go"
+    case add = "til"
+    case all = "jobs"
+    case doIt = "to"
+    case go = "go" //TODO RM
     case help = "help"
     case less = "less"
     case note = "note"
@@ -87,14 +87,15 @@ enum Instruction {
         
         switch verb {
             case .add:
-                guard let listName = ArgParser.listName(args: args, index: 1) else {
-                    print("Error: Add couldn't find list name in \(args)")
-                    return nil
-                }
-                guard let offset = ArgParser.offset(args: args, index: 2) else {
+                guard let offset = ArgParser.offset(args: args, index: 1) else {
                     print("Error: Add couldn't find offset in args: \(args)")
                     return nil
                 }
+                guard let listName = ArgParser.listName(args: args, index: 2) else {
+                    print("Error: Add couldn't find list name in \(args)")
+                    return nil
+                }
+                
                 guard let description = ArgParser.description(args: args, start: 3) else {
                     print("Error: Add couldn't find a description in args: \(args)")
                     return nil
