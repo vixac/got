@@ -166,6 +166,7 @@ class VxdayTable {
     var columnNames: [String] = []
     let width: Int
     init(_ title: String, width: Int) {
+        print("table crated")
         self.title = title
         self.width = width
     }
@@ -207,27 +208,6 @@ class VxdayTable {
         for (i , cell) in cells.enumerated() {
             bufferCells = []
             let ready = ReadyCell(cell)
-            
-            /*
-            //TODO move this over to render time.
-            if rowWidth + ready.width > self.width {
-                let diff = rowWidth + ready.width - self.width
-                //TODO make recursive, can have multiple overflow rows, also
-                let truncated = strPrefix(ready.plainText, index: diff)
-                let leftover =  strSuffix(ready.plainText, index: diff)
-                ready = ReadyCell(text: truncated, color: cell.color())
-
-                let spaceBeforeOverflowStarts = rowWidth
-                let spaceCell = ReadyCell(text: "", color: ready.color)
-                let overflowCell = ReadyCell(text: leftover, color: ready.color)
-                for _ in  1 ... i  {
-                    bufferCells.append(spaceCell)
-                }
-                bufferCells.append(overflowCell)
- */
-                
-           // }
-        //TODO clean up remnants
             rowWidth += ready.width
             self.newCellOnColumn(ready, column: i)
             readies.append(ready)

@@ -24,7 +24,7 @@ enum Verb : String {
     case go = "go" //TODO RM
     case help = "help"
     case less = "less"
-    case note = "note"
+    case notes = "notes"
     case retire = "retire"
     case retired = "retired"
     case today = "today"
@@ -59,7 +59,7 @@ enum Instruction {
     //hash actions
     case x(Hash)
     case go(Hash)
-    case note(Hash)
+    case notes(Hash)
     case lessHash(Hash)
     case trackHash(Hash)
     case remove(Hash)
@@ -161,12 +161,12 @@ enum Instruction {
                     return .lessList(listName)
                 }
                 
-            case .note:
+            case .notes:
                 guard let hash = ArgParser.hash(args: args, index: 1) else {
                     print("Error: Couldn't find hash name in \(args)")
                     return nil
                 }
-                return .note(hash)
+                return .notes(hash)
         case .keep:
             guard let listName = ArgParser.listName(args: args, index: 1) else {
                 print("Error: Do couldn't find list name in \(args)")

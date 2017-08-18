@@ -88,7 +88,6 @@ class VxdayExec {
     }
     
     static func getEnvironmentVar(_ name: String) -> String? {
-	print("getting env: \(name)")
         guard let rawValue = getenv(name) else { 
            print("Error, can't find environment variable: \(name). You've probably not set GOT_SRC or GOT_BASE, or not sourced the got_env file")
            return nil
@@ -155,6 +154,14 @@ class VxdayExec {
         }
         return hashToListName(hash)
     }
+    static func showNotes(_ hash: Hash) {
+        guard let list = hashToListName(hash) else {
+            return
+        }
+        let filename = VxdayFile.getNoteFilename(list, hash: hash)
+        VxdayExec.shell("cat", filename)
+        
+    }
     
     static func hashToJobOrTask(_ hash: Hash, list: ListName?) ->  Item? {
         var theList = list
@@ -176,12 +183,15 @@ class VxdayExec {
     }
     
     static func note(_ hash: Hash) {
+        /*
         guard let list = hashToListName(hash) else {
             print("Error finding list name for hash: \(hash)")
             return
         }
-        let script = VxdayFile.getScriptPath(.note)
-        let filename = VxdayFile.getNoteFilename(list, hash: hash)
+ */
+        print("TODO this doesnt woork yet.")
+        //let script = VxdayFile.getScriptPath(.note)
+        //let filename = VxdayFile.getNoteFilename(list, hash: hash)
        // VxdayExec.shellNoWait ("vim", filename)doesnt work.
         
     }
@@ -213,15 +223,28 @@ class VxdayExec {
         }
     }
     
-    static func waitForUser(cb:( (CreationDate,CompletionDate) -> Void)) {
+    static func waitForUser(cb:( (CreationDate,CompletionDate) -> Void), note: (String) -> Void) {
         let start  = VxdayUtil.now()
         Trap.handle(signal: Trap.Signal.interrupt) { signal in
             VxdayExec.bypassCPointerContextIssueByUsingStaticStateToSaveToken()
         }
-        if let _ = readLine(strippingNewline: true) {
-            let end = VxdayUtil.now()
-            cb(CreationDate(start), CompletionDate(end))
+        while let line = readLine(strippingNewline: true) {
+            if line == "done" {
+                let end = VxdayUtil.now()
+                cb(CreationDate(start), CompletionDate(end))
+                return
+            }
+            else {
+                
+                note(line)
+            }
         }
+    }
+    
+    static func takeNote(_ list: ListName, hash: Hash, note: String) {
+        let noteFile = VxdayFile.getNoteFilename(list, hash: hash)
+        let script = VxdayFile.getScriptPath(.append)
+        VxdayExec.shell(script, note, noteFile)
     }
     
     static func bypassCPointerContextIssueByUsingStaticStateToSaveToken() {
@@ -261,12 +284,21 @@ class VxdayExec {
             print("Error finding this hash in an active list: \(hash.hash)")
             return
         }
+        guard let item = hashToJobOrTask(hash, list: list) else {
+            print("Error finding item for hash \(hash) in list \(list)")
+            return
+        }
         let now = VxdayUtil.now()
         VxdayExec.globals = VxdayExecSessionGlobals(start: CreationDate(now), hash: hash, list: list)
-        print("timer started for \(list) at \(now), for hash: \(hash)")
-        waitForUser { start, end in
+        
+        let description = item.getJob() != nil  ? item.getJob()!.description : item.getTask()!.description
+        OneLinerView.showTimerStarted(list, time: now, hash: hash, description:  description).render().forEach { print($0)}
+        waitForUser (cb: { start, end in
             saveToken(list, hash: hash , creation: start , completion: end)
-        }
+        }, note: { text in
+            let now = VxdayUtil.datetimeFormatter.string(from: VxdayUtil.now())
+            VxdayExec.takeNote(list, hash: hash, note: "\(now): \(text)")
+        })
         
     }
     static func remove(_ hash: Hash) {
@@ -307,10 +339,6 @@ class VxdayExec {
         
         VxdayExec.storeItem(vxjob)
         OneLinerView.showItemCreatedOneLiner(vxjob).render().forEach {print($0)}
-        
-//        let summary = view.renderItemStoredSummary()
- //       print(summary)
-        
     }
     
  
