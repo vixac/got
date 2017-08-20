@@ -207,11 +207,9 @@ class DaySummary {
     func addToken(_ token: VxToken) {
         totalSeconds += TimeBreakdown(start: token.creation.date, end: token.completion.date).totalSeconds
         if let current = listSummaries[token.list] {
-            print("adding to existing for list: \(token.list)")
             current.addToken(token)
         }
         else {
-            print("adding to new for list: \(token.list)")
             let listTokenSummary = ListTokensSummary(token.list)
             listTokenSummary.addToken(token)
             listSummaries[token.list] = listTokenSummary
@@ -587,6 +585,36 @@ class OneLinerView {
         
     }
     
+    static func showHashRemoved(_ hash: Hash, list: ListName, description: Description) -> VxdayTable {
+        let textCell = Cell.text("Deleted: ", VxColor.white())
+        let hashCell = Cell.hash(hash)
+        let listCell = Cell.list(list)
+        let descCell = Cell.description(description)
+        let table = VxdayTable("", width: 150)
+        table.addRow([textCell, hashCell, listCell, descCell])
+        return table
+    }
+    
+    static func showHashCompleted(_ hash: Hash, list: ListName, description: Description) -> VxdayTable {
+        let textCell = Cell.text("Finished! : ", VxColor.white())
+        let hashCell = Cell.hash(hash)
+        let listCell = Cell.list(list)
+        let descCell = Cell.description(description)
+        let table = VxdayTable("", width: 150)
+        table.addRow([textCell, hashCell, listCell, descCell])
+        return table
+    }
+    
+    static func showTimerStopped(_ breakdown: TimeBreakdown) -> VxdayTable {
+        let first = Cell.text("Timer stopped, total:", VxColor.white())
+        let second = Cell.text(breakdown.toString(), VxColor.happy())
+        let table = VxdayTable("", width: 150)
+        table.addRow([first, second])
+        return table
+    }
+    
+    
+    
     static func showTimerStarted(_ list: ListName, time: Date, hash: Hash, description: Description) -> VxdayTable {
         let list  = Cell.list(list)
         let desc = Cell.description(description)
@@ -594,12 +622,150 @@ class OneLinerView {
         let hash = Cell.hash(hash)
         let table = VxdayTable("", width: 150)
         let creation = CreationDate(time)
-        let creationCell = Cell.text(creation.toString(), VxColor.warning())
+        let creationCell = Cell.text(creation.date.toTimeString(), VxColor.warning())
         table.addRow([summary, creationCell, list, hash, desc])
         return table
     }
 }
 
+
+
+class WhatView {
+    let items: [Item]
+    init(_ item : Item) {
+        items = [item]
+    }
+    init(_ items: [Item]) {
+        self.items = items
+    }
+    
+    private func toBuckets() -> [ListSummary] {
+        var dict : [ListName: ListSummary] = [:]
+        for item in items {
+            if let job = item.getJob() {
+                let list = job.list
+                if dict[list] == nil {
+                    let summary = ListSummary(list)
+                    summary.addJob(job)
+                    dict[list] = summary
+                }
+                else  {
+                    dict[list]?.addJob(job)
+                }
+            }
+                
+            else if let task = item.getTask() {
+                let list = task.list
+                if dict[list] == nil {
+                    let summary =  ListSummary(list)
+                    summary.addTask(task)
+                    dict[list] = summary
+                }
+                else {
+                    dict[list]?.addTask(task)
+                }
+                
+            }
+            else if let token = item.getToken() {
+                let list = token.list
+                if dict[list] == nil {
+                    let summary =  ListSummary(list)
+                    summary.addToken(token)
+                    dict[list] = summary
+                }
+                else {
+                    dict[list]?.addToken(token)
+                }
+                
+            }
+            //tokens aren't part of the summary yet.
+        }
+        return dict.map { return $0.value }.sorted( by: { $0.total() < $1.total()})
+    }
+    
+    func toTable() -> VxdayTable {
+
+        let table = VxdayTable("All lists", width: 150)
+        let colWidth = 15
+        let listHeading = Cell.info(VxdayUtil.pad("List", toLength: colWidth))
+        let overdueHeading = Cell.info(VxdayUtil.pad("Overdue", toLength: colWidth))
+        let todayHeading = Cell.info(VxdayUtil.pad("Due", toLength: colWidth))
+        let upcomingHeading = Cell.info(VxdayUtil.pad("Upcoming", toLength: colWidth))
+        let tasksHeading = Cell.info(VxdayUtil.pad("Tasks", toLength: colWidth))
+        let totalHeading = Cell.info(VxdayUtil.pad("Total", toLength: colWidth))
+        table.addRow([listHeading, overdueHeading, todayHeading, upcomingHeading, tasksHeading, totalHeading, listHeading])
+        let buckets = self.toBuckets()
+        buckets.forEach { summary in
+            let listCell = Cell.list(summary.list)
+            let overdueCell = Cell.text(noStringForZero(summary.past.count), VxColor.danger())
+            let presentCell = Cell.text(noStringForZero(summary.present.count), VxColor.warning())
+            let futureCell = Cell.text(noStringForZero(summary.future.count), VxColor.happy())
+            let taskCell = Cell.text(noStringForZero(summary.taskCount), VxColor.warning())
+            let totalCell = Cell.text(noStringForZero(summary.past.count + summary.present.count + summary.future.count + summary.taskCount), VxColor.white())
+            table.addRow([listCell, overdueCell, presentCell, futureCell, taskCell, totalCell, listCell])
+            //table.addHeading("", char: "-   ", color: VxColor.base())
+        }
+        
+        
+        
+        
+        table.addHeading("Total", char: "-", color: VxColor.base())
+        let listCount = buckets.count
+        let overdueCount = buckets.map { $0.past.count}.reduce(0, { $0 + $1})
+        let todayCount = buckets.map { $0.present.count}.reduce(0, { $0 + $1})
+        let futureCount = buckets.map { $0.future.count}.reduce(0 , {$0 + $1})
+        let taskCount = buckets.map {$0.taskCount}.reduce(0, {$0 + $1})
+        
+        let listCell = Cell.text(noStringForZero(listCount), VxColor.white())
+        let overdueCell = Cell.text(noStringForZero(overdueCount), VxColor.danger())
+        let todayCell = Cell.text(noStringForZero(todayCount), VxColor.warning())
+        let futureCell = Cell.text(noStringForZero(futureCount), VxColor.happy())
+        let taskCell = Cell.text(noStringForZero(taskCount), VxColor.warning())
+        let totalCell = Cell.text(noStringForZero((overdueCount + todayCount + futureCount + taskCount)), VxColor.white())
+        table.addRow([listCell, overdueCell, todayCell, futureCell, taskCell, totalCell])
+        return table
+        
+    }
+    
+    
+    
+    /*
+    func globalOneLiner(buckets: [ListSummary]) -> String {
+        let listCount = buckets.count
+        let overdueCount = buckets.map { $0.past.count}.reduce(0, { $0 + $1})
+        let todayCount = buckets.map { $0.present.count}.reduce(0, { $0 + $1})
+        let futureCount = buckets.map { $0.future.count}.reduce(0 , {$0 + $1})
+        let taskCount = buckets.map {$0.taskCount}.reduce(0, {$0 + $1})
+        let totalLists = VxdayColor.boldInfo(pad("Lists: \(listCount)", toLength: Spaces.List))
+        let overdue = VxdayColor.danger(noStringForZero("Overdue:", number: overdueCount, toLength:  Spaces.WhatOverdue))
+        let present = VxdayColor.warning(noStringForZero("Today:", number: todayCount, toLength: Spaces.WhatPresent))
+        let future = VxdayColor.happy(noStringForZero("Upcoming:", number: futureCount, toLength: Spaces.WhatFuture))
+        let tasks  = VxdayColor.warning(noStringForZero("Tasks:", number: taskCount, toLength: Spaces.WhatTasks))
+        let total = VxdayColor.boldInfo("Total: \(overdueCount + todayCount + futureCount + taskCount)")
+        return "\(totalLists) \(overdue) \(present) \(future) \(tasks) \(total)"
+    }
+    func oneLiners(_ buckets: [ListSummary]) -> [String] {
+        return buckets.map  { summary in
+            let overdue = VxdayColor.danger(noStringForZero("Overdue:", number: summary.past.count, toLength: Spaces.WhatOverdue))
+            let present = VxdayColor.warning(noStringForZero("Today:", number: summary.present.count, toLength: Spaces.WhatPresent))
+            let upcoming = VxdayColor.happy(noStringForZero("Upcoming:", number: summary.future.count, toLength: Spaces.WhatFuture))
+            let tasks = VxdayColor.warning(noStringForZero("Tasks:", number: summary.taskCount, toLength: Spaces.WhatTasks))
+            let total = "Total: \(summary.past.count + summary.present.count + summary.future.count + summary.taskCount)"
+            let listName = listNameView(summary.list)
+            return "\(listName) \(overdue) \(present) \(upcoming) \(tasks) \(total)"
+        }
+    }
+    
+*/
+    private func noStringForZero(_ number: Int) -> String {
+        if number == 0 {
+            return ""
+        }
+        let str = "\(number)"
+        return str
+    }
+    
+}
 //TODO rm once replaced with ItemTableView (although toBuckets)
 
 class ItemView {

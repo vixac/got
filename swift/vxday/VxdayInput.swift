@@ -32,7 +32,7 @@ enum Verb : String {
     case track = "track"
     case unretire = "unretire"
     case what = "what"
-    case x = "x"
+    case x = "done"
     case jot = "jot"
     case complete = "complete"
     case remove = "remove"

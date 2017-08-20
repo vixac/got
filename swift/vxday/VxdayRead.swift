@@ -112,5 +112,4 @@ class VxdayReader {
     static func linesToItems(_ lines: [String], list: ListName) -> [Item] {
         return lines.flatMap{ Item.create($0, list: list)}
     }
-
 }

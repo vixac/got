@@ -126,8 +126,10 @@ class VxdayExec {
             print("Error: Can't find list for hash: \(hash.hash)")
             return
         }
+        
         let summaryFileName = VxdayFile.getSummaryFilename(l)
         let scriptFile = VxdayFile.getScriptPath(.removeLine)
+        
         VxdayExec.shell(scriptFile, hash.hash, summaryFileName)
     }
     
@@ -138,15 +140,20 @@ class VxdayExec {
             allItemsEver += VxdayReader.itemsInList(list)
         }
 
+        WhatView(allItemsEver).toTable().render().forEach {print($0)}
+        /*
+        print("TODO use table..")
         let view = ItemView(allItemsEver)
         let buckets = ItemView.toBuckets(view.items)
         
         view.oneLiners(buckets).forEach {print($0)}
-        
+    
         let global = view.globalOneLiner(buckets: buckets)
         print("-----------------------------------------------------------------------")
         print((global) )
+ */
     }
+    
     
     static func getListIfNeeded(_ hash: Hash,  list: ListName?) -> ListName? {
         if let _ = list {
@@ -154,6 +161,7 @@ class VxdayExec {
         }
         return hashToListName(hash)
     }
+    
     static func showNotes(_ hash: Hash) {
         guard let list = hashToListName(hash) else {
             return
@@ -258,8 +266,9 @@ class VxdayExec {
     static func saveToken(_ list: ListName, hash: Hash, creation: CreationDate, completion: CompletionDate) {
         let token = VxToken(list: list, hash: hash, creation: creation, completion: completion)
         self.storeItem(token)
-        let view = ItemView(Item.token(token))
-        view.renderAll().forEach { print($0)}
+        let timeBreakdown = TimeBreakdown(start: creation.date, end: completion.date)
+        OneLinerView.showTimerStopped(timeBreakdown).render().forEach{ print($0)}
+        
     }
     
     static func report(_ days: IntOffset, list: ListName?) {
@@ -284,15 +293,10 @@ class VxdayExec {
             print("Error finding this hash in an active list: \(hash.hash)")
             return
         }
-        guard let item = hashToJobOrTask(hash, list: list) else {
-            print("Error finding item for hash \(hash) in list \(list)")
-            return
-        }
         let now = VxdayUtil.now()
         VxdayExec.globals = VxdayExecSessionGlobals(start: CreationDate(now), hash: hash, list: list)
-        
-        let description = item.getJob() != nil  ? item.getJob()!.description : item.getTask()!.description
-        OneLinerView.showTimerStarted(list, time: now, hash: hash, description:  description).render().forEach { print($0)}
+        let description = VxdayReader.descriptionForHash(hash , list: list)
+        OneLinerView.showTimerStarted(list, time: now, hash: hash, description: description ?? Description("")).render().forEach { print($0)}
         waitForUser (cb: { start, end in
             saveToken(list, hash: hash , creation: start , completion: end)
         }, note: { text in
@@ -303,8 +307,14 @@ class VxdayExec {
     }
     static func remove(_ hash: Hash) {
         guard let list = hashToListName(hash) else {
+            print("erorr finding hash: \(hash)")
             return
         }
+        guard let description = VxdayReader.descriptionForHash(hash, list: list) else {
+            print("Error getting description for list: '\(list) and hash \(hash)")
+            return
+        }
+        OneLinerView.showHashRemoved(hash, list: list, description: description).render().forEach {print($0)}
         removeActiveHash(hash, list: list)
     }
     
@@ -346,14 +356,17 @@ class VxdayExec {
         guard let list = hashToListName(hash) else {
             return
         }
-        guard let item = hashToJobOrTask(hash, list: list)?.vxItem() else {
+        guard let item = hashToJobOrTask(hash, list: list) else {
             print("Error extracting job from hash: \(hash)")
             return
         }
+        
         removeActiveHash(hash, list: list)
-        let completeItem = item.complete()
+        let completeItem = item.vxItem().complete()
         storeItem(completeItem)
         
+        let description = item.getJob() != nil  ? item.getJob()!.description : item.getTask()!.description
+        OneLinerView.showHashCompleted(hash, list: list, description: description).render().forEach{print($0)}
     }
     
     static func all() {
@@ -376,9 +389,6 @@ class VxdayExec {
         let view  = ItemTableView(items)
         let table = view.toTable()
         table.render().forEach { print($0) }
-        //let view  = ItemView(items)
-        //let jobsStrings = view.renderAll()
-        //jobsStrings.forEach { print($0)}
     }
     
     //TODO try to write these using mv

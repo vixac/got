@@ -19,7 +19,7 @@ class VxdayUtil {
     
     private static let datetimeFormat = "yyyy-MM-dd'T'HH:mm:ss"
     private static let dateFormat = "yyyy-MM-dd"
-    
+    private static let timeFormat = "HH:mm:ss"
     static let datetimeFormatter : DateFormatter  = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = VxdayUtil.datetimeFormat
@@ -32,6 +32,11 @@ class VxdayUtil {
         return dateFormatter
     }()
     
+    static let timeFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = VxdayUtil.timeFormat
+        return dateFormatter
+    }()
     class func splitString(_ string: String) -> [String] {
         return string.components(separatedBy: " ")
         
@@ -142,6 +147,18 @@ extension Date {
     
     func daysAgo() -> String {
         return Date.daysOffsetString(self.daysAgoInt())
+    }
+    
+    func toDateString() -> String {
+        return VxdayUtil.dateFormatter.string(from: self)
+    }
+    
+    func toDateTimeString() -> String {
+        return VxdayUtil.datetimeFormatter.string(from: self)
+    }
+    
+    func toTimeString() -> String {
+        return VxdayUtil.timeFormatter.string(from: self)
     }
     
     func bucket() -> VxdayUtil.TimeBucket {

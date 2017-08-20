@@ -37,6 +37,7 @@ enum Cell {
     case upcoming(Int?)
     case total(Int?)
     case text(String?, VxColor)
+    case info(String)
     case totalTime(TimeBreakdown?) //1 hour, 20mins, etc
     case empty
     
@@ -70,7 +71,8 @@ enum Cell {
             return color
         case .timeliness:
             return VxColor.info2()
-        
+        case .info:
+            return VxColor.white()
         default:
             return VxColor.base()
         }
@@ -108,6 +110,8 @@ enum Cell {
             return emptyOrPrefix("Total", v)
         case let .text(text, _):
             return text ?? ""
+        case let .info(text):
+            return text
         case .empty:
             return ""
         default:
@@ -166,7 +170,6 @@ class VxdayTable {
     var columnNames: [String] = []
     let width: Int
     init(_ title: String, width: Int) {
-        print("table crated")
         self.title = title
         self.width = width
     }
