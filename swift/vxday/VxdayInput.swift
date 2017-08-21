@@ -51,7 +51,7 @@ enum Instruction {
     case doIt(ListName, Description)
     
     case lessList(ListName)
-    case allList(ListName)
+    case allList(String) //prefix, not list.
     case trackList(ListName)
     case top(ListName)
     case complete(ListName?)
@@ -106,7 +106,7 @@ enum Instruction {
                 
             case .all:
                 if let listName = ArgParser.listName(args: args, index: 1) {
-                    return .allList(listName)
+                    return .allList(listName.name)
                 }
                 else {
                     return .all

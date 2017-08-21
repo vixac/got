@@ -29,12 +29,17 @@ class VxdayReader {
     
     //ugly.
     static var cache : Cache = Cache()
-    
-    static func allLists() -> [ListName] {
+ 
+    static func allLists(_ prefix: String = "") -> [ListName] {
         let fm = FileManager.default
         let enumerator = fm.enumerator(atPath: VxdayFile.activeDir)!
         var lists: Set<String> = Set()
         while  let file  = enumerator.nextObject() as? String  {
+  	    if prefix != "" {
+		if !file.hasPrefix(prefix) {
+		     continue
+                }
+            }
             if file.characters.first != "." {
                 lists.insert(VxdayUtil.beforeUnderscore(file)!)
             }
