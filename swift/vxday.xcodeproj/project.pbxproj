@@ -8,6 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		1C8444D51E85CBB10060E661 /* VxDayUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C8444D41E85CBB10060E661 /* VxDayUtilTests.swift */; };
+		CE1D1B331F4CB043001438DE /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926D11F4CA6BB00DBEA83 /* main.swift */; };
+		CE1D1B341F4CB043001438DE /* Trap.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926D01F4CA6BB00DBEA83 /* Trap.swift */; };
+		CE1D1B351F4CB043001438DE /* VxdayExec.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926CD1F4CA6BB00DBEA83 /* VxdayExec.swift */; };
+		CE1D1B361F4CB043001438DE /* VxdayInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926D31F4CA6BB00DBEA83 /* VxdayInput.swift */; };
+		CE1D1B371F4CB043001438DE /* VxdayInstruction.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926D21F4CA6BB00DBEA83 /* VxdayInstruction.swift */; };
+		CE1D1B381F4CB043001438DE /* VxdayRead.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926CC1F4CA6BB00DBEA83 /* VxdayRead.swift */; };
+		CE1D1B391F4CB043001438DE /* VxdayTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926D41F4CA6BB00DBEA83 /* VxdayTable.swift */; };
+		CE1D1B3A1F4CB043001438DE /* VxdayTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926CE1F4CA6BB00DBEA83 /* VxdayTypes.swift */; };
+		CE1D1B3B1F4CB043001438DE /* VxdayUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926D51F4CA6BB00DBEA83 /* VxdayUtil.swift */; };
+		CE1D1B3C1F4CB043001438DE /* VxdayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE926CF1F4CA6BB00DBEA83 /* VxdayView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -184,6 +194,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE1D1B331F4CB043001438DE /* main.swift in Sources */,
+				CE1D1B341F4CB043001438DE /* Trap.swift in Sources */,
+				CE1D1B351F4CB043001438DE /* VxdayExec.swift in Sources */,
+				CE1D1B361F4CB043001438DE /* VxdayInput.swift in Sources */,
+				CE1D1B371F4CB043001438DE /* VxdayInstruction.swift in Sources */,
+				CE1D1B381F4CB043001438DE /* VxdayRead.swift in Sources */,
+				CE1D1B391F4CB043001438DE /* VxdayTable.swift in Sources */,
+				CE1D1B3A1F4CB043001438DE /* VxdayTypes.swift in Sources */,
+				CE1D1B3B1F4CB043001438DE /* VxdayUtil.swift in Sources */,
+				CE1D1B3C1F4CB043001438DE /* VxdayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,7 +312,6 @@
 				CLANG_ENABLE_MODULES = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "vxday/vxday-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 3.0;
 			};
@@ -304,7 +323,6 @@
 				CLANG_ENABLE_MODULES = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "vxday/vxday-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Release;

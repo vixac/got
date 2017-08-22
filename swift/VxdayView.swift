@@ -743,7 +743,58 @@ class WhatView {
 class HelpView {
     
     static func toTable(_ width: Int) -> VxdayTable {
-        var table = VxdayTable(width: width)
+        let table = VxdayTable(" Got Help ", width: width)
+        let c = VxColor.info2()
+        let commands = ["it",
+                        "to",
+                        "till",
+                        "jobs",
+                        "what",
+                        "start",
+                        "done",
+                        "remove",
+                        "today"]
+        let quickDescriptions = ["quickly keep an item",
+                                 "add an item to a list",
+                                 "add an item with a deadline to a list",
+                                 "see everything",
+                                 "see summaries of lists",
+                                 "time an item, and take notes",
+                                 "mark an item complete",
+                                 "erase an item",
+                                 "add an item to do today"]
+        let explanations = ["The simplest thing you can add: create an item with no list or deadline. For example: \(c.colorThis("'got it Try out Got'"))",
+                            "Add an item to a list. For example: \(c.colorThis("'got to shop Strawberry icecream'")) creates a list called 'shop' and adds an item to it called: 'Strawberry Icecream'",
+                            "Add an item with a deadline. There are 3 ways to do this. \(c.colorThis("'got till 5 read Grapes of Wrath'")) creates a deadline in 5 days time. \(c.colorThis("'got till 19th holiday book flights'")) creates a deadline either the 19th of this month, or next month if 19th has passed. \(c.colorThis("'got till 21/05/18 admin Email Bob about the thing'")) sets the deadline to 21st May 2018",
+                            "Shows all active jobs. You can specify a list. For example: \(c.colorThis("'got jobs accounts'"))",
+                            "",
+                            "Starts the timer on an item. For example: \(c.colorThis("got start 0c441b2b0")) It will block this shell. You can add notes to this hash by writing into the shell with the timer. When you are finished, CTRL C or type \(c.colorThis("'stop'"))",
+                            "\(c.colorThis("got done 0c441b2b0"))",
+                            "\(c.colorThis("got remove 0c441b2b0"))",
+            ""]
+
+        let params = [
+            "<item>",
+            "<list> <item>",
+            "[offset|nth|dd/mm/yy] <list> <item>",
+            "[list]",
+            "",
+            "<hash>",
+            "<hash>",
+            "<hash>",
+            "<list> <item>"
+        ]
+        table.addRow([Cell.info("Command"), Cell.info("Parameters"), Cell.info("Summary"), Cell.info("More")])
+        commands.enumerated().forEach { (index, command) in
+            let commandCell = Cell.text(command, VxColor.info2())
+            let quick = Cell.description(Description(quickDescriptions[index]))
+            let paramCell = Cell.text(params[index], VxColor.info())
+            let explanation = Cell.description(Description(explanations[index]))
+            table.addRow([commandCell, paramCell, quick, explanation])
+        }
+    
+        
+        return table
         
     }
 }

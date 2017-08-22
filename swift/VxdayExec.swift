@@ -235,7 +235,7 @@ class VxdayExec {
             VxdayExec.bypassCPointerContextIssueByUsingStaticStateToSaveToken()
         }
         while let line = readLine(strippingNewline: true) {
-            if line == "done" {
+            if line == "stop" {
                 let end = VxdayUtil.now()
                 cb(CreationDate(start), CompletionDate(end))
                 return
