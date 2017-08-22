@@ -154,19 +154,7 @@ class VxdayExec {
         lists.forEach { list in
             allItemsEver += VxdayReader.itemsInList(list)
         }
-
-        WhatView(allItemsEver).toTable().render().forEach {print($0)}
-        /*
-        print("TODO use table..")
-        let view = ItemView(allItemsEver)
-        let buckets = ItemView.toBuckets(view.items)
-        
-        view.oneLiners(buckets).forEach {print($0)}
-    
-        let global = view.globalOneLiner(buckets: buckets)
-        print("-----------------------------------------------------------------------")
-        print((global) )
- */
+        WhatView(allItemsEver).toTable(getShellWidth()).render().forEach {print($0)}
     }
     
     

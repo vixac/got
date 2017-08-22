@@ -630,9 +630,9 @@ class WhatView {
         return dict.map { return $0.value }.sorted( by: { $0.total() < $1.total()})
     }
     
-    func toTable() -> VxdayTable {
+    func toTable(_ width: Int) -> VxdayTable {
 
-        let table = VxdayTable("All lists", width: 150)
+        let table = VxdayTable("All lists", width: width)
         let colWidth = 15
         let listHeading = Cell.info(VxdayUtil.pad("List", toLength: colWidth))
         let overdueHeading = Cell.info(VxdayUtil.pad("Overdue", toLength: colWidth))

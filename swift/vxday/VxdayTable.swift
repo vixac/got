@@ -8,21 +8,6 @@
 
 import Foundation
 
-
-//TODO RM. Going to do this dynamically.
-class Spaces {
-    static let List = 9
-    static let Timeliness = 14
-    static let WhatOverdue = 13
-    static let WhatPresent = 13
-    static let WhatFuture = 13
-    static let WhatTasks = 12
-    static let DaysString = 15
-    static let DaysAgo = 14
-    static let Hash = 11
-}
-
-
 enum Cell {
     case list(ListName?)
     case deadline(DeadlineDate?) // yesterday 10 days ago in 10 days today etc.
@@ -159,9 +144,6 @@ enum Row {
 
 
 class VxdayTable {
-    //takes semantic information about each row.
-    //wait. it doesnt have to. just a STRING i guess and a maybe a callback for the color.
-
     var columnWidths: [Int:Int] = [:] //column number to width.
     var rows: [Row] = []
     
@@ -247,8 +229,7 @@ class VxdayTable {
     }
     
     func render() -> [String] {
-       
-     let tableWidth = self.width //columnWidths.map {$0.value}.reduce(0, {$0 + $1})
+        let tableWidth = self.width
         var localWidths = columnWidths // at the time of rendering, we want the last column to have no padding, so we rig the widths
         if let topIndex = columnWidths.keys.sorted().last {
             localWidths[topIndex] = 0
@@ -281,20 +262,9 @@ class VxdayTable {
                 }
                 case let .heading(title, char, color):
                     rowText =  renderSectionDivider(title, char: char, totalLength: tableWidth, color: color)
-                
             }
-
             rendered.append(rowText)
-            //var lastWidth = 0
             let padWidth = localWidths.map {$0.value}.reduce(0, {$0 + $1})
-            /*
-            for column in localWidths.keys.sorted() {
-                let width = localWidths[column]!
-                padWidth += width
-                lastWidth = width
-            }
-            padWidth -= lastWidth
- */
             while currentIndex < remainingStrings.count {
                 let toAppend : String = VxdayUtil.pad("", toLength: padWidth) + remainingStrings[currentIndex]
                 rendered.append(toAppend)
