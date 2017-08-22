@@ -404,68 +404,68 @@ class ItemTableView {
         
         
         if tasks.count > 0 {
-            table.addRow([Cell.empty, Cell.text("Tasks", VxColor.white())])
-            table.addRow([Cell.text(" Created", VxColor.base())])
-            //table.addHeading("Tasks", char: "-", color: VxColor.bright())
-            //created hash, list, description
+            table.addRow([Cell.info("Created"),Cell.info(""), Cell.info("Hash"), Cell.info("List")])
             tasks.forEach { task in
-               // let daysAgoCell = Cell.text(task.creation.date.daysAgo(), VxColor.bright())
                 let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: task.creation.date), VxColor.neutral())
                 let hashCell = Cell.hash(task.hash)
                 let listCell = Cell.list(task.list)
                 let descCell = Cell.description(task.description)
-                //table.addRow([daysAgoCell, yyyymmddCell, hashCell, listCell, descCell])
                 table.addRow([ yyyymmddCell, Cell.empty, hashCell, listCell, descCell])
             }
 
         }
+        
+        let hasDeadlined = upcoming.count > 0 || today.count > 0 || overdue.count > 0
+        if hasDeadlined {
+            table.addHeading("", char: "-", color: VxColor.base())
+            table.addRow([Cell.info("Created"),Cell.info("Due")])//, Cell.info("Hash"), Cell.info("List"), Cell.info("Title")])
+        }
+        if overdue.count > 0 {
+            table.addRow([Cell.empty])
+            overdue.forEach { job in
+                table.addRow(self.jobToCells(job, dateColor:  VxColor.danger()))
+            }
+        }
+        if today.count > 0 {
+            //table.addRow([Cell.empty])
+          //  table.addRow([Cell.empty, Cell.text("Today", VxColor.warning())])
+            //table.addRow([Cell.empty])
+            today.forEach { job in
+                table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
+            }
+        }
+
         if upcoming.count > 0 {
-            table.addRow([Cell.empty])
-            table.addRow([Cell.empty, Cell.text("Upcoming", VxColor.happy())])
-            table.addRow([Cell.empty])
+            //table.addRow([Cell.empty])
+            // table.addRow([Cell.empty, Cell.text("Upcoming", VxColor.happy())])
+            //table.addRow([Cell.empty])
             
             //table.addHeading("Upcoming", char: "-", color: VxColor.happy())
             upcoming.forEach { job in
                 table.addRow(self.jobToCells(job, dateColor:  VxColor.happy()))
             }
         }
-        if today.count > 0 {
-            table.addRow([Cell.empty])
-            table.addRow([Cell.empty, Cell.text("Today", VxColor.warning())])
-            table.addRow([Cell.empty])
-            today.forEach { job in
-                table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
-            }
-        }
-        if overdue.count > 0 {
-            table.addRow([Cell.empty])
-            table.addRow([Cell.empty, Cell.text("Overdue", VxColor.danger())])
-            table.addRow([Cell.empty])
-            overdue.forEach { job in
-                table.addRow(self.jobToCells(job, dateColor:  VxColor.danger()))
-            }
-        }
         table.addRow([Cell.empty])
-        
-
+        /* // this looks alot like got what <list> might look like. Don't think I want it.
+        table.addHeading("", char: "-", color: VxColor.base())
         let totalCount = today.count + tasks.count + upcoming.count + overdue.count
         table.addRow([
             Cell.text("Upcoming: \(upcoming.count)", VxColor.happy()),
             Cell.text("Overdue: \(overdue.count)", VxColor.danger()),
             Cell.text("Today: \(today.count)", VxColor.warning()),
             Cell.text("Total: \(totalCount)", VxColor.white())])
- 
+ */
         return table
     }
     
     private func jobToCells(_ job: VxJob, dateColor: VxColor) -> [Cell] {
         let dueDate = job.deadline.date
         let daysAgoCell = Cell.text(dueDate.daysAgo(), dateColor)
-        let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: job.creation.date), dateColor)
+        let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: job.creation.date), VxColor.base())
         let hashCell = Cell.hash(job.hash)
         let listCell = Cell.list(job.list)
         let descCell = Cell.description(job.description)
-        return [daysAgoCell, yyyymmddCell, hashCell, listCell, descCell]
+        return [yyyymmddCell, daysAgoCell,  hashCell, listCell, descCell]
     }
     private func separate() -> (tasks: [VxTask], overdue: [VxJob], today: [VxJob], upcoming: [VxJob]) {
         var tasks: [VxTask] = []
@@ -503,7 +503,7 @@ class ItemTableView {
 class OneLinerView {
     static func showNewList(_ list: ListName) -> VxdayTable {
         let table = VxdayTable("", width: 150)
-        let firstCell = Cell.text("New List started:", VxColor.white())
+        let firstCell = Cell.text("New List Started:", VxColor.white())
         let secondCell = Cell.list(list)
         
         table.addRow([firstCell, secondCell])
@@ -523,7 +523,7 @@ class OneLinerView {
     static func showItemCreatedOneLiner(_ item: VxJob)-> VxdayTable {
         let list = Cell.list(item.list)
         let desc = Cell.description(item.description)
-        let summary = Cell.text("Item added, due:", VxColor.white())
+        let summary = Cell.text("Item Added, Due:", VxColor.white())
         let deadline = Cell.deadline(item.deadline)
         let hashCell = Cell.hash(item.hash)
         let table = VxdayTable("", width: 150)

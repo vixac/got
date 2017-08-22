@@ -69,29 +69,47 @@ struct Ordinals {
         return nil
     }
 }
-struct DateOffset {
- 
-    /*
-     7/11
-     7/april
-     8/10/17
-     5/10/18
-     */
-    
-    let str: String
+
+struct DateString {
     let date: Date
-
     init?(_ string: String) {
-        self.str = string
+        let calendar = Calendar(identifier: Calendar.Identifier.gregorian)
+        var parts  = string.components(separatedBy: "/")
+        if parts.count != 3 {
+            return nil
+        }
+        
+        var components = DateComponents()
+        guard let day = Int(parts[0]) else {
+            return nil
+        }
+        components.day = day
+        guard let month = Int(parts[1]) else {
+            return nil
+        }
+        components.month = month
+        guard let year = Int( "20\(parts[2])") else { // this won't work in 83 years. memo added to my got list.
+            return nil
+        }
+        components.year = year
+        guard let d =  calendar.date(from: components) else {
+            return nil
+        }
+        self.date = d
+    }
+    var offset: IntOffset {
+        return IntOffset(date.daysAgoInt())
+    }
+}
+    
+struct DateOffset {
+    let date: Date
+    init?(_ string: String) {
         let now = VxdayUtil.now()
-        
-
-        
         let calendar = Calendar(identifier: Calendar.Identifier.gregorian)
         var components = (calendar as NSCalendar).components([NSCalendar.Unit.day, NSCalendar.Unit.month, NSCalendar.Unit.year],
                                                              from: now)
-        guard let ordinalDay = Ordinals.toDay(str) else {
-            print("Error, \(str) is not a valid 1st or 2nd or nth of the month.")
+        guard let ordinalDay = Ordinals.toDay(string) else {
             return nil
         }
         
@@ -105,7 +123,6 @@ struct DateOffset {
             componentToAdd.month = 1
             targetDate = calendar.date(byAdding: componentToAdd, to: targetDate)!
         }
-        print("Target date is now \(targetDate.toDateString())")
         self.date = targetDate
     }
     

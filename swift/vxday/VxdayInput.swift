@@ -16,9 +16,8 @@ struct IntOffset {
     }
 }
 
-
 enum Verb : String {
-    case add = "til"
+    case add = "till"
     case all = "jobs"
     case doIt = "to"
     case go = "go" //TODO RM
@@ -39,6 +38,7 @@ enum Verb : String {
     case start = "start"
     case report = "report"
     case keep = "keep"
+    case info = "info"
     
 }
 
@@ -64,7 +64,7 @@ enum Instruction {
     case trackHash(Hash)
     case remove(Hash)
     case start(Hash)
-    
+    case info(Hash)
     //global actions
 
     case all
@@ -89,16 +89,17 @@ enum Instruction {
         
         switch verb {
             case .add:
-                
                 var theOffset = IntOffset(0)
                 if let offset = ArgParser.offset(args: args, index: 1) {
                     theOffset = offset
+                } else if let dateOffset = ArgParser.dateOffset(args: args, index: 1) {
+                    theOffset = dateOffset.offset
                 } else {
-                    guard let dateOffset = ArgParser.dateOffset(args: args, index: 1) else {
-                        print("Error: Add couldn't find either a date offset or a readable date string")
+                    guard let dateString = ArgParser.dateString(args: args, index: 1) else {
+                        print("Error: Add couldn't find either a date offset or a readable date string. 4 means in 4 days, 4th means on the 4th of this or next month (whichever is in the futre)==")
                         return nil
                     }
-                    theOffset = dateOffset.offset
+                    theOffset =  dateString.offset
                 }
                 
                 guard let listName = ArgParser.listName(args: args, index: 2) else {
@@ -119,6 +120,12 @@ enum Instruction {
                 else {
                     return .all
                 }
+            case .info:
+                guard let hash = ArgParser.hash(args: args, index: 1) else {
+                    print("Error: Couldn't find hash  in \(args)")
+                    return nil
+                }
+                return .info(hash)
             case .today:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Do couldn't find list name in \(args)")
@@ -219,9 +226,7 @@ enum Instruction {
                     return .trackList(listName)
                 }
                 return .track
-                
-                
-                
+
             case .unretire:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Unretire couldn't find list name in \(args)")
@@ -261,7 +266,13 @@ enum Instruction {
 
 
 class ArgParser {
-    
+  
+    static func dateString(args: [String], index: Int) -> DateString? {
+        guard let str = ArgParser.str(args: args, index: index) else  {
+            return nil
+        }
+        return DateString(str)
+    }
   
     static func dateOffset(args: [String], index: Int) -> DateOffset? {
         guard let str = ArgParser.str(args: args, index: index) else  {
@@ -285,7 +296,6 @@ class ArgParser {
             return nil
         }
         guard let intOffset : Int  = Int(str) else {
-            print("Error, this doesn't look like an integer offset: \(str)")
             return nil
         }
         return IntOffset(intOffset)
@@ -310,6 +320,9 @@ class ArgParser {
     
     static func description(args: [String], start: Int) -> Description? {
         guard let str = VxdayUtil.flattenRest(args, start: start) else {
+            return nil
+        }
+        if str.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)  == "" {
             return nil
         }
         return Description(str)

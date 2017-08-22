@@ -17,7 +17,6 @@ enum Script : String {
     case lookForHash = "look_for_hash.sh"
     case removeLine = "remove_line.sh"
     case shellWidth = "shell_width.sh"
-    case noteLineCount = "note_line_count.sh"
 }
 
 class VxdayFile {
@@ -194,6 +193,11 @@ class VxdayExec {
         return item
     }
     
+    static func info(_ hash: Hash) {
+        print("TDOO info on \(hash)")
+        let lineCount = noteLineCount(hash)
+        print("GOT LINE COUNT: \(lineCount)")
+    }
     static func note(_ hash: Hash) {
         /*
         guard let list = hashToListName(hash) else {
@@ -257,9 +261,11 @@ class VxdayExec {
             print("No hash found: \(hash)")
             return 0
         }
-        let shell = VxdayFile.getScriptPath(.noteLineCount)
-        return 0 //TODO
+        let filename  = VxdayFile.getNoteFilename(list, hash: hash)
+        let count = VxdayReader.readFile(filename).count
+        return count
     }
+    
     static func takeNote(_ list: ListName, hash: Hash, note: String) {
         let noteFile = VxdayFile.getNoteFilename(list, hash: hash)
         let script = VxdayFile.getScriptPath(.append)
