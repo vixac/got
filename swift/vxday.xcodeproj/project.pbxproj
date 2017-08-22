@@ -7,16 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1C1208301F2B5DDB004A2CDA /* VxdayTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C12082F1F2B5DDB004A2CDA /* VxdayTypes.swift */; };
-		1C1208321F2B9C50004A2CDA /* Trap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1208311F2B9C50004A2CDA /* Trap.swift */; };
-		1C1208351F2C9BA2004A2CDA /* VxdayTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1208341F2C9BA2004A2CDA /* VxdayTable.swift */; };
-		1C38CA2F1F267C220034028E /* VxdayInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA2E1F267C220034028E /* VxdayInput.swift */; };
-		1C38CA311F2684060034028E /* VxdayExec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA301F2684060034028E /* VxdayExec.swift */; };
-		1C38CA331F268A850034028E /* VxdayInstruction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA321F268A850034028E /* VxdayInstruction.swift */; };
-		1C38CA351F27C1830034028E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA341F27C1830034028E /* main.swift */; };
-		1C38CA371F28A9570034028E /* VxdayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C38CA361F28A9570034028E /* VxdayView.swift */; };
-		1C5875691F28B42400110695 /* VxdayRead.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C5875681F28B42400110695 /* VxdayRead.swift */; };
-		1C77A6041F25267D00109773 /* VxdayUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C77A6031F25267D00109773 /* VxdayUtil.swift */; };
 		1C8444D51E85CBB10060E661 /* VxDayUtilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C8444D41E85CBB10060E661 /* VxDayUtilTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -33,20 +23,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1C12082F1F2B5DDB004A2CDA /* VxdayTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayTypes.swift; sourceTree = "<group>"; };
-		1C1208311F2B9C50004A2CDA /* Trap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trap.swift; sourceTree = "<group>"; };
-		1C1208341F2C9BA2004A2CDA /* VxdayTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayTable.swift; sourceTree = "<group>"; };
-		1C38CA2E1F267C220034028E /* VxdayInput.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayInput.swift; sourceTree = "<group>"; };
-		1C38CA301F2684060034028E /* VxdayExec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayExec.swift; sourceTree = "<group>"; };
-		1C38CA321F268A850034028E /* VxdayInstruction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayInstruction.swift; sourceTree = "<group>"; };
-		1C38CA341F27C1830034028E /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = main.swift; path = vxday/main.swift; sourceTree = "<group>"; };
-		1C38CA361F28A9570034028E /* VxdayView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayView.swift; sourceTree = "<group>"; };
 		1C4C6FC71E7EC96C00AB1949 /* vxday */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = vxday; sourceTree = BUILT_PRODUCTS_DIR; };
-		1C5875681F28B42400110695 /* VxdayRead.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayRead.swift; sourceTree = "<group>"; };
-		1C77A6031F25267D00109773 /* VxdayUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VxdayUtil.swift; sourceTree = "<group>"; };
 		1C8444D21E85CBB10060E661 /* vxdayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vxdayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C8444D41E85CBB10060E661 /* VxDayUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxDayUtilTests.swift; sourceTree = "<group>"; };
 		1C8444D61E85CBB10060E661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CEE926CC1F4CA6BB00DBEA83 /* VxdayRead.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayRead.swift; sourceTree = "<group>"; };
+		CEE926CD1F4CA6BB00DBEA83 /* VxdayExec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayExec.swift; sourceTree = "<group>"; };
+		CEE926CE1F4CA6BB00DBEA83 /* VxdayTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayTypes.swift; sourceTree = "<group>"; };
+		CEE926CF1F4CA6BB00DBEA83 /* VxdayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayView.swift; sourceTree = "<group>"; };
+		CEE926D01F4CA6BB00DBEA83 /* Trap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trap.swift; sourceTree = "<group>"; };
+		CEE926D11F4CA6BB00DBEA83 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		CEE926D21F4CA6BB00DBEA83 /* VxdayInstruction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayInstruction.swift; sourceTree = "<group>"; };
+		CEE926D31F4CA6BB00DBEA83 /* VxdayInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayInput.swift; sourceTree = "<group>"; };
+		CEE926D41F4CA6BB00DBEA83 /* VxdayTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayTable.swift; sourceTree = "<group>"; };
+		CEE926D51F4CA6BB00DBEA83 /* VxdayUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayUtil.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,8 +60,16 @@
 		1C4C6FBE1E7EC96C00AB1949 = {
 			isa = PBXGroup;
 			children = (
-				1C77A6071F26007B00109773 /* scripts */,
-				1C4C6FC91E7EC96C00AB1949 /* vxday */,
+				CEE926D11F4CA6BB00DBEA83 /* main.swift */,
+				CEE926D01F4CA6BB00DBEA83 /* Trap.swift */,
+				CEE926CD1F4CA6BB00DBEA83 /* VxdayExec.swift */,
+				CEE926D31F4CA6BB00DBEA83 /* VxdayInput.swift */,
+				CEE926D21F4CA6BB00DBEA83 /* VxdayInstruction.swift */,
+				CEE926CC1F4CA6BB00DBEA83 /* VxdayRead.swift */,
+				CEE926D41F4CA6BB00DBEA83 /* VxdayTable.swift */,
+				CEE926CE1F4CA6BB00DBEA83 /* VxdayTypes.swift */,
+				CEE926D51F4CA6BB00DBEA83 /* VxdayUtil.swift */,
+				CEE926CF1F4CA6BB00DBEA83 /* VxdayView.swift */,
 				1C8444D31E85CBB10060E661 /* vxdayTests */,
 				1C4C6FC81E7EC96C00AB1949 /* Products */,
 			);
@@ -84,30 +82,6 @@
 				1C8444D21E85CBB10060E661 /* vxdayTests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		1C4C6FC91E7EC96C00AB1949 /* vxday */ = {
-			isa = PBXGroup;
-			children = (
-				1C77A6031F25267D00109773 /* VxdayUtil.swift */,
-				1C38CA2E1F267C220034028E /* VxdayInput.swift */,
-				1C38CA301F2684060034028E /* VxdayExec.swift */,
-				1C38CA321F268A850034028E /* VxdayInstruction.swift */,
-				1C38CA361F28A9570034028E /* VxdayView.swift */,
-				1C5875681F28B42400110695 /* VxdayRead.swift */,
-				1C12082F1F2B5DDB004A2CDA /* VxdayTypes.swift */,
-				1C1208311F2B9C50004A2CDA /* Trap.swift */,
-				1C1208341F2C9BA2004A2CDA /* VxdayTable.swift */,
-			);
-			path = vxday;
-			sourceTree = "<group>";
-		};
-		1C77A6071F26007B00109773 /* scripts */ = {
-			isa = PBXGroup;
-			children = (
-				1C38CA341F27C1830034028E /* main.swift */,
-			);
-			name = scripts;
 			sourceTree = "<group>";
 		};
 		1C8444D31E85CBB10060E661 /* vxdayTests */ = {
@@ -168,6 +142,7 @@
 				TargetAttributes = {
 					1C4C6FC61E7EC96C00AB1949 = {
 						CreatedOnToolsVersion = 8.0;
+						LastSwiftMigration = 0900;
 						ProvisioningStyle = Automatic;
 					};
 					1C8444D11E85CBB10060E661 = {
@@ -209,16 +184,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1C1208321F2B9C50004A2CDA /* Trap.swift in Sources */,
-				1C38CA311F2684060034028E /* VxdayExec.swift in Sources */,
-				1C1208301F2B5DDB004A2CDA /* VxdayTypes.swift in Sources */,
-				1C38CA371F28A9570034028E /* VxdayView.swift in Sources */,
-				1C5875691F28B42400110695 /* VxdayRead.swift in Sources */,
-				1C38CA2F1F267C220034028E /* VxdayInput.swift in Sources */,
-				1C38CA351F27C1830034028E /* main.swift in Sources */,
-				1C1208351F2C9BA2004A2CDA /* VxdayTable.swift in Sources */,
-				1C38CA331F268A850034028E /* VxdayInstruction.swift in Sources */,
-				1C77A6041F25267D00109773 /* VxdayUtil.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -324,7 +289,11 @@
 		1C4C6FCF1E7EC96C00AB1949 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "vxday/vxday-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
@@ -332,7 +301,10 @@
 		1C4C6FD01E7EC96C00AB1949 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "vxday/vxday-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Release;

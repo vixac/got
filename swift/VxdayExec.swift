@@ -22,7 +22,7 @@ enum Script : String {
 class VxdayFile {
     
     static let bashDir: String = {
-        VxdayExec.getEnvironmentVar("GOT_SRC")! + "/bash"
+        VxdayExec.getEnvironmentVar("GOT_SRC")! + "/scripts"
     }()
     
     static let activeDir: String = {
@@ -75,16 +75,6 @@ class VxdayExec {
         task.arguments = args
         task.launch()
         task.waitUntilExit()
-        return task.terminationStatus
-    }
-    
-    
-    @discardableResult
-    static func shellNoWait(_ args: String...) -> Int32 {
-        let task = Process()
-        task.launchPath = "/usr/bin/env"
-        task.arguments = args
-        task.launch()
         return task.terminationStatus
     }
     

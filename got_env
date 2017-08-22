@@ -10,5 +10,11 @@ export GOT_ACTIVE=$GOT_CONTENTS/active
 export GOT_RETIRED=$GOT_CONTENTS/retired
 export GOT_OUTPUT_FILE=$GOT_CONTENTS/.output.vxday
 
-alias got=$GOT_SRC/swift/vxday/got
+alias got=$GOT_SRC/got
 
+if  [ ! -f $GOT_SRC/got ]; then
+  echo "Looks like your first time using Got! Just compiling, won't take 10 seconds."
+  $GOT_SRC/compile.sh
+  echo "Got compiled."
+fi
+    

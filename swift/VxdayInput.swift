@@ -93,7 +93,7 @@ enum Instruction {
                     print("Error: Do couldn't find a description in args: \(args)")
                     return nil
                 }
-                return .add(listName, IntOffset(0), description)
+                return .doIt(ListName("<nolist>"), description)
             case .add:
                 var theOffset = IntOffset(0)
                 if let offset = ArgParser.offset(args: args, index: 1) {
@@ -162,14 +162,7 @@ enum Instruction {
                 
             case .help:
                 return .help
-                
-            case .jot:
-                guard let description = ArgParser.description(args: args, start: 1) else {
-                    print("Error: Do couldn't find a description in args: \(args)")
-                    return nil
-                }
-                return .doIt(ListName("_jot"), description)
-                
+            
             case .less:
                 if let hash = ArgParser.hash(args: args, index: 1)  {
                     return .lessHash(hash)
