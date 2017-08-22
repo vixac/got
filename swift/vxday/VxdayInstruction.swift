@@ -22,8 +22,8 @@ class VxdayInstruction {
                 VxdayExec.unretire(list)
             case let .lessList(list):
                 VxdayExec.lessList(list)
-            case let .allList(list):
-                VxdayExec.allList(list)
+            case let .allList(prefix):
+                VxdayExec.allList(prefix)
             case .all:
                 VxdayExec.all()
         case let .complete(list):

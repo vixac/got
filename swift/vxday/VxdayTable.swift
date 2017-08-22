@@ -163,7 +163,6 @@ class VxdayTable {
     //wait. it doesnt have to. just a STRING i guess and a maybe a callback for the color.
 
     var columnWidths: [Int:Int] = [:] //column number to width.
-    
     var rows: [Row] = []
     
     var title: String
@@ -221,24 +220,7 @@ class VxdayTable {
             rows.append(Row.cells(bufferCells))
         }
     }
-    func strPrefix(_ s: String, index: Int) -> String {
-        print("PRE: \(s), count is \(s.characters.count), cutting to \(index)")
-        let start = s.startIndex
-        let end = s.index(s.startIndex, offsetBy: index)
-        let substring = s[start..<end]
-        print("STR prefix is \(substring)")
-        return substring
-        
-    }
     
-    func strSuffix(_ s: String, index: Int) -> String {
-        print("SUF:\(s), count is \(s.characters.count), cutting to \(index)")
-        let start = s.index(s.startIndex, offsetBy: index)
-        let end = s.endIndex
-        let substring = s[start..<end]
-        print("STR sufix is \(substring)")
-        return substring
-    }
     func newCellOnColumn(_ cell: ReadyCell, column: Int) {
         let spaceBetweenCells = 3
         let width  = cell.width + spaceBetweenCells
@@ -265,31 +247,34 @@ class VxdayTable {
     }
     
     func render() -> [String] {
-        let tableWidth = columnWidths.map {$0.value}.reduce(0, {$0 + $1})
+       
+     let tableWidth = self.width //columnWidths.map {$0.value}.reduce(0, {$0 + $1})
+        var localWidths = columnWidths // at the time of rendering, we want the last column to have no padding, so we rig the widths
+        if let topIndex = columnWidths.keys.sorted().last {
+            localWidths[topIndex] = 0
+        }
         
         var rendered: [String] = []
         if self.title != "" {
             rendered.append(renderTitle(length: tableWidth))
         }
         rendered.append(renderColumnNames())
-        var bufferedText = ""
         rows.forEach { row in
-            bufferedText = ""
+            var remainingStrings : [String] = []
+            var currentIndex: Int = 0
             var rowText = ""
             switch row {
                 case let .cells(cells):
                     var rowWidthSoFar = 0
                     for (i, cell) in cells.enumerated() {
-                        var rendered = VxdayTable.renderText(cell.plainText, width: columnWidths[i]!, color: cell.color)
+                        var rendered = VxdayTable.renderText(cell.plainText, width: localWidths[i]!, color: cell.color)
                         
                         if rowWidthSoFar + cell.width > self.width {
-                            print("TODO truncate this: ")
-                            let diff = rowWidthSoFar + cell.width - self.width
-                            let truncated = strPrefix(cell.plainText, index: diff)
-                            let leftover =  strSuffix(cell.plainText, index: diff)
-                            rendered = VxdayTable.renderText(truncated, width: columnWidths[i]!, color: cell.color)
-                            let leftoverPadding = VxdayUtil.pad("", toLength: rowWidthSoFar)
-                            bufferedText = leftoverPadding + VxdayTable.renderText(leftover, width: columnWidths[i]!, color: cell.color)
+                            let targetStringLength = self.width - rowWidthSoFar
+                            remainingStrings = cell.plainText.wrap(columns: targetStringLength)
+
+                            rendered  = VxdayTable.renderText(remainingStrings[0], width: localWidths[i]!, color: cell.color)
+                            currentIndex += 1
                         }
                         rowWidthSoFar += cell.plainText.characters.count
                         rowText += rendered
@@ -300,8 +285,24 @@ class VxdayTable {
             }
 
             rendered.append(rowText)
-            if bufferedText != "" {
-                rendered.append(rowText)
+            //var lastWidth = 0
+            let padWidth = localWidths.map {$0.value}.reduce(0, {$0 + $1})
+            /*
+            for column in localWidths.keys.sorted() {
+                let width = localWidths[column]!
+                padWidth += width
+                lastWidth = width
+            }
+            padWidth -= lastWidth
+ */
+            while currentIndex < remainingStrings.count {
+                let toAppend : String = VxdayUtil.pad("", toLength: padWidth) + remainingStrings[currentIndex]
+                rendered.append(toAppend)
+                currentIndex += 1
+            }
+            if remainingStrings.count > 1 {
+                
+                rendered.append("") // a clean line after truncation looks nicer.
             }
         }
         return rendered

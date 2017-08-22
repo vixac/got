@@ -265,8 +265,8 @@ class TokenDayView {
         return result
     }
 
-    func toTable(_ days: IntOffset) -> VxdayTable {
-        let table = VxdayTable( "Token summary", width: 150)
+    func toTable(_ days: IntOffset, width: Int) -> VxdayTable {
+        let table = VxdayTable( "Token summary", width: width)
         let daySummaries = self.createSummaries(numDays: days)
         let sortedDayKeys = daySummaries.keys.sorted()
 
@@ -322,9 +322,9 @@ class CompleteTableView {
         self.items = items 
     }
     
-    func toTable() -> VxdayTable {
+    func toTable(_ width: Int) -> VxdayTable {
         
-        let table = VxdayTable( "", width: 150)
+        let table = VxdayTable( "", width: width)
 
         var rows: [TimeInterval : [Cell]] = [:]
         items.filter { $0.getJob() != nil || $0.getTask() != nil }.forEach { item in
@@ -391,28 +391,8 @@ class ItemTableView {
     init(_ items: [Item]) {
         self.items = items
     }
-    
-    private func getJobs() -> [VxJob] {
-        let jobs : [VxJob] = items.flatMap {
-            if case let Item.job(job) = $0 {
-                return job
-            }
-            return nil
-            }.sorted { $0.deadline.date < $1.deadline.date}
-        return jobs
-    }
-    
-    private func getTasks() -> [VxTask] {
-        let tasks: [VxTask] = items.flatMap {
-            if case let Item.task(task) = $0 {
-                return task
-            }
-            return nil
-            }.sorted {$0.creation.date < $1.creation.date}
-        return tasks
-    }
-    
-    func toTable() -> VxdayTable {
+
+    func toTable(_ width: Int) -> VxdayTable {
         let sections = self.separate()
         
         let tasks = sections.tasks
@@ -420,7 +400,7 @@ class ItemTableView {
         let today = sections.today
         let upcoming = sections.upcoming
         
-        let table = VxdayTable("", width: 150)
+        let table = VxdayTable("", width: width)
         
         
         if tasks.count > 0 {
@@ -453,7 +433,6 @@ class ItemTableView {
             table.addRow([Cell.empty])
             table.addRow([Cell.empty, Cell.text("Today", VxColor.warning())])
             table.addRow([Cell.empty])
-            // table.addHeading("Today", char: "-", color: VxColor.base())
             today.forEach { job in
                 table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
             }
@@ -462,52 +441,20 @@ class ItemTableView {
             table.addRow([Cell.empty])
             table.addRow([Cell.empty, Cell.text("Overdue", VxColor.danger())])
             table.addRow([Cell.empty])
-          //  table.addHeading("Overdue", char: "-", color: VxColor.base())
             overdue.forEach { job in
                 table.addRow(self.jobToCells(job, dateColor:  VxColor.danger()))
             }
         }
-
-        
-     //   table.addRow([Cell.empty, Cell.text("Totals:", VxColor.white())])
         table.addRow([Cell.empty])
         
-        
-        /*
-        table.addRow([Cell.text("Tasks:", VxColor.neutral()), Cell.text("\(tasks.count)", VxColor.neutral())])
-        table.addRow([Cell.text("Upcoming:", VxColor.happy()), Cell.text("\(upcoming.count)", VxColor.happy())])
-        table.addRow([Cell.text("Overdue:", VxColor.danger()), Cell.text("\(overdue.count)", VxColor.danger())])
-        table.addRow([Cell.text("Today:", VxColor.warning()), Cell.text("\(today.count)", VxColor.warning())])
-        */
-        
-        
-        
+
         let totalCount = today.count + tasks.count + upcoming.count + overdue.count
         table.addRow([
             Cell.text("Upcoming: \(upcoming.count)", VxColor.happy()),
             Cell.text("Overdue: \(overdue.count)", VxColor.danger()),
             Cell.text("Today: \(today.count)", VxColor.warning()),
             Cell.text("Total: \(totalCount)", VxColor.white())])
-        
-        //table.addRow([Cell.text("Total:", VxColor.white()), Cell.text("\()", VxColor.white())])
-            
-        //table.addRow([Cell.text("Upcoming:", VxColor.happy()), Cell.text("\(upcoming.count)", VxColor.happy())])
-        //table.addRow([Cell.text("Overdue:", VxColor.danger()), Cell.text("\(overdue.count)", VxColor.danger())])
-        //table.addRow([Cell.text("Today:", VxColor.warning()), Cell.text("\(today.count)", VxColor.warning())])
-    /*    let totalStrCell = Cell.text("Upcoming:", VxColor.happy())
-        let numStrCell = Cell.text("\(upcoming.count)", VxColor.happy())
-        table.addRow([totalStrCell, numStrCell])
-        
-        let totalStrCell = Cell.text("Tasks:", VxColor.bright())
-        let numStrCell = Cell.text("\(tasks.count)", VxColor.bright())
-        table.addRow([totalStrCell, numStrCell])
-        
-        let totalStrCell = Cell.text("Tasks:", VxColor.bright())
-        let numStrCell = Cell.text("\(tasks.count)", VxColor.bright())
  
-        table.addRow([totalStrCell, numStrCell])
- */
-        
         return table
     }
     
@@ -693,8 +640,39 @@ class WhatView {
         let upcomingHeading = Cell.info(VxdayUtil.pad("Upcoming", toLength: colWidth))
         let tasksHeading = Cell.info(VxdayUtil.pad("Tasks", toLength: colWidth))
         let totalHeading = Cell.info(VxdayUtil.pad("Total", toLength: colWidth))
-        table.addRow([listHeading, overdueHeading, todayHeading, upcomingHeading, tasksHeading, totalHeading, listHeading])
         let buckets = self.toBuckets()
+
+        let listCount = buckets.count
+        let overdueCount = buckets.map { $0.past.count}.reduce(0, { $0 + $1})
+        let todayCount = buckets.map { $0.present.count}.reduce(0, { $0 + $1})
+        let futureCount = buckets.map { $0.future.count}.reduce(0 , {$0 + $1})
+        let taskCount = buckets.map {$0.taskCount}.reduce(0, {$0 + $1})
+      
+	var headingRow: [Cell] = []
+	headingRow.append(listHeading)
+
+	let showOverdue = overdueCount > 0 
+	let showToday = todayCount > 0
+	let showFuture  = futureCount > 0 
+	let showTasks = taskCount > 0 
+	if showOverdue {
+		headingRow.append(overdueHeading)
+	} 
+	
+	if showToday {
+		headingRow.append(todayHeading)
+	} 
+	if showFuture {
+		headingRow.append(upcomingHeading)
+	} 
+	if showTasks {
+		headingRow.append(tasksHeading)
+	} 
+
+	headingRow.append(totalHeading)
+	headingRow.append(listHeading)
+    table.addRow(headingRow)
+
         buckets.forEach { summary in
             let listCell = Cell.list(summary.list)
             let overdueCell = Cell.text(noStringForZero(summary.past.count), VxColor.danger())
@@ -702,23 +680,52 @@ class WhatView {
             let futureCell = Cell.text(noStringForZero(summary.future.count), VxColor.happy())
             let taskCell = Cell.text(noStringForZero(summary.taskCount), VxColor.warning())
             let totalCell = Cell.text(noStringForZero(summary.past.count + summary.present.count + summary.future.count + summary.taskCount), VxColor.white())
-            table.addRow([listCell, overdueCell, presentCell, futureCell, taskCell, totalCell, listCell])
+            var bucketRow: [Cell] = []
+            bucketRow.append(listCell)
+            if showOverdue {
+                bucketRow.append(overdueCell)
+            }
+            
+            if showToday {
+                bucketRow.append(presentCell)
+            }
+            if showFuture {
+                bucketRow.append(futureCell)
+            }
+            if showTasks {
+                bucketRow.append(taskCell)
+            }
+
+            bucketRow.append(totalCell)
+            bucketRow.append(listCell)
+                table.addRow(bucketRow)
+
         }
         
-        table.addHeading("Total", char: "-", color: VxColor.base())
-        let listCount = buckets.count
-        let overdueCount = buckets.map { $0.past.count}.reduce(0, { $0 + $1})
-        let todayCount = buckets.map { $0.present.count}.reduce(0, { $0 + $1})
-        let futureCount = buckets.map { $0.future.count}.reduce(0 , {$0 + $1})
-        let taskCount = buckets.map {$0.taskCount}.reduce(0, {$0 + $1})
-        
-        let listCell = Cell.text(noStringForZero(listCount), VxColor.white())
-        let overdueCell = Cell.text(noStringForZero(overdueCount), VxColor.danger())
-        let todayCell = Cell.text(noStringForZero(todayCount), VxColor.warning())
-        let futureCell = Cell.text(noStringForZero(futureCount), VxColor.happy())
-        let taskCell = Cell.text(noStringForZero(taskCount), VxColor.warning())
-        let totalCell = Cell.text(noStringForZero((overdueCount + todayCount + futureCount + taskCount)), VxColor.white())
-        table.addRow([listCell, overdueCell, todayCell, futureCell, taskCell, totalCell])
+    table.addHeading("Total", char: "-", color: VxColor.base())
+   
+    let listCell = Cell.text(noStringForZero(listCount), VxColor.white())
+    let overdueCell = Cell.text(noStringForZero(overdueCount), VxColor.danger())
+    let todayCell = Cell.text(noStringForZero(todayCount), VxColor.warning())
+    let futureCell = Cell.text(noStringForZero(futureCount), VxColor.happy())
+    let taskCell = Cell.text(noStringForZero(taskCount), VxColor.warning())
+    let totalCell = Cell.text(noStringForZero((overdueCount + todayCount + futureCount + taskCount)), VxColor.white())
+	var summaryRow : [Cell] = []
+	summaryRow.append(listCell)
+	if showOverdue {
+	   summaryRow.append(overdueCell)
+	}
+	if showToday {
+	   summaryRow.append(todayCell)
+	}
+	if showFuture {
+	   summaryRow.append(futureCell)
+	}
+	if showTasks {
+	   summaryRow.append(taskCell)
+	}
+	summaryRow.append(totalCell)
+	table.addRow(summaryRow)
         return table
         
     }

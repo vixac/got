@@ -16,6 +16,7 @@ enum Script : String {
     case wait = "wait.sh"
     case lookForHash = "look_for_hash.sh"
     case removeLine = "remove_line.sh"
+    case shellWidth = "shell_width.sh"
 }
 
 class VxdayFile {
@@ -121,6 +122,20 @@ class VxdayExec {
     static func getOutput() -> String? {
         return VxdayReader.readFile(VxdayFile.outputFile).first
     }
+    
+    static func getShellWidth() -> Int {
+        VxdayExec.shell(VxdayFile.getScriptPath(.shellWidth))
+        guard let str = getOutput() else {
+            print("Error getting shell width")
+            return 150
+        }
+        guard let width = Int(str) else {
+            print("Error, width is not a number")
+            return 150
+        }
+        return width - 30 // need the 30 and don't really know why
+    }
+    
     static func removeActiveHash(_ hash: Hash, list: ListName?) {
         guard let l = getListIfNeeded(hash, list: list) else {
             print("Error: Can't find list for hash: \(hash.hash)")
@@ -211,7 +226,7 @@ class VxdayExec {
             
             
             let view = CompleteTableView(items)
-            let table = view.toTable()
+            let table = view.toTable(getShellWidth())
             table.render().forEach {
                 print("rendering $0 which is \($0)")
                 print($0)}
@@ -226,7 +241,7 @@ class VxdayExec {
             }
             
             let view = CompleteTableView(allCompleteItems)
-            let table = view.toTable()
+            let table = view.toTable(getShellWidth())
             table.render().forEach {print($0)}
         }
     }
@@ -285,7 +300,7 @@ class VxdayExec {
             report.addToken(t)
         }
      
-        report.toTable(days).render().forEach { print($0)}
+        report.toTable(days, width: getShellWidth()).render().forEach { print($0)}
     }
     
     static func startTokenSession(_ hash: Hash) {
@@ -378,16 +393,20 @@ class VxdayExec {
         }
         
         let view  = ItemTableView(allItemsEver)
-        let table = view.toTable()
+        let width = getShellWidth()
+        let table = view.toTable(width)
         table.render().forEach { print($0) }
     }
     
-    static func allList(_ list: ListName) {
+    static func allList(_ prefix: String) {
+	let allLists = VxdayReader.allLists(prefix)	
+	var allItems: [Item] = []
+	allLists.forEach {  list in 
+            allItems += VxdayReader.itemsInList(list)
+	}
         
-        let items = VxdayReader.itemsInList(list)
-        
-        let view  = ItemTableView(items)
-        let table = view.toTable()
+        let view  = ItemTableView(allItems)
+        let table = view.toTable(getShellWidth())
         table.render().forEach { print($0) }
     }
     

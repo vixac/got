@@ -288,3 +288,37 @@ extension Date {
     
     
 }
+
+extension String {
+    public func wrap(columns: Int) -> [String] {
+        let scanner = Scanner(string: self)
+        
+        var result : [String] = []
+        var currentLineLength = 0
+        
+        var str = ""
+        var word: NSString?
+        while scanner.scanUpToCharacters(from: CharacterSet.whitespacesAndNewlines, into: &word) {
+            let wordLength = word?.length ?? 0
+            
+            if currentLineLength != 0 && currentLineLength + wordLength + 1 > columns {
+                // too long for current line, wrap
+                str += " "
+                result.append(str)
+                str  = ""
+                currentLineLength = 0
+            }
+            
+            // append the word
+            if currentLineLength != 0 {
+                str += " "
+                currentLineLength += 1
+            }
+            
+            str += ((word ?? "") as String)
+            currentLineLength += wordLength
+        }
+        result.append(str)
+        return result
+    }
+}
