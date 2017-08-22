@@ -33,6 +33,7 @@ enum ItemType : String {
     }
 }
 
+
 struct Hash : Hashable {
     let hash: String
     init(_ hash: String) {
@@ -48,6 +49,69 @@ struct Hash : Hashable {
     
     static func == (lhs: Hash, rhs: Hash) -> Bool {
         return lhs.hash == rhs.hash
+    }
+}
+
+
+
+struct Ordinals {
+    private static let ordinals: [String: Int] = {
+        var dictionary : [String: Int] = [:]
+        ["1st", "2nd", "3rd","4th", "5th", "6th", "7th","8th", "9th", "10th", "11th","12th", "13th", "14th", "15th","16th", "17th", "18th", "19th","20th", "21st", "22nd", "23rd","24th", "25th", "26th", "27th","28th", "29th", "30th", "31st"].enumerated().forEach{ (index, val) in
+            dictionary[val] = index
+        }
+        return dictionary
+    }()
+    static func toDay(_ str: String) -> Int? {
+        if let val =  ordinals[str] {
+            return val + 1
+        }
+        return nil
+    }
+}
+struct DateOffset {
+ 
+    /*
+     7/11
+     7/april
+     8/10/17
+     5/10/18
+     */
+    
+    let str: String
+    let date: Date
+
+    init?(_ string: String) {
+        self.str = string
+        let now = VxdayUtil.now()
+        
+
+        
+        let calendar = Calendar(identifier: Calendar.Identifier.gregorian)
+        var components = (calendar as NSCalendar).components([NSCalendar.Unit.day, NSCalendar.Unit.month, NSCalendar.Unit.year],
+                                                             from: now)
+        guard let ordinalDay = Ordinals.toDay(str) else {
+            print("Error, \(str) is not a valid 1st or 2nd or nth of the month.")
+            return nil
+        }
+        
+        let todayDay = components.day!
+        components.day = ordinalDay
+        var targetDate = calendar.date(from: components)!
+        
+        
+        if ordinalDay < todayDay { // add a month
+            var componentToAdd = DateComponents()
+            componentToAdd.month = 1
+            targetDate = calendar.date(byAdding: componentToAdd, to: targetDate)!
+        }
+        print("Target date is now \(targetDate.toDateString())")
+        self.date = targetDate
+    }
+    
+
+    var offset: IntOffset {
+        return IntOffset(date.daysAgoInt())
     }
 }
 

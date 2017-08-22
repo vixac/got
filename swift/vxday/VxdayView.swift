@@ -565,7 +565,7 @@ class OneLinerView {
     static func showTimerStarted(_ list: ListName, time: Date, hash: Hash, description: Description) -> VxdayTable {
         let list  = Cell.list(list)
         let desc = Cell.description(description)
-        let summary = Cell.text("Starting timer at", VxColor.white())
+        let summary = Cell.text("Started timer at", VxColor.white())
         let hash = Cell.hash(hash)
         let table = VxdayTable("", width: 150)
         let creation = CreationDate(time)

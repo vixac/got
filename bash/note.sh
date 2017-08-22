@@ -2,7 +2,7 @@
 #opens $1 filename in vim, then when closed, inserts the timestamp at the top  of the file.
 echo "file is $1"
 FILE=$1
-TMPFILE=$FILE.vxdaytmp
+TMPFILE=$FILE.got
 touch $FILE
 #copying file to tmp so that we can see if it changes
 cp $FILE $TMPFILE

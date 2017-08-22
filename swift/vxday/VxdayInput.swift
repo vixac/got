@@ -89,10 +89,18 @@ enum Instruction {
         
         switch verb {
             case .add:
-                guard let offset = ArgParser.offset(args: args, index: 1) else {
-                    print("Error: Add couldn't find offset in args: \(args)")
-                    return nil
+                
+                var theOffset = IntOffset(0)
+                if let offset = ArgParser.offset(args: args, index: 1) {
+                    theOffset = offset
+                } else {
+                    guard let dateOffset = ArgParser.dateOffset(args: args, index: 1) else {
+                        print("Error: Add couldn't find either a date offset or a readable date string")
+                        return nil
+                    }
+                    theOffset = dateOffset.offset
                 }
+                
                 guard let listName = ArgParser.listName(args: args, index: 2) else {
                     print("Error: Add couldn't find list name in \(args)")
                     return nil
@@ -102,7 +110,7 @@ enum Instruction {
                     print("Error: Add couldn't find a description in args: \(args)")
                     return nil
                 }
-                return .add(listName, offset, description)
+                return .add(listName, theOffset, description)
                 
             case .all:
                 if let listName = ArgParser.listName(args: args, index: 1) {
@@ -255,6 +263,12 @@ enum Instruction {
 class ArgParser {
     
   
+    static func dateOffset(args: [String], index: Int) -> DateOffset? {
+        guard let str = ArgParser.str(args: args, index: index) else  {
+            return nil
+        }
+        return DateOffset(str)
+    }
     static func listName(args: [String], index: Int) -> ListName? {
         guard let str = ArgParser.str(args: args, index: index) else  {
             return nil

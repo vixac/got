@@ -17,6 +17,7 @@ enum Script : String {
     case lookForHash = "look_for_hash.sh"
     case removeLine = "remove_line.sh"
     case shellWidth = "shell_width.sh"
+    case noteLineCount = "note_line_count.sh"
 }
 
 class VxdayFile {
@@ -42,17 +43,17 @@ class VxdayFile {
     }
     
     static func getSummaryFilename(_ list: ListName) -> String {
-        return VxdayFile.activeDir + "/" + list.name + "_summary.vxday"
+        return VxdayFile.activeDir + "/" + list.name + "_summary.got"
     }
     static func getNoteFilename(_ list: ListName, hash: Hash) -> String {
-        return VxdayFile.activeDir + "/" + list.name + "_" + hash.hash + "_notes.vxday"
+        return VxdayFile.activeDir + "/" + list.name + "_" + hash.hash + "_notes.got"
     }
     
     static func getCompleteFilename(_ list: ListName) -> String  {
-        return VxdayFile.activeDir + "/" + list.name + "_complete.vxday"
+        return VxdayFile.activeDir + "/" + list.name + "_complete.got"
     }
     static func getTokenFilename(_ list: ListName) -> String {
-        return VxdayFile.activeDir + "/" + list.name + "_tokens.vxday"
+        return VxdayFile.activeDir + "/" + list.name + "_tokens.got"
     }
 
 }
@@ -66,7 +67,7 @@ struct VxdayExecSessionGlobals {
 class VxdayExec {
     
     static var globals : VxdayExecSessionGlobals? = nil
-    private static let starVxday = "_*.vxday"
+    private static let starVxday = "_*.got"
     
     @discardableResult
     static func shell(_ args: String...) -> Int32 {
@@ -97,7 +98,7 @@ class VxdayExec {
     }
  
     static func lessList(_ list: ListName) {
-        let files = VxdayFile.activeDir + "/" + list.name + "_*.vxday"
+        let files = VxdayFile.activeDir + "/" + list.name + "_*.got"
         VxdayExec.shell("cat", files)
     }
     
@@ -251,7 +252,14 @@ class VxdayExec {
             }
         }
     }
-    
+    static func noteLineCount(_ hash: Hash) -> Int {
+        guard let list = hashToListName(hash) else {
+            print("No hash found: \(hash)")
+            return 0
+        }
+        let shell = VxdayFile.getScriptPath(.noteLineCount)
+        return 0 //TODO
+    }
     static func takeNote(_ list: ListName, hash: Hash, note: String) {
         let noteFile = VxdayFile.getNoteFilename(list, hash: hash)
         let script = VxdayFile.getScriptPath(.append)
