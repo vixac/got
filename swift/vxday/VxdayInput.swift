@@ -32,7 +32,7 @@ enum Verb : String {
     case unretire = "unretire"
     case what = "what"
     case x = "done"
-    case jot = "jot"
+    case it = "it"
     case complete = "complete"
     case remove = "remove"
     case start = "start"
@@ -88,6 +88,12 @@ enum Instruction {
         }
         
         switch verb {
+            case .it:
+                guard let description = ArgParser.description(args: args, start: 2) else {
+                    print("Error: Do couldn't find a description in args: \(args)")
+                    return nil
+                }
+                return .add(listName, IntOffset(0), description)
             case .add:
                 var theOffset = IntOffset(0)
                 if let offset = ArgParser.offset(args: args, index: 1) {
