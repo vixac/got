@@ -43,6 +43,8 @@ class VxdayInstruction {
         case let .info(hash):
             VxdayExec.info(hash)
             
+        case let .help:
+            VxdayExec.help()
         default:
              print("TODO handle instruction: \(instruction)")
         }

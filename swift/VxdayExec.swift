@@ -434,6 +434,9 @@ class VxdayExec {
     }
     
     
+    static func help() {
+        HelpView.toTable(getShellWidth()).render().forEach {print($0)}
+    }
     
     static func wait(_ list: ListName, hash: Hash) {
         let script = VxdayFile.getScriptPath(.wait)

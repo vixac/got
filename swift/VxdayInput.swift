@@ -89,7 +89,7 @@ enum Instruction {
         
         switch verb {
             case .it:
-                guard let description = ArgParser.description(args: args, start: 2) else {
+                guard let description = ArgParser.description(args: args, start: 1) else {
                     print("Error: Do couldn't find a description in args: \(args)")
                     return nil
                 }

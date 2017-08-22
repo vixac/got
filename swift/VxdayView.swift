@@ -740,5 +740,12 @@ class WhatView {
     
 }
 
+class HelpView {
+    
+    static func toTable(_ width: Int) -> VxdayTable {
+        var table = VxdayTable(width: width)
+        
+    }
+}
 
 
