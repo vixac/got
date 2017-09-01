@@ -15,22 +15,20 @@
 
 #### Getting Started
 
-You'll need the swift compiler (swiftc) which can be found at [https://swift.org/download/#releases]
-If you're running on windows, you can get started [here.](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+You'll need the swift compiler (swiftc) which can be found at https://swift.org/download/#releases
+If you're running on Windows, you can get started [here.](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
-**installation**
+**Installation**
 - clone this repo
 - Choose where you want to keep your Got contents files
-- Add these 3 lines to your .profile
+- Add these 3 lines to your ~/.profile
 
 ```
 export GOT_SRC=<path/to/this/repo>
 export GOT_CONTENTS=<path/to/wherever/you/want/your/contents>
-. $GOT_SRC/got_env
+source $GOT_SRC/got_env
 ```
-- Source got_env
-
-Sourcing this file will also compile Got if the executable does not exist yet.
+- Now you've got your environment variables in place, reload your .profile. Sourcing the got_env file will also compile 'got' if the executable does not exist yet. 
 
 #### How does it work
 - 'got' stores everything in plain text files in your GOT_CONTENTS directory, so if you want your got synced across machines, all you need to do is put your GOT_CONTENTS in something like google drive or dropbox
