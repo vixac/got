@@ -14,5 +14,5 @@ BASE=$GOT_SRC/swift
 echo "compiling got.."
 swiftc $BASE/main.swift $BASE/VxdayTable.swift $BASE/Trap.swift $BASE/VxdayTypes.swift $BASE/VxdayRead.swift $BASE/VxdayView.swift $BASE/VxdayInstruction.swift $BASE/VxdayExec.swift $BASE/VxdayUtil.swift $BASE/VxdayInput.swift  -o $GOT_SRC/got
 echo "compilation complete!"
-echo "moving got to /usr/local/bin"
+echo "moving got to /usr/local/bin. To do this please enter your password"
 mv $GOT_SRC/got /usr/local/bin
