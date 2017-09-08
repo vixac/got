@@ -341,9 +341,6 @@ class VxdayExec {
         VxdayExec.storeItem(vxtask)
 
         OneLinerView.showItemCreatedOneLiner(vxtask).render().forEach {print($0)}
-        
-        
-        
     }
     
     static func createJob(_ list: ListName, offset: IntOffset, description: Description ) {
@@ -436,6 +433,10 @@ class VxdayExec {
         
     }
     
+    static func gotInfo() {
+        let gotDir = VxdayFile.gotBase
+        print("Your got base is: \(gotDir)")
+    }
     
     static func help() {
         HelpView.toTable(getShellWidth()).render().forEach {print($0)}

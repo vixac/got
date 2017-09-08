@@ -38,6 +38,7 @@ enum Verb : String {
     case start = "start"
     case report = "report"
     case keep = "keep"
+    case gotInfo = "status"
     case info = "info"
     
 }
@@ -55,7 +56,7 @@ enum Instruction {
     case trackList(ListName)
     case top(ListName)
     case complete(ListName?)
-    
+    case gotInfo
     //hash actions
     case x(Hash)
     case go(Hash)
@@ -257,6 +258,9 @@ enum Instruction {
                     return nil
                 }
                 return .x(hash)
+            
+            case .gotInfo:
+                return .gotInfo
         }
 
     }

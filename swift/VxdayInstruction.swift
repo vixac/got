@@ -42,7 +42,8 @@ class VxdayInstruction {
             VxdayExec.showNotes(hash)
         case let .info(hash):
             VxdayExec.info(hash)
-            
+        case .gotInfo:
+            VxdayExec.gotInfo()
         case .help:
             VxdayExec.help()
         default:
