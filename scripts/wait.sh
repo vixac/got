@@ -1,5 +1,4 @@
-. $GOT_SRC/got_env
-echo "starting timer for list $1 and hash $2"
+echo "WAIT WAS CALLED...."
 FILE=$1
 HASH=$2
 

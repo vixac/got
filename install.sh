@@ -1,4 +1,3 @@
-
 echo "GOT SOURCE IS '$GOT_SRC'"
 if [[ -z "$GOT_SRC" ]]; then
  echo "Error, GOT_SRC is not set. It's the root dir of the Got git repo."
@@ -16,3 +15,17 @@ swiftc $BASE/main.swift $BASE/VxdayTable.swift $BASE/Trap.swift $BASE/VxdayTypes
 echo "compilation complete!"
 echo "moving got to /usr/local/bin. To do this please enter your password"
 mv $GOT_SRC/got /usr/local/bin
+
+if [[ -z "$GOT" ]]; then
+   GOT=~/.got
+fi
+
+
+mkdir -p $GOT/contents/active
+mkdir -p $GOT/contents/retired
+mkdir -p $GOT/scripts
+cp scripts/*.sh $GOT/scripts
+cp got_env $GOT
+
+. $GOT/got_env
+

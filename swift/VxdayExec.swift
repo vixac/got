@@ -21,20 +21,26 @@ enum Script : String {
 
 class VxdayFile {
     
+    static let gotBase: String = {
+        VxdayExec.getEnvironmentVar("GOT") ?? "~/.got"
+    }()
+    static let contentDir: String = {
+        VxdayFile.gotBase + "/contents"
+    }()
     static let bashDir: String = {
-        VxdayExec.getEnvironmentVar("GOT_SRC")! + "/scripts"
+        VxdayFile.gotBase + "/scripts"
     }()
     
     static let activeDir: String = {
-        VxdayExec.getEnvironmentVar("GOT_ACTIVE")!
+        VxdayFile.contentDir + "/active"
     }()
     
     static let retiredDir: String = {
-        VxdayExec.getEnvironmentVar("GOT_RETIRED")!
+        VxdayFile.contentDir + "/retired"
     }()
     
     static let outputFile : String = {
-        VxdayExec.getEnvironmentVar("GOT_OUTPUT_FILE")!
+        VxdayFile.gotBase + "/.tmpdata"
     }()
     
     static func getScriptPath(_ script: Script) -> String {
@@ -196,9 +202,6 @@ class VxdayExec {
         }
  */
         print("TODO this doesnt woork yet.")
-        //let script = VxdayFile.getScriptPath(.note)
-        //let filename = VxdayFile.getNoteFilename(list, hash: hash)
-       // VxdayExec.shellNoWait ("vim", filename)doesnt work.
         
     }
     static func showComplete(_ list: ListName?) {
