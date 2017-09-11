@@ -12,7 +12,7 @@ func main() {
     
     args.remove(at: 0) // thanks, but we dont need the filename.
     guard let instruction = Instruction.create(args) else {
-        print("Invalid instruction. Try day help")
+        print("Invalid instruction. Try 'got help'")
         return
     }
     VxdayInstruction.executeInstruction(instruction)
