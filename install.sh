@@ -18,3 +18,4 @@ mkdir -p $GOT/contents/active
 mkdir -p $GOT/contents/retired
 mkdir -p $GOT/scripts
 cp scripts/*.sh $GOT/scripts
+chmod +x $GOT/scripts/*.sh
