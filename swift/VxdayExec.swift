@@ -85,6 +85,7 @@ class VxdayExec {
     }
     
     static func getEnvironmentVar(_ name: String) -> String? {
+        
         guard let rawValue = getenv(name) else { 
            print("Error, can't find environment variable: \(name). You've probably not set GOT_SRC or GOT_BASE, or not sourced the got_env file")
            return nil

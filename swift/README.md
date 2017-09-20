@@ -20,21 +20,18 @@ If you're running on Windows, you can get started [here.](https://www.youtube.co
 
 **Installation**
 - clone this repo
-
-
-- for simple installation, run this:
-```
- sudo ./simple_install.sh
-```
-Alternatively, set $GOT to be the directory where you want to keep your 'got' data, then:
 - run install.sh  (creates the got executable in the directory of the repository)
-- put the got executable in your :path, (you can  run sudo move.sh to put it in /usr/local/bin if you like).
+- run move.sh
+
+```
+- Now you've got your environment variables in place, reload your .profile. Sourcing the got_env file will also compile 'got' if the executable does not exist yet. 
 
 #### How does it work
-- 'got' stores everything in plain text files in your $GOT directory, so if you want your got synced across machines, all you need to do is put your $GOT in something like google drive or dropbox
+- 'got' stores everything in plain text files in your GOT_CONTENTS directory, so if you want your got synced across machines, all you need to do is put your GOT_CONTENTS in something like google drive or dropbox
 - 'got' is mostly entirely keyboard based, except when you want to do something to an item, in which case you'll want to copy paste the hash (double click CTRL+C CTRL+V)
 - 'got' uses colours, so works best with a dark or black background
 - 'got', like 'echo', lets you enter plain text into your terminal. Also, like 'echo', if you're going to use reserved symbols like ' or .*, you'll want to use quotes for the description of your item. For example: 'got to test "using got"' and 'got till 3rd "Test every got command"'
+
 
 #### Items, lists, hashes
 Every job or task you put in 'got' is an item. It's your description, along with a hash, the time you created it, and the list and deadline if there is one.

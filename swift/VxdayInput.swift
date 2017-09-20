@@ -262,11 +262,8 @@ enum Instruction {
             case .gotInfo:
                 return .gotInfo
         }
-
     }
 }
-
-
 
 class ArgParser {
   

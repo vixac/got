@@ -37,6 +37,7 @@
 		1C8444D21E85CBB10060E661 /* vxdayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vxdayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C8444D41E85CBB10060E661 /* VxDayUtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxDayUtilTests.swift; sourceTree = "<group>"; };
 		1C8444D61E85CBB10060E661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CEAC645A1F72BD2700D0665D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		CEE926CC1F4CA6BB00DBEA83 /* VxdayRead.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayRead.swift; sourceTree = "<group>"; };
 		CEE926CD1F4CA6BB00DBEA83 /* VxdayExec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayExec.swift; sourceTree = "<group>"; };
 		CEE926CE1F4CA6BB00DBEA83 /* VxdayTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VxdayTypes.swift; sourceTree = "<group>"; };
@@ -70,6 +71,7 @@
 		1C4C6FBE1E7EC96C00AB1949 = {
 			isa = PBXGroup;
 			children = (
+				CEAC645A1F72BD2700D0665D /* README.md */,
 				CEE926D11F4CA6BB00DBEA83 /* main.swift */,
 				CEE926D01F4CA6BB00DBEA83 /* Trap.swift */,
 				CEE926CD1F4CA6BB00DBEA83 /* VxdayExec.swift */,
