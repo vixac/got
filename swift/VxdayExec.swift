@@ -22,29 +22,35 @@ enum Script : String {
 class VxdayFile {
     
     static let gotBase: String = {
-        VxdayExec.getEnvironmentVar("GOT") ?? "~/.got"
+        if let s =  VxdayExec.getEnvironmentVar("GOT") {
+             return s 
+}
+       else { 
+      let home = VxdayExec.getEnvironmentVar("HOME") ?? "~" 
+      return home + "/.got"
+}
     }()
     static let contentDir: String = {
-        VxdayFile.gotBase + "/contents"
+       return   VxdayFile.gotBase + "/contents"
     }()
     static let bashDir: String = {
-        VxdayFile.gotBase + "/scripts"
+       return  VxdayFile.gotBase + "/scripts"
     }()
     
     static let activeDir: String = {
-        VxdayFile.contentDir + "/active"
+       return  VxdayFile.contentDir + "/active"
     }()
     
     static let retiredDir: String = {
-        VxdayFile.contentDir + "/retired"
+       return  VxdayFile.contentDir + "/retired"
     }()
     
     static let outputFile : String = {
-        VxdayFile.gotBase + "/.tmpdata"
+       return  VxdayFile.gotBase + "/.tmpdata"
     }()
     
     static func getScriptPath(_ script: Script) -> String {
-        return VxdayFile.bashDir + "/" + script.rawValue
+       return VxdayFile.bashDir + "/" + script.rawValue
     }
     
     static func getSummaryFilename(_ list: ListName) -> String {
@@ -85,9 +91,7 @@ class VxdayExec {
     }
     
     static func getEnvironmentVar(_ name: String) -> String? {
-        
         guard let rawValue = getenv(name) else { 
-           print("Error, can't find environment variable: \(name). You've probably not set GOT_SRC or GOT_BASE, or not sourced the got_env file")
            return nil
         }
         return String(utf8String: rawValue)
