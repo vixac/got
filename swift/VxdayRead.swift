@@ -32,7 +32,6 @@ class VxdayReader {
  
     static func allLists(_ prefix: String = "") -> [ListName] {
         let fm = FileManager.default
-	print("VX looking for active:")
         guard let enumerator = fm.enumerator(atPath: VxdayFile.activeDir) else { return [] 
 }
         var lists: Set<String> = Set()
