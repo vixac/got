@@ -763,7 +763,7 @@ class HelpView {
                                  "mark an item complete",
                                  "erase an item",
                                  "add an item to do today"]
-        let explanations = ["The simplest thing you can add: create an item with no list or deadline. For example: \(c.colorThis("'got it Try out Got'"))",
+        let explanations = ["The simplest thing you can add: create an item with no list, due to be completed today. For example: \(c.colorThis("'got it Try out Got'"))",
                             "Add an item to a list. For example: \(c.colorThis("'got to shop Strawberry icecream'")) creates a list called 'shop' and adds an item to it called: 'Strawberry Icecream'",
                             "Add an item with a deadline. There are 3 ways to do this. \(c.colorThis("'got till 5 read Grapes of Wrath'")) creates a deadline in 5 days time. \(c.colorThis("'got till 19th holiday book flights'")) creates a deadline either the 19th of this month, or next month if 19th has passed. \(c.colorThis("'got till 21/05/18 admin Email Bob about the thing'")) sets the deadline to 21st May 2018",
                             "Shows all active jobs. You can specify a list. For example: \(c.colorThis("'got jobs accounts'"))",

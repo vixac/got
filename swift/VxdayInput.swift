@@ -94,7 +94,7 @@ enum Instruction {
                     print("Error: Do couldn't find a description in args: \(args)")
                     return nil
                 }
-                return .doIt(ListName("<nolist>"), description)
+                return .doIt(ListName("today"), description)
             case .add:
                 var theOffset = IntOffset(0)
                 if let offset = ArgParser.offset(args: args, index: 1) {

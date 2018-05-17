@@ -309,14 +309,14 @@ class VxdayExec {
             return
         }
         let now = VxdayUtil.now()
+        VxdayExec.takeNote(list, hash: hash, note: VxdayUtil.datetimeFormatter.string(from: now))
         VxdayExec.globals = VxdayExecSessionGlobals(start: CreationDate(now), hash: hash, list: list)
         let description = VxdayReader.descriptionForHash(hash , list: list)
         OneLinerView.showTimerStarted(list, time: now, hash: hash, description: description ?? Description("")).render().forEach { print($0)}
         waitForUser (cb: { start, end in
             saveToken(list, hash: hash , creation: start , completion: end)
         }, note: { text in
-            let now = VxdayUtil.datetimeFormatter.string(from: VxdayUtil.now())
-            VxdayExec.takeNote(list, hash: hash, note: "\(now): \(text)")
+            VxdayExec.takeNote(list, hash: hash, note: text)
         })
         
     }
