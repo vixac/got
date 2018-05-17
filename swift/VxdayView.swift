@@ -427,34 +427,26 @@ class ItemTableView {
             }
         }
         if today.count > 0 {
-            //table.addRow([Cell.empty])
-          //  table.addRow([Cell.empty, Cell.text("Today", VxColor.warning())])
-            //table.addRow([Cell.empty])
             today.forEach { job in
-                table.addRow(self.jobToCells(job, dateColor: VxColor.warning()))
+                table.addRow(self.jobToCells(job, dateColor: VxColor.happy()))
             }
         }
 
         if upcoming.count > 0 {
-            //table.addRow([Cell.empty])
-            // table.addRow([Cell.empty, Cell.text("Upcoming", VxColor.happy())])
-            //table.addRow([Cell.empty])
-            
-            //table.addHeading("Upcoming", char: "-", color: VxColor.happy())
             upcoming.forEach { job in
-                table.addRow(self.jobToCells(job, dateColor:  VxColor.happy()))
+                table.addRow(self.jobToCells(job, dateColor:  VxColor.warning()))
             }
         }
         table.addRow([Cell.empty])
-        /* // this looks alot like got what <list> might look like. Don't think I want it.
+         // this looks alot like got what <list> might look like. Don't think I want it.
         table.addHeading("", char: "-", color: VxColor.base())
         let totalCount = today.count + tasks.count + upcoming.count + overdue.count
         table.addRow([
-            Cell.text("Upcoming: \(upcoming.count)", VxColor.happy()),
-            Cell.text("Overdue: \(overdue.count)", VxColor.danger()),
-            Cell.text("Today: \(today.count)", VxColor.warning()),
+            Cell.text("Overdue: \(overdue.count)", VxColor.white()),
+            Cell.text("Today: \(today.count)", VxColor.white()),
+            Cell.text("Upcoming: \(upcoming.count)", VxColor.white()),
             Cell.text("Total: \(totalCount)", VxColor.white())])
- */
+ 
         return table
     }
     
@@ -745,8 +737,8 @@ class HelpView {
     static func toTable(_ width: Int) -> VxdayTable {
         let table = VxdayTable(" Got Help ", width: width)
         let c = VxColor.info2()
-        let commands = ["it",
-                        "to",
+        let commands = ["to",
+                        "it",
                         "till",
                         "jobs",
                         "what",

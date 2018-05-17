@@ -396,11 +396,11 @@ class VxdayExec {
     }
     
     static func allList(_ prefix: String) {
-	let allLists = VxdayReader.allLists(prefix)	
-	var allItems: [Item] = []
-	allLists.forEach {  list in 
-            allItems += VxdayReader.itemsInList(list)
-	}
+        let allLists = VxdayReader.allLists(prefix)
+        var allItems: [Item] = []
+        allLists.forEach {  list in
+                allItems += VxdayReader.itemsInList(list)
+        }
         
         let view  = ItemTableView(allItems)
         let table = view.toTable(getShellWidth())

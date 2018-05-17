@@ -15,7 +15,7 @@ class VxdayInstruction {
             case let .add(list, offset, description):
                 VxdayExec.createJob(list, offset: offset, description: description)
             case let .doIt(list, description):
-                VxdayExec.createJob(list, offset: IntOffset(0), description: description)
+                VxdayExec.createTask(list, description: description)
             case let .retire(list):
                 VxdayExec.retire(list)
             case let .unretire(list):

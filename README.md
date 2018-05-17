@@ -6,8 +6,8 @@
 
 #### Examples
 
-- **got it Try out Got**       _(adds the item 'Try out Got'. No list, no deadline.)_
-- **got to shop Strawberry icecream**      _(adds the item 'Strawberry icecream' to the list 'shop'. No deadline.)_
+- **got to Try out Got**       _(adds the item 'Try out Got'. No list, due for today.)_
+- **got it shop Strawberry icecream**      _(adds the item 'Strawberry icecream' to the list 'shop'. No deadline.)_
 - **got till 19th holiday book flights**      _(adds 'book flights' to the list 'holiday' with deadline 19th of this or next month, whichever is coming up next)_
 - **got till 21/05/18 admin Email Bob about the thing**        _(adds 'Email Bob about the thing' to the list 'admin' for the 21st May 2018)_
 - **got jobs admin**      -(show all jobs under the admin list)

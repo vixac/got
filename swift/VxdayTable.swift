@@ -45,9 +45,9 @@ enum Cell {
         case .overdue:
             return VxColor.danger()
         case .today:
-            return VxColor.warning()
-        case .upcoming:
             return VxColor.happy()
+        case .upcoming:
+            return VxColor.warning()
         case .hash:
             return VxColor.info2()
         case .total:

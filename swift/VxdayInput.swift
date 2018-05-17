@@ -89,12 +89,12 @@ enum Instruction {
         }
         
         switch verb {
-            case .it:
+            case .doIt:
                 guard let description = ArgParser.description(args: args, start: 1) else {
                     print("Error: Do couldn't find a description in args: \(args)")
                     return nil
                 }
-                return .doIt(ListName("today"), description)
+                return .add(ListName("today"), IntOffset(0), description)
             case .add:
                 var theOffset = IntOffset(0)
                 if let offset = ArgParser.offset(args: args, index: 1) {
@@ -143,7 +143,7 @@ enum Instruction {
                     return nil
                 }
                 return .add(listName, IntOffset(0), description)
-            case .doIt:
+            case .it:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Do couldn't find list name in \(args)")
                     return nil
