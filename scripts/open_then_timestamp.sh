@@ -8,7 +8,7 @@ cp $FILE $TMPFILE
 
 #take the time editing began.
 DATE=$('date')
-vim $FILE
+vim -c 'startinsert' $FILE
 
 #take a diff to see if we've made a change.
 DIFF=$(diff $FILE $TMPFILE)

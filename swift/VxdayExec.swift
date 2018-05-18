@@ -219,7 +219,6 @@ class VxdayExec {
             let view = CompleteTableView(items)
             let table = view.toTable(getShellWidth())
             table.render().forEach {
-                print("rendering $0 which is \($0)")
                 print($0)}
         
         }
