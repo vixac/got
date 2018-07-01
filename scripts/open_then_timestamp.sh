@@ -16,5 +16,6 @@ rm $TMPFILE
 if [ "$DIFF" != "" ] 
 then
     # echo newline with the date, then cat it with the rest of the file to 
-    (echo -e '\n' && echo $DATE) | cat - $FILE > $TMPFILE && mv $TMPFILE $FILE
+    LINE="----------------------------"
+    (echo -e '\n' && echo "$LINE" && echo $DATE && echo -e "$LINE \n") | cat - $FILE > $TMPFILE && mv $TMPFILE $FILE
 fi
