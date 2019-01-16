@@ -81,6 +81,10 @@ public extension Trap {
      - SeeAlso: [Advanced Signal Handling](http://www.gnu.org/software/libc/manual/html_node/Advanced-Signal-Handling.html#Advanced-Signal-Handling)
      */
     public static func handle(signal: Signal, action: SignalHandler) {
+
+	print("VX: TODO this has been undone for")
+        return
+/*
         typealias SignalAction = sigaction
         
         // Instead of using just `signal` we can use the more powerful `sigaction`
@@ -88,6 +92,7 @@ public extension Trap {
         let _ = withUnsafePointer(to: &signalAction) { actionPointer in
             sigaction(signal.osValue, actionPointer, nil)
         }
+*/
     }
     
     /**
