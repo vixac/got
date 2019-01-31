@@ -17,6 +17,8 @@ enum Script : String {
     case lookForHash = "look_for_hash.sh"
     case removeLine = "remove_line.sh"
     case shellWidth = "shell_width.sh"
+    case vim = "open_then_timestamp.sh"
+    case exec = "exec.sh"
 }
 
 class VxdayFile {
@@ -89,6 +91,69 @@ class VxdayExec {
         task.waitUntilExit()
         return task.terminationStatus
     }
+    /*
+    static func run(_ pName: String, _ items: [String]) {
+        print("VX: attempting to launch: \(pName) with itemss: \(items)")
+        let process = Process()
+        if #available(OSX 10.13, *) {
+            process.executableURL = URL(fileURLWithPath:pName)
+            process.arguments = ["-la"]
+            
+            process.terminationHandler = { (process) in
+                print("\ndidFinish: \(!process.isRunning)")
+            }
+            do {
+                try process.run()
+            } catch let e  {
+                print("VX: is this workign? \(e)")
+            }
+        } else {
+            print("VX: running processes is not available before Mac OS 10.13")
+            // Fallback on earlier versions
+        }
+        
+    }
+ */
+    
+    static func quickRun(_ name: String, args: [String]) {
+        if #available(OSX 10.13, *) {
+       // let url = URL(fileURLWithPath:name)
+        do {
+            let process = Process()
+            let pipe = Pipe()
+            process.executableURL = URL(fileURLWithPath:name)
+            //process.standardOutput = pipe
+            //process.standardError = pipe
+            process.arguments = args
+           // process.waitUntilExit()
+            process.terminationHandler =  { (process) in
+                print("\ndidFinish: \(!process.isRunning)")
+            }
+            try process.run()
+        } catch let e  {
+            print("VX: is this workign? \(e)")
+            }
+        } else {
+             print("VX: running processes is not available before Mac OS 10.13")
+        }
+    }
+     @discardableResult static func shellNew(_ launchPath: String, _ arguments: [String] = []) -> (String? , Int32) {
+        let task = Process()
+        
+        task.launchPath = launchPath
+        task.arguments = arguments
+        
+        let pipe = Pipe()
+        
+        task.standardOutput = pipe
+        task.standardError = pipe
+        task.launch()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8)
+        task.waitUntilExit()
+        
+        return (output, task.terminationStatus)
+    }
     
     static func getEnvironmentVar(_ name: String) -> String? {
         guard let rawValue = getenv(name) else { 
@@ -97,6 +162,21 @@ class VxdayExec {
         return String(utf8String: rawValue)
     }
  
+    
+    static func openTop(_ list: ListName?) {
+        print("VX: opentop called")
+        if let l = list  {
+            print("VX: opening  shell new top for: \(l)")
+            let echo = "/bin/echo"
+            let vim = "/usr/bin/vim"
+            //let vimScript = VxdayFile.getScriptPath(.vim)
+            let execScript = VxdayFile.getScriptPath(.exec)
+            //VxdayExec.quickRun("/usr/bin/vim", args:  ["wtf.txt"]) //this opens then closes instantly
+            //VxdayExec.quickRun(execScript, args:  ["vim test.txt"]) //this opens then closes instantly
+            VxdayExec.shell(execScript, vim)
+        }
+    }
+    
     static func lessList(_ list: ListName) {
         let files = VxdayFile.activeDir + "/" + list.name + "_*.got"
         VxdayExec.shell("cat", files)

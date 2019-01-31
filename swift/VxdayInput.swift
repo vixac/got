@@ -27,7 +27,6 @@ enum Verb : String {
     case retire = "retire"
     case retired = "retired"
     case today = "today"
-    case top = "top"
     case track = "track"
     case unretire = "unretire"
     case what = "what"
@@ -40,6 +39,7 @@ enum Verb : String {
     case keep = "keep"
     case gotInfo = "status"
     case info = "info"
+    case free = "free"
     
 }
 
@@ -54,7 +54,6 @@ enum Instruction {
     case lessList(ListName)
     case allList(String) //prefix, not list.
     case trackList(ListName)
-    case top(ListName)
     case complete(ListName?)
     case gotInfo
     //hash actions
@@ -66,6 +65,7 @@ enum Instruction {
     case remove(Hash)
     case start(Hash)
     case info(Hash)
+    case free(ListName) // free text entry on a list name. Similar to "daytop"
     //global actions
 
     case all
@@ -210,12 +210,12 @@ enum Instruction {
                 }
                 return .retire(listName)
                 
-            case .top:
+            case .free:
                 guard let listName = ArgParser.listName(args: args, index: 1) else {
                     print("Error: Do couldn't find list name in \(args)")
                     return nil
                 }
-                return .top(listName)
+                return .free(listName)
                 
             case .track:
                 if let hash = ArgParser.hash(args: args, index: 1)  {

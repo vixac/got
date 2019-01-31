@@ -15,6 +15,7 @@ enum ItemType : String {
     case token = "->."
     case job = "=."
     case task = "-."
+    case now = "=>."
     
     func english() -> String {
         
@@ -29,6 +30,8 @@ enum ItemType : String {
             return "Task Completed"
         case .token:
             return "Token"
+        case .now:
+             return "Now"
         }
     }
 }
@@ -260,6 +263,20 @@ protocol VxItem {
     func itemType() -> ItemType
     func complete() -> VxItem
     func isComplete() -> Bool
+}
+
+struct VxNow: VxItem {
+    let list: ListName
+    let hash: Hash
+    let creation: CreationDate
+    func toVxday() -> String {
+        return "TODO"
+    }
+    func itemType() -> ItemType {
+        if isComplete() {
+            return 
+        }
+    }
 }
 
 struct VxJob : VxItem {
