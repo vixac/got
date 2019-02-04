@@ -40,6 +40,7 @@ enum Verb : String {
     case gotInfo = "status"
     case info = "info"
     case free = "free"
+    case now = "now"
     
 }
 
@@ -65,6 +66,7 @@ enum Instruction {
     case remove(Hash)
     case start(Hash)
     case info(Hash)
+    case now(ListName, Description)
     case free(ListName) // free text entry on a list name. Similar to "daytop"
     //global actions
 
@@ -89,6 +91,16 @@ enum Instruction {
         }
         
         switch verb {
+        case .now:
+            guard let listName = ArgParser.listName(args: args, index: 1) else {
+                print("Error: Do couldn't find list name in \(args)")
+                return nil
+            }
+            guard let description = ArgParser.description(args: args, start: 2) else {
+                print("Error: Do couldn't find a description in args: \(args)")
+                return nil
+            }
+            return .now(listName, description)
             case .doIt:
                 guard let description = ArgParser.description(args: args, start: 1) else {
                     print("Error: Do couldn't find a description in args: \(args)")
@@ -330,6 +342,7 @@ class ArgParser {
     
     static func itemType(args: [String], index: Int) -> ItemType? {
         guard let str = ArgParser.str(args: args, index: index) else  {
+            print("Error no str in args: \(args) at index: \(index)")
             return nil
         }
         return ItemType(rawValue: str)

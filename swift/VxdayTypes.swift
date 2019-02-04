@@ -218,7 +218,7 @@ struct ListName : Hashable {
     }
 }
 
-struct  TimeBreakdown {
+struct TimeBreakdown {
     let hours: Int
     let mins: Int
     let seconds : Int
@@ -263,20 +263,6 @@ protocol VxItem {
     func itemType() -> ItemType
     func complete() -> VxItem
     func isComplete() -> Bool
-}
-
-struct VxNow: VxItem {
-    let list: ListName
-    let hash: Hash
-    let creation: CreationDate
-    func toVxday() -> String {
-        return "TODO"
-    }
-    func itemType() -> ItemType {
-        if isComplete() {
-            return 
-        }
-    }
 }
 
 struct VxJob : VxItem {
@@ -345,6 +331,40 @@ struct VxTask : VxItem {
     }
 }
 
+
+struct VxNow: VxItem {
+    let creation: CreationDate
+    let list: ListName
+    let hash: Hash
+    let completion: CompletionDate?
+    let description : Description
+    
+    func toVxday() -> String {
+        let symbolStr = itemType().rawValue + " "
+        let hashStr = hash.hash + " "
+        let creationStr = creation.toString() + " "
+        let descriptionStr = description.text + " "
+        let completionStr = completion != nil  ? (VxdayUtil.datetimeFormatter.string(from: completion!.date) + " ") : ""
+        let str = symbolStr + hashStr + creationStr  + completionStr + descriptionStr
+        return str
+    }
+    
+    func itemType() -> ItemType {
+        if isComplete() {
+            return  .completeTask
+        }
+        return .now
+    }
+    
+    func complete() -> VxItem {
+        return VxTask(list: list, hash: hash, creation: creation, description: description, completion: CompletionDate(VxdayUtil.now()))
+    }
+    
+    func isComplete() -> Bool {
+        return completion != nil
+    }
+}
+
 struct VxToken : VxItem {
     let list: ListName
     let hash: Hash
@@ -394,6 +414,7 @@ enum Item {
     case job(VxJob)
     case task(VxTask)
     case token(VxToken)
+    case now(VxNow)
     
     
     func getJob() -> VxJob? {
@@ -423,6 +444,8 @@ enum Item {
             return task
         case let .token(token):
             return token
+        case let .now(now):
+            return now
         }
     }
     
@@ -442,6 +465,12 @@ enum Item {
                 return "\(ItemType.task.rawValue) \(task.hash.hash) \(task.creation.toString()) \(completion)\(task.description.text)"
             case let .token(token):
                 return "\(ItemType.token.rawValue) \(token.hash.hash) \(token.creation.toString()) \(token.completion.toString())"
+        case let .now(now):
+            var completion = now.completion?.toString()  ?? ""
+            if completion != "" {
+                completion = completion + " "
+            }
+            return "\(ItemType.now.rawValue) \(now.hash.hash) \(now.creation.toString()) \(completion)\(now.description.text)"
         }
     }
     
@@ -540,6 +569,18 @@ enum Item {
                 return nil
             }
             return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: completionDate))
+            
+        case .now:
+            guard let creationDate = ArgParser.creation(args: array, index: 2) else {
+                print("Error: could not extract creation date from: \(array)")
+                return nil
+            }
+            
+            guard let description = ArgParser.description(args: array, start: 3) else {
+                print("Error: could not get description from: \(array)")
+                return nil
+            }
+            return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: nil ))
         }
     }
 }

@@ -427,6 +427,20 @@ class VxdayExec {
         OneLinerView.showItemCreatedOneLiner(vxtask).render().forEach {print($0)}
     }
     
+    static func createNow(_ list: ListName, description: Description) {
+        print("VX: creating now")
+        if !VxdayReader.isListPresent(list) {
+            OneLinerView.showNewList(list).render().forEach { print($0)}
+        }
+        let now = VxdayUtil.now()
+        let hash = VxdayUtil.hash(VxdayUtil.datetimeFormatter.string(from: now) + description.text)
+        let created = CreationDate(now)
+        
+        let nowItem = VxNow(creation: created, list: list, hash: hash, completion: nil, description: description)
+        VxdayExec.storeItem(nowItem)
+        OneLinerView.showItemCreatedOneLiner(nowItem).render().forEach {print($0)}
+    }
+    
     static func createJob(_ list: ListName, offset: IntOffset, description: Description ) {
         
         if !VxdayReader.isListPresent(list) {

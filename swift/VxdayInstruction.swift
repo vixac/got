@@ -48,6 +48,8 @@ class VxdayInstruction {
             VxdayExec.help()
         case let .free(list):
             VxdayExec.openTop(list)
+        case let .now(list, description):
+                VxdayExec.createNow(list, description: description)
         default:
              print("TODO handle instruction: \(instruction)")
         }

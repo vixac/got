@@ -512,6 +512,16 @@ class OneLinerView {
         return table
         
     }
+    static func showItemCreatedOneLiner(_ now: VxNow)-> VxdayTable {
+        let list = Cell.list(now.list)
+        let desc = Cell.description(now.description)
+        let summary = Cell.text("Immediate Task added:", VxColor.white())
+        let hashCell = Cell.hash(now.hash)
+        let table = VxdayTable("", width: 150)
+        table.addRow([summary, hashCell,list, desc])
+        return table
+        
+    }
     static func showItemCreatedOneLiner(_ item: VxJob)-> VxdayTable {
         let list = Cell.list(item.list)
         let desc = Cell.description(item.description)
