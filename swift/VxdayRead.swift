@@ -21,6 +21,9 @@ class Cache {
             else if let t = $0.getTask() {
                 descriptions[t.hash] = t.description
             }
+            else if let n = $0.getNow() {
+                descriptions[n.hash] = n.description
+            }
         }
     }
 }

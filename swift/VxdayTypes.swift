@@ -410,13 +410,18 @@ struct VxToken : VxItem {
 
 enum Item {
     
-    
     case job(VxJob)
     case task(VxTask)
     case token(VxToken)
     case now(VxNow)
     
     
+    func getNow() -> VxNow? {
+        if case let Item.now(now) = self {
+            return now
+        }
+        return nil 
+    }
     func getJob() -> VxJob? {
         if case let Item.job(job) = self  {
             return job
@@ -571,6 +576,7 @@ enum Item {
             return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: completionDate))
             
         case .now:
+            
             guard let creationDate = ArgParser.creation(args: array, index: 2) else {
                 print("Error: could not extract creation date from: \(array)")
                 return nil
@@ -580,7 +586,7 @@ enum Item {
                 print("Error: could not get description from: \(array)")
                 return nil
             }
-            return Item.task(VxTask(list: list, hash: hash, creation: creationDate, description: description, completion: nil ))
+            return Item.now(VxNow(creation: creationDate, list: list, hash: hash, completion: nil, description: description))
         }
     }
 }

@@ -366,10 +366,6 @@ class CompleteTableView {
                 let descriptionCell = Cell.text(t.description.text, VxColor.base())
                 rows[t.creation.date.timeIntervalSince1970] = [completedCell, dateCell, emptyCell, descriptionCell]
             }
-            
-            
-            
-            
         }
         
         let sortedKeys = Array(rows.keys).sorted(by: <)
@@ -399,7 +395,7 @@ class ItemTableView {
         let overdue = sections.overdue
         let today = sections.today
         let upcoming = sections.upcoming
-        
+        let now  = sections.now
         let table = VxdayTable("", width: width)
         
         
@@ -440,6 +436,20 @@ class ItemTableView {
         table.addRow([Cell.empty])
          // this looks alot like got what <list> might look like. Don't think I want it.
         table.addHeading("", char: "-", color: VxColor.base())
+        
+        if now.count > 0 {
+           // table.addHeading("", char: "<>", color: VxColor.base())
+            now.forEach { n in
+                let yyyymmddCell = Cell.text(VxdayUtil.dateFormatter.string(from: n.creation.date), VxColor.bright())
+                let hashCell = Cell.hash(n.hash)
+                let listCell = Cell.list(n.list)
+                let descCell = Cell.description(n.description)
+                 table.addRow([yyyymmddCell, Cell.text("Now", VxColor.bright()), hashCell, listCell, descCell])
+            }
+            //table.addHeading("", char: "<>", color: VxColor.base())
+            table.addHeading("", char: "-", color: VxColor.base())
+        }
+        
         let totalCount = today.count + tasks.count + upcoming.count + overdue.count
         table.addRow([
             Cell.text("Overdue: \(overdue.count)", VxColor.white()),
@@ -459,10 +469,12 @@ class ItemTableView {
         let descCell = Cell.description(job.description)
         return [yyyymmddCell, daysAgoCell,  hashCell, listCell, descCell]
     }
-    private func separate() -> (tasks: [VxTask], overdue: [VxJob], today: [VxJob], upcoming: [VxJob]) {
+    
+    private func separate() -> (tasks: [VxTask], overdue: [VxJob], today: [VxJob], upcoming: [VxJob], now: [VxNow]) {
         var tasks: [VxTask] = []
         var overdue: [VxJob] = []
         var today: [VxJob] = []
+        var now: [VxNow] = []
         var upcoming: [VxJob] = []
         
         items.forEach { item in
@@ -480,11 +492,14 @@ class ItemTableView {
                         upcoming.append(j)
                     }
             }
+            else if let n = item.getNow() {
+                now.append(n)
+            }
         }
         return (tasks: tasks.sorted(by: {$0.creation.date < $1.creation.date}),
                 overdue: overdue.sorted( by: {$0.deadline.date < $1.deadline.date}),
                 today: today.sorted( by: {$0.deadline.date < $1.deadline.date}),
-                upcoming: upcoming.sorted( by: {$0.deadline.date < $1.deadline.date}))
+                upcoming: upcoming.sorted( by: {$0.deadline.date < $1.deadline.date}), now.sorted(by: {$0.creation.date < $1.creation.date}))
     }
     
     
@@ -515,7 +530,7 @@ class OneLinerView {
     static func showItemCreatedOneLiner(_ now: VxNow)-> VxdayTable {
         let list = Cell.list(now.list)
         let desc = Cell.description(now.description)
-        let summary = Cell.text("Immediate Task added:", VxColor.white())
+        let summary = Cell.text("Immediate Task added:", VxColor.bright())
         let hashCell = Cell.hash(now.hash)
         let table = VxdayTable("", width: 150)
         table.addRow([summary, hashCell,list, desc])

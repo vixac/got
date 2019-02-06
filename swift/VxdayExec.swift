@@ -428,7 +428,6 @@ class VxdayExec {
     }
     
     static func createNow(_ list: ListName, description: Description) {
-        print("VX: creating now")
         if !VxdayReader.isListPresent(list) {
             OneLinerView.showNewList(list).render().forEach { print($0)}
         }
