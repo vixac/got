@@ -44,7 +44,7 @@ class VxdayReader {
 		     continue
                 }
             }
-            if file.characters.first != "." {
+            if file.first != "." {
                 lists.insert(VxdayUtil.beforeUnderscore(file)!)
             }
             
@@ -73,7 +73,7 @@ class VxdayReader {
         let filename = VxdayFile.getTokenFilename(list)
         let contents = VxdayReader.readFile(filename)
         //danger we might get silent errors here with the flat map if getToken fails.
-        return VxdayReader.linesToItems(contents, list: list).flatMap { $0.getToken()}
+        return VxdayReader.linesToItems(contents, list: list).compactMap { $0.getToken()}
     }
     static func readFile(_ path: String) -> [String] {
         guard let contents =  try? String(contentsOfFile: path) else {
@@ -119,6 +119,6 @@ class VxdayReader {
     }
     
     static func linesToItems(_ lines: [String], list: ListName) -> [Item] {
-        return lines.flatMap{ Item.create($0, list: list)}
+        return lines.compactMap{ Item.create($0, list: list)}
     }
 }

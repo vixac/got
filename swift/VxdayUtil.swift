@@ -48,7 +48,7 @@ class VxdayUtil {
             return nil
         }
         let endWords = array.suffix(array.count - start)
-        return endWords.flatMap({$0 + " " }).joined()
+        return endWords.compactMap({$0 + " " }).joined()
     }
     
     class func nowDay() -> Date {
