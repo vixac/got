@@ -124,6 +124,7 @@ class ListSummary {
     var present: [VxJob] = []
     var future: [VxJob] = []
     var taskCount: Int = 0
+    var nowCount: Int = 0
     var timeWorked: Int = 0
     init(_ list: ListName) {
         self.list = list
@@ -142,13 +143,15 @@ class ListSummary {
      func addTask(_ task: VxTask) {
         taskCount += 1
     }
-    
+    func addNow(_ now: VxNow) {
+        nowCount += 1
+    }
     func addToken(_ token: VxToken) {
         let breakdown = token.timeBreakdown()
         timeWorked += breakdown.totalSeconds
     }
     func total() -> Int {
-        return past.count + present.count + future.count + taskCount
+        return past.count + present.count + future.count + taskCount + nowCount
     }
 }
 
@@ -464,11 +467,12 @@ class ItemTableView {
             table.addHeading("", char: "-", color: VxColor.base())
         }   
         
-        let totalCount = today.count + tasks.count + upcoming.count + overdue.count
+        let totalCount = today.count + tasks.count + upcoming.count + overdue.count + now.count
         table.addRow([
             Cell.text("Overdue: \(overdue.count)", VxColor.white()),
             Cell.text("Today: \(today.count)", VxColor.white()),
             Cell.text("Upcoming: \(upcoming.count)", VxColor.white()),
+            Cell.text("Now: \(now.count)", VxColor.white()),
             Cell.text("Total: \(totalCount)", VxColor.white())])
  
         return table
@@ -656,6 +660,14 @@ class WhatView {
                 }
                 
             }
+            else if let now = item.getNow() {
+                let list = now.list
+                if dict[list] == nil {
+                    let summary = ListSummary(list)
+                    summary.addNow(now)
+                    dict[list] = summary
+                }
+            }
             //tokens aren't part of the summary yet.
         }
         return dict.map { return $0.value }.sorted( by: { $0.total() < $1.total()})
@@ -669,6 +681,8 @@ class WhatView {
         let overdueHeading = Cell.info(VxdayUtil.pad("Overdue", toLength: colWidth))
         let todayHeading = Cell.info(VxdayUtil.pad("Due", toLength: colWidth))
         let upcomingHeading = Cell.info(VxdayUtil.pad("Upcoming", toLength: colWidth))
+        //VX: now isnt finished for got what
+        //let nowHeading = Cell.info(VxdayUtil.pad("Now", toLength: colWidth))
         let tasksHeading = Cell.info(VxdayUtil.pad("Tasks", toLength: colWidth))
         let totalHeading = Cell.info(VxdayUtil.pad("Total", toLength: colWidth))
         let buckets = self.toBuckets()
@@ -678,6 +692,7 @@ class WhatView {
         let todayCount = buckets.map { $0.present.count}.reduce(0, { $0 + $1})
         let futureCount = buckets.map { $0.future.count}.reduce(0 , {$0 + $1})
         let taskCount = buckets.map {$0.taskCount}.reduce(0, {$0 + $1})
+        //let nowCount = buckets.map {$0.nowCount}.reduce(0, {$0 + $1})
       
 	var headingRow: [Cell] = []
 	headingRow.append(listHeading)
@@ -685,7 +700,8 @@ class WhatView {
 	let showOverdue = overdueCount > 0 
 	let showToday = todayCount > 0
 	let showFuture  = futureCount > 0 
-	let showTasks = taskCount > 0 
+	let showTasks = taskCount > 0
+   // let showNow  = nowCount > 0
 	if showOverdue {
 		headingRow.append(overdueHeading)
 	} 
@@ -698,7 +714,8 @@ class WhatView {
 	} 
 	if showTasks {
 		headingRow.append(tasksHeading)
-	} 
+	}
+        
 
 	headingRow.append(totalHeading)
 	headingRow.append(listHeading)
