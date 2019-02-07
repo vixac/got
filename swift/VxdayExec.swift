@@ -294,9 +294,10 @@ class VxdayExec {
             let completeFile = VxdayFile.getCompleteFilename(l)
             let contents = VxdayReader.readFile(completeFile)
             let items = VxdayReader.linesToItems(contents, list: l)
+            let sortedItems = items.sorted(by: {$0.vxItem().creation.date < $1.vxItem().creation.date})
             
             
-            let view = CompleteTableView(items)
+            let view = CompleteTableView(sortedItems)
             let table = view.toTable(getShellWidth())
             table.render().forEach {
                 print($0)}

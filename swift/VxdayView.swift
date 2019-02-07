@@ -331,7 +331,7 @@ class CompleteTableView {
             var offsetFromDeadline: Int? = nil
             if let j = item.getJob() {
                 guard let completion = j.completion else {
-                    print("Error missing completion: \(j)")
+                    print("Error missing completion for job: \(j)")
                     return
                 }
                 offsetFromDeadline = VxdayUtil.timeliness(deadline: j.deadline, completion: completion)
@@ -350,24 +350,35 @@ class CompleteTableView {
                         color = VxColor.happy()
                     }
                 }
+                let listCell = Cell.list(j.list)
                 let timelinessCell = Cell.text(timelinessStr, color )
                 let descriptionCell = Cell.text(j.description.text, VxColor.base())
-                rows[j.creation.date.timeIntervalSince1970] = [completedCell, dateCell, timelinessCell, descriptionCell]
+                rows[j.creation.date.timeIntervalSince1970] = [completedCell, dateCell, listCell, timelinessCell, descriptionCell]
                 
             }
             else if let t = item.getTask() {
                 guard let completion = t.completion else {
-                    print("Error missing completion: \(t)")
+                    print("Error missing completion for task: \(t)")
                     return
                 }
                 let completedCell = Cell.text(completion.date.daysAgo(), VxColor.base())
                 let dateCell = Cell.text(VxdayUtil.dateFormatter.string(from: completion.date), VxColor.base())
                 let emptyCell = Cell.empty
+                let listCell = Cell.list(t.list)
                 let descriptionCell = Cell.text(t.description.text, VxColor.base())
-                rows[t.creation.date.timeIntervalSince1970] = [completedCell, dateCell, emptyCell, descriptionCell]
+                rows[t.creation.date.timeIntervalSince1970] = [completedCell, dateCell, listCell, emptyCell, descriptionCell]
             }
-            else  {
-                print("VX: TODO now isn't handled here")
+            else if let n = item.getNow() {
+                guard let completion = n.completion else {
+                    print("Error missing completion for now : \(n)")
+                    return
+                }
+                let completedCell = Cell.text(completion.date.daysAgo(), VxColor.base())
+                let dateCell = Cell.text(VxdayUtil.dateFormatter.string(from: completion.date), VxColor.base())
+                let emptyCell = Cell.empty
+                let listCell = Cell.list(n.list)
+                let descriptionCell = Cell.text(n.description.text, VxColor.base())
+                rows[n.creation.date.timeIntervalSince1970] = [completedCell, dateCell, listCell, emptyCell, descriptionCell]
             }
         }
         
