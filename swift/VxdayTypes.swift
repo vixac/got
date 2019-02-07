@@ -44,7 +44,7 @@ struct Hash : Hashable {
     }
     
     func isValid() -> Bool {
-        return hash.characters.first == "0" && hash.characters.count == 9
+        return hash.first == "0" && hash.count == 9
     }
     var hashValue: Int {
         return hash.hashValue

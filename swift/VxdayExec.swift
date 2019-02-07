@@ -120,7 +120,7 @@ class VxdayExec {
        // let url = URL(fileURLWithPath:name)
         do {
             let process = Process()
-            let pipe = Pipe()
+           // let pipe = Pipe()
             process.executableURL = URL(fileURLWithPath:name)
             //process.standardOutput = pipe
             //process.standardError = pipe
@@ -167,7 +167,7 @@ class VxdayExec {
         print("VX: opentop called")
         if let l = list  {
             print("VX: opening  shell new top for: \(l)")
-            let echo = "/bin/echo"
+           // let echo = "/bin/echo"
             let vim = "/usr/bin/vim"
             //let vimScript = VxdayFile.getScriptPath(.vim)
             let execScript = VxdayFile.getScriptPath(.exec)

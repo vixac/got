@@ -296,7 +296,7 @@ class ArgParser {
         guard let str = ArgParser.str(args: args, index: index) else  {
             return nil
         }
-        if str.characters.first == "0" {
+        if str.first == "0" {
             print("Error, this looks like a hash, not a list name: \(str)")
             return nil
         }
@@ -317,13 +317,13 @@ class ArgParser {
         guard let str = ArgParser.str(args: args, index: index) else  {
             return nil
         }
-        guard  str.characters.first == "0" else {
+        guard  str.first == "0" else {
             print("Error this doesn't look like a hash, it doesn't start with a 0: \(str)")
             return nil
         }
         
         //06b77a160 valid hash.
-        guard str.characters.count == 9 else {
+        guard str.count == 9 else {
             print("This hash is the wrong length: \(str). Hashes are 8 chars")
             return nil
         }

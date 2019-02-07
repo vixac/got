@@ -64,8 +64,8 @@ class VxdayUtil {
         let time = now().timeIntervalSince1970.hashValue
         let hashable = "\(time)" + string
         var hashed = "0" + String(format: "%2X", hashable).lowercased()
-        if hashed.characters.count < 9 {
-            let numNeeded = 9 - hashed.characters.count
+        if hashed.count < 9 {
+            let numNeeded = 9 - hashed.count
             for _ in 1...numNeeded {
                 hashed += "0"
             }
@@ -107,11 +107,11 @@ class VxdayUtil {
         return string.components(separatedBy: "_").first 
     }
     class func pad(_ string: String, toLength length: Int) -> String {
-        if string.characters.count > length {
+        if string.count > length {
             return string
         }
         var spaces = ""
-        let needed = length - string.characters.count
+        let needed = length - string.count
         if needed < 1 {
             return string
         }

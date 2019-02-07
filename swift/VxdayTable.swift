@@ -126,13 +126,13 @@ struct ReadyCell {
     let width: Int
     init(_ cell: Cell) {
         self.plainText = cell.plainText()
-        self.width = self.plainText.characters.count
+        self.width = self.plainText.count
         self.color = cell.color()
     }
     init(text: String, color: VxColor) {
         self.plainText = text
         self.color = color
-        self.width = self.plainText.characters.count
+        self.width = self.plainText.count
     }
 }
 
@@ -159,25 +159,25 @@ class VxdayTable {
     }
     func renderSectionDivider(_ text: String, char: String, totalLength: Int, color: VxColor) ->  String {
         
-        let textLen = text.characters.count
+        let textLen = text.count
         if totalLength <  textLen {
             return text
         }
         let repeatingSymbol = char
         let firstBitLength = (totalLength - textLen) / 2
-        let firstBit = String(repeating: repeatingSymbol, count: firstBitLength / char.characters.count )
+        let firstBit = String(repeating: repeatingSymbol, count: firstBitLength / char.count )
         var str = firstBit + text
         
         
         //padding here to keep the repeating pattern in sync.
-        let repeatingLength = char.characters.count
-        while str.characters.count % repeatingLength != 0 {
+        let repeatingLength = char.count
+        while str.count % repeatingLength != 0 {
             str += " "
         }
         
         
-        let remainingLength = totalLength - str.characters.count
-        str += String(repeating: repeatingSymbol, count: remainingLength / char.characters.count )
+        let remainingLength = totalLength - str.count
+        str += String(repeating: repeatingSymbol, count: remainingLength / char.count )
         return color.colorThis(str)
     }
     
@@ -257,7 +257,7 @@ class VxdayTable {
                             rendered  = VxdayTable.renderText(remainingStrings[0], width: localWidths[i]!, color: cell.color)
                             currentIndex += 1
                         }
-                        rowWidthSoFar += cell.plainText.characters.count
+                        rowWidthSoFar += cell.plainText.count
                         rowText += rendered
                 }
                 case let .heading(title, char, color):
