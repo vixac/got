@@ -266,7 +266,7 @@ class VxdayExec {
         }
         
         // that job or task thing is just in case we have token or notes in the same file
-        let items = VxdayReader.itemsInList(l).filter { $0.vxItem().hash.hash == hash.hash && ( $0.vxItem().itemType() == .job || $0.vxItem().itemType() == .task) }
+        let items = VxdayReader.itemsInList(l).filter { $0.vxItem().hash.hash == hash.hash && ( $0.vxItem().itemType() == .job || $0.vxItem().itemType() == .task) || $0.vxItem().itemType() == .now }
         guard let item  = items.first  else {
             print("Dev Error finding hash \(hash.hash) in list \(l.name)")
             return nil
@@ -457,6 +457,7 @@ class VxdayExec {
     
  
     static func x(_ hash: Hash) {
+        
         guard let list = hashToListName(hash) else {
             return
         }
@@ -469,8 +470,22 @@ class VxdayExec {
         let completeItem = item.vxItem().complete()
         storeItem(completeItem)
         
-        let description = item.getJob() != nil  ? item.getJob()!.description : item.getTask()!.description
-        OneLinerView.showHashCompleted(hash, list: list, description: description).render().forEach{print($0)}
+        var description: Description? = nil
+        if let j = item.getJob() {
+            description = j.description
+        }
+        if let t = item.getTask() {
+            description = t.description
+        }
+        if let n = item.getNow() {
+            description = n.description
+        }
+        guard let d = description else {
+            print("No description found.")
+            return
+        }
+        OneLinerView.showHashCompleted(hash, list: list, description: d).render().forEach{print($0)}
+ 
     }
     
     static func all() {

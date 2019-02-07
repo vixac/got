@@ -327,7 +327,7 @@ class CompleteTableView {
         let table = VxdayTable( "", width: width)
 
         var rows: [TimeInterval : [Cell]] = [:]
-        items.filter { $0.getJob() != nil || $0.getTask() != nil }.forEach { item in
+        items.filter { $0.getJob() != nil || $0.getTask() != nil || $0.getNow() != nil  }.forEach { item in
             var offsetFromDeadline: Int? = nil
             if let j = item.getJob() {
                 guard let completion = j.completion else {
@@ -365,6 +365,9 @@ class CompleteTableView {
                 let emptyCell = Cell.empty
                 let descriptionCell = Cell.text(t.description.text, VxColor.base())
                 rows[t.creation.date.timeIntervalSince1970] = [completedCell, dateCell, emptyCell, descriptionCell]
+            }
+            else  {
+                print("VX: TODO now isn't handled here")
             }
         }
         
@@ -448,7 +451,7 @@ class ItemTableView {
             }
             //table.addHeading("", char: "<>", color: VxColor.base())
             table.addHeading("", char: "-", color: VxColor.base())
-        }
+        }   
         
         let totalCount = today.count + tasks.count + upcoming.count + overdue.count
         table.addRow([

@@ -112,9 +112,9 @@ enum Cell {
             case .past:
                 return VxColor.danger()
             case .present:
-                return VxColor.warning()
+                return VxColor.happy()
             case .future:
-                return  VxColor.happy()
+                return  VxColor.warning()
         }
     }
 }
