@@ -56,4 +56,4 @@ There are many parts still in need of more work:
 - 'got' wants to be better at coping with merge conflicts over file sharing platforms
 - 'got' wants to be awesome for note keeping
 - 'got' wants to support multiple views, for multiple areas of life
-- 'got' wants to reduce the need to copy paste hashes as much as possible.
+- 'got' wants to reduce the need to copy paste hashes as much as possible
