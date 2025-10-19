@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"vixac.com/got/console"
 )
 
 var configPath string
@@ -24,6 +25,9 @@ func Execute() {
 }
 
 func init() {
+	printer := console.Printer{}
 	// Global persistent flags
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "firbolg-ec2.yml", "Path to config file")
+	done := buildDoneCommand(printer)
+	rootCmd.AddCommand(done)
 }
