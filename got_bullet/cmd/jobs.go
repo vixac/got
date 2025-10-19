@@ -4,23 +4,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var jobsCmd = &cobra.Command{
-	Use:   "jobs",
-	Short: "List jobs",
-	Run: func(cmd *cobra.Command, args []string) {
-		println("jobs took arg count:", len(args))
-		for _, v := range args {
-			println("VX: jobs args are " + v)
-		}
-		if underGid == "" {
-			print("VX: list jobs from the top lvl")
-		}
+func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
-		println("VX: TODO ls items.", underGid)
-	},
-}
+	var underGid string
+	var jobsCmd = &cobra.Command{
+		Use:   "jobs",
+		Short: "List jobs",
+		Run: func(cmd *cobra.Command, args []string) {
+			println("jobs took arg count:", len(args))
+			for _, v := range args {
+				println("VX: jobs args are " + v)
+			}
+			if underGid == "" {
+				print("VX: list jobs from the top lvl")
+			}
 
-func init() {
-	rootCmd.AddCommand(jobsCmd)
+			println("VX: TODO ls items.", underGid)
+		},
+	}
 	jobsCmd.Flags().StringVarP(&underGid, "under", "u", "", "The parent item")
+	return jobsCmd
+
 }

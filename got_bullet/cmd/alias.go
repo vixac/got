@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"vixac.com/got/console"
 )
 
-func buildAliasCommand(messenger console.Messenger) *cobra.Command {
+func buildAliasCommand(deps RootDependencies) *cobra.Command {
 	var gid string
 	var alias string
 	var cmd = &cobra.Command{

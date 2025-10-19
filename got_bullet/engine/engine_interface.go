@@ -2,7 +2,7 @@ package engine
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
-	Summary(gid GidLookup) (GotSummary, error)
+	Summary(gid GidLookup) (*GotSummary, error)
 }
 
 // User entered best guess at a gid. Might be the Gid, might be an alias. Might be the title
