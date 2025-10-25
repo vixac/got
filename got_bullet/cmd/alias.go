@@ -24,6 +24,11 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			println("VX: TODO complete.", gid)
+			ok, err := deps.Engine.Alias(gid, alias)
+			if err != nil {
+				println("VX: error aliasing: ", err.Error())
+			}
+			print("VX: ok was ", ok)
 		},
 	}
 	cmd.Flags().StringVarP(&gid, "gid", "g", "", "The item to alias")
