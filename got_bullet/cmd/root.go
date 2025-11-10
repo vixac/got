@@ -30,10 +30,18 @@ func NewRootCommand(deps RootDependencies) *cobra.Command {
 		Long:  `Got is a comamnd line tool for managing todo list in a folder structure`,
 	}
 
-	rootCmd.AddCommand(buildDoneCommand(deps.Printer))
-	rootCmd.AddCommand(buildJobsCommand(deps))
-	rootCmd.AddCommand(buildMvCommand(deps))
-	rootCmd.AddCommand(buildAliasCommand(deps))
-	rootCmd.AddCommand(buildAddCommand(deps))
+	//these commands are passed into rootCmnd and also into repl, which is a root command too.
+	var gotCommands []*cobra.Command
+
+	gotCommands = append(gotCommands, buildDoneCommand(deps.Printer))
+	gotCommands = append(gotCommands, buildJobsCommand(deps))
+	gotCommands = append(gotCommands, buildMvCommand(deps))
+	gotCommands = append(gotCommands, buildAliasCommand(deps))
+	gotCommands = append(gotCommands, buildAddCommand(deps))
+
+	rootCmd.AddCommand(buildReplCommand(deps, gotCommands))
+	for _, c := range gotCommands {
+		rootCmd.AddCommand(c)
+	}
 	return rootCmd
 }
