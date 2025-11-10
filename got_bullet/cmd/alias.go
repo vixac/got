@@ -12,10 +12,6 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 		Use:   "alias",
 		Short: "alias an item with a better name",
 		Run: func(cmd *cobra.Command, args []string) {
-			println(len(args))
-			for _, v := range args {
-				println("VX: done args are " + v)
-			}
 			if gid == "" {
 				deps.Printer.Error(console.Message{Message: "Missing gid"})
 				return

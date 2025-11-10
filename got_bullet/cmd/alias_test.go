@@ -61,7 +61,6 @@ func TestDoneCommand_MissingGID(t *testing.T) {
 		return
 	}
 	if p.errors[0].Message != "Missing gid" {
-
 		t.Errorf("wrong message: %v", p.errors[0].Message)
 	}
 	//VX:TODO read the error and confirm its correct
