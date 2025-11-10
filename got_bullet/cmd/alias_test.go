@@ -1,123 +1,84 @@
 package cmd
 
 import (
+	"errors"
 	"testing"
 
-	"vixac.com/got/console"
-	"vixac.com/got/engine"
+	"gotest.tools/assert"
 )
 
-// --- Mock Dependencies ---
+func TestAliasCommand_MissingGID(t *testing.T) {
 
-type mockMessenger struct {
-	messages []console.Message
-	errors   []console.Message
-}
-
-func (m *mockMessenger) Print(message console.Message) {
-	m.messages = append(m.messages, message)
-}
-func (m *mockMessenger) Error(message console.Message) {
-	m.errors = append(m.errors, message)
-}
-
-type mockEngine struct {
-}
-
-func (m *mockEngine) Summary(lookup engine.GidLookup) (*engine.GotSummary, error) {
-	println("VX: Not mocked Summary")
-	return nil, nil
-}
-func (m *mockEngine) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) {
-	println("VX: Not mocked Resolve")
-	return nil, nil
-}
-func (m *mockEngine) Alias(gid string, alias string) (bool, error) {
-	println("VX: Not mocked Alias")
-	return false, nil
-}
-
-// --- Tests ---
-
-func TestDoneCommand_MissingGID(t *testing.T) {
-
-	var p = mockMessenger{}
-	var e = mockEngine{}
+	var p = MockMessenger{}
+	var e = MockEngine{}
 	mockDeps := RootDependencies{
 		Printer: &p,
 		Engine:  &e,
 	}
 	cmd := buildAliasCommand(mockDeps)
-
 	cmd.SetArgs([]string{}) // no --gid flag
-
 	_ = cmd.Execute()
+	assert.Equal(t, len(p.errors), 1)
 
-	if len(p.errors) == 0 {
-		t.Errorf("expected missing gid message, got no error")
+	if p.errors[0].Message != "Missing gid" {
+		t.Errorf("wrong message: %v", p.errors[0].Message)
 	}
+}
+func TestAliasCommand_MissingAlias(t *testing.T) {
+
+	var p = MockMessenger{}
+	var e = MockEngine{}
+	mockDeps := RootDependencies{
+		Printer: &p,
+		Engine:  &e,
+	}
+	cmd := buildAliasCommand(mockDeps)
+	cmd.SetArgs([]string{"--gid", "abc"}) // no --alias flag
+	_ = cmd.Execute()
 	if len(p.errors) != 1 {
 		t.Errorf("expected 1 error")
 		return
 	}
-	if p.errors[0].Message != "Missing gid" {
+	if p.errors[0].Message != "Missing alias" {
 		t.Errorf("wrong message: %v", p.errors[0].Message)
 	}
-	//VX:TODO read the error and confirm its correct
 }
 
-//unconfirmed.
-/*
-func TestDoneCommand_Success(t *testing.T) {
-	m := &mockMessenger{}
-	cmd := cmd.NewDoneCommand(m, tasks)
+func TestAliasCommandValidButEngineThrows(t *testing.T) {
 
-	cmd.SetArgs([]string{"--gid", "123"})
-
-	err := cmd.Execute()
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	var p = MockMessenger{}
+	var e = MockEngine{}
+	e.errorToThrow = errors.New("test error")
+	mockDeps := RootDependencies{
+		Printer: &p,
+		Engine:  &e,
 	}
-
-	if tasks.completedGID != "123" {
-		t.Errorf("expected task to be completed with gid 123, got %v", tasks.completedGID)
-	}
-
-	found := false
-	for _, msg := range m.output {
-		if strings.Contains(msg, "Task completed") {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("expected completion message, got %v", m.output)
-	}
+	cmd := buildAliasCommand(mockDeps)
+	cmd.SetArgs([]string{"--gid", "abc", "--alias", "new_name"}) // no --alias flag
+	_ = cmd.Execute()
+	assert.Equal(t, len(p.errors), 1)
+	assert.Equal(t, p.errors[0].Message, "test error")
+	assert.Equal(t, e.aliasAlias, "new_name")
+	assert.Equal(t, e.aliasGid, "abc")
 }
 
-func TestDoneCommand_FailureFromService(t *testing.T) {
-	m := &mockMessenger{}
-	tasks := &mockTaskService{err: errors.New("db unavailable")}
-	cmd := cmd.NewDoneCommand(m, tasks)
+func TestAliasCommand_Valid(t *testing.T) {
 
-	cmd.SetArgs([]string{"--gid", "123"})
-
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	var p = MockMessenger{}
+	var e = MockEngine{}
+	mockDeps := RootDependencies{
+		Printer: &p,
+		Engine:  &e,
 	}
-
-	if !strings.Contains(err.Error(), "db unavailable") {
-		t.Errorf("expected service error, got %v", err)
+	cmd := buildAliasCommand(mockDeps)
+	cmd.SetArgs([]string{"--gid", "abc", "--alias", "new_name"}) // no --alias flag
+	_ = cmd.Execute()
+	if len(p.errors) != 0 {
+		t.Errorf("expected  no errors. 0 != %d", len(p.errors))
+		return
 	}
-
-	found := false
-	for _, msg := range m.output {
-		if strings.Contains(msg, "Failed to complete task") {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("expected error message, got %v", m.output)
-	}
+	assert.Equal(t, e.aliasAlias, "new_name")
+	assert.Equal(t, e.aliasGid, "abc")
+	assert.Equal(t, len(p.messages), 1)
+	assert.Equal(t, p.messages[0].Message, "Success: abc is now aliased to new_name.")
 }
-*/

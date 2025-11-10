@@ -21,13 +21,12 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: "Missing alias"})
 				return
 			}
-
-			println("VX: TODO complete.", gid)
-			ok, err := deps.Engine.Alias(gid, alias)
+			_, err := deps.Engine.Alias(gid, alias)
 			if err != nil {
-				println("VX: error aliasing: ", err.Error())
+				deps.Printer.Error(console.Message{Message: err.Error()})
 			}
-			print("VX: ok was ", ok)
+			msg := "Success: " + gid + " is now aliased to " + alias + "."
+			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}
 	cmd.Flags().StringVarP(&gid, "gid", "g", "", "The item to alias")

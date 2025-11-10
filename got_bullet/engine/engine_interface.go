@@ -4,6 +4,8 @@ package engine
 type GotEngine interface {
 	Summary(lookup GidLookup) (*GotSummary, error)
 	Resolve(lookup GidLookup) (*NodeId, error)
+	Delete(lookup GidLookup) (*NodeId, error)
+	Unalias(alias string) (*NodeId, error)
 	Alias(gid string, alias string) (bool, error)
 }
 

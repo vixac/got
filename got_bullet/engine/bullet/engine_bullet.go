@@ -42,6 +42,22 @@ func (e *EngineBullet) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) 
 	return nil, errors.New("not impl")
 }
 
+func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
+	//check if the gid is an exact match for an item id
+	//check int32 parse, check its length is the right length
+
+	//aliases can't start with a number.
+	return nil, errors.New("not impl")
+}
+
+func (e *EngineBullet) Unalias(alias string) (*engine.NodeId, error) {
+	//check if the gid is an exact match for an item id
+	//check int32 parse, check its length is the right length
+
+	//aliases can't start with a number.
+	return nil, errors.New("not impl")
+}
+
 /**
 The cache is going to work like this
 
