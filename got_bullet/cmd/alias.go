@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"vixac.com/got/console"
 )
 
 func buildAliasCommand(deps RootDependencies) *cobra.Command {
@@ -16,11 +17,13 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 				println("VX: done args are " + v)
 			}
 			if gid == "" {
-				print("VX:TODO print to output: Error you didn't pass in a gid")
+				deps.Printer.Error(console.Message{Message: "Missing gid"})
+				return
 			}
 
 			if alias == "" {
-				print("VX:TODO print to output: Error you didn't pass in a gid")
+				deps.Printer.Error(console.Message{Message: "Missing alias"})
+				return
 			}
 
 			println("VX: TODO complete.", gid)
