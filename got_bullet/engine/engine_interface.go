@@ -7,6 +7,7 @@ type GotEngine interface {
 	Delete(lookup GidLookup) (*NodeId, error)
 	Unalias(alias string) (*NodeId, error)
 	Alias(gid string, alias string) (bool, error)
+	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 }
 
 // User entered best guess at a gid. Might be the Gid, might be an alias. Might be the title

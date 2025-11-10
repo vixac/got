@@ -27,12 +27,16 @@ type MockEngine struct {
 	resolveLookup engine.GidLookup
 	errorToThrow  error
 
-	unaliasAlias string
+	nodeIdToReturn *engine.NodeId
+	unaliasAlias   string
+
+	moveLookup    engine.GidLookup
+	moveNewParent engine.GidLookup
 }
 
 func (m *MockEngine) Unalias(alias string) (*engine.NodeId, error) {
 	m.unaliasAlias = alias
-	return nil, m.errorToThrow
+	return m.nodeIdToReturn, m.errorToThrow
 }
 func (m *MockEngine) Summary(lookup engine.GidLookup) (*engine.GotSummary, error) {
 	m.summaryLookup = lookup
@@ -40,14 +44,20 @@ func (m *MockEngine) Summary(lookup engine.GidLookup) (*engine.GotSummary, error
 }
 func (m *MockEngine) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) {
 	m.resolveLookup = lookup
-	return nil, m.errorToThrow
+	return m.nodeIdToReturn, m.errorToThrow
 }
 func (m *MockEngine) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
 	m.resolveLookup = lookup
-	return nil, m.errorToThrow
+	return m.nodeIdToReturn, m.errorToThrow
 }
 func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 	m.aliasGid = gid
 	m.aliasAlias = alias
 	return false, m.errorToThrow
+}
+
+func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
+	m.moveLookup = lookup
+	m.moveNewParent = newParent
+	return m.nodeIdToReturn, m.errorToThrow
 }

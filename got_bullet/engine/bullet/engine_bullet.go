@@ -58,6 +58,10 @@ func (e *EngineBullet) Unalias(alias string) (*engine.NodeId, error) {
 	return nil, errors.New("not impl")
 }
 
+func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
+	return nil, errors.New("not impl")
+}
+
 /**
 The cache is going to work like this
 
