@@ -9,12 +9,12 @@ import (
 	"vixac.com/got/engine"
 )
 
-func buildUnderCommand(deps RootDependencies) *cobra.Command {
+func buildNoteCommand(deps RootDependencies) *cobra.Command {
 	var parentAlias string
 
 	cmd := &cobra.Command{
-		Use:   "under <alias> <heading>",
-		Short: "Create a task with no deadline, under provided parent",
+		Use:   "note <alias> <heading>",
+		Short: "Create a note under provided parent",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				err := errors.New("missing args")
@@ -36,7 +36,7 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 			}
 			_, err := deps.Engine.CreateBuck(&engine.GidLookup{Input: parentAlias},
 				nil,
-				true, //the only difference between note and under
+				false, //the only difference between note and under
 				heading,
 			)
 			if err != nil {

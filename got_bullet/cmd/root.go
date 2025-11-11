@@ -33,6 +33,10 @@ func NewRootCommand(deps RootDependencies) *cobra.Command {
 	//these commands are passed into rootCmnd and also into repl, which is a root command too.
 	var gotCommands []*cobra.Command
 
+	gotCommands = append(gotCommands, buildItCommand(deps))
+	gotCommands = append(gotCommands, buildToCommand(deps))
+	gotCommands = append(gotCommands, buildQuickCommand(deps))
+	gotCommands = append(gotCommands, buildNoteCommand(deps))
 	gotCommands = append(gotCommands, buildRemoveCommand(deps))
 	gotCommands = append(gotCommands, buildEventCommand(deps))
 	gotCommands = append(gotCommands, buildUnderCommand(deps))

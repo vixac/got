@@ -8,7 +8,7 @@ type GotEngine interface {
 	Unalias(alias string) (*NodeId, error)
 	Alias(gid string, alias string) (bool, error)
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
-	CreateBuck(parent *GidLookup, date *DateLookup, completable bool) (*NodeId, error)
+	CreateBuck(parent *GidLookup, date *DateLookup, completable bool, heading string) (*NodeId, error)
 }
 
 type DateLookup struct {

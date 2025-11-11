@@ -42,7 +42,8 @@ func buildTillCommand(deps RootDependencies) *cobra.Command {
 			}
 			_, err := deps.Engine.CreateBuck(&engine.GidLookup{Input: parentAlias},
 				&engine.DateLookup{UserInput: date},
-				true,
+				true, //this is the only differece between til and event
+				heading,
 			)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})

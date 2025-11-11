@@ -43,6 +43,7 @@ func buildEventCommand(deps RootDependencies) *cobra.Command {
 			_, err := deps.Engine.CreateBuck(&engine.GidLookup{Input: parentAlias},
 				&engine.DateLookup{UserInput: date},
 				false, //this is the only difference btween till and event
+				heading,
 			)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})

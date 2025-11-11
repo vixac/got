@@ -37,6 +37,7 @@ type MockEngine struct {
 	createParent      *engine.GidLookup
 	createDate        *engine.DateLookup
 	createCompletable bool
+	heading           string
 }
 
 func (m *MockEngine) Unalias(alias string) (*engine.NodeId, error) {
@@ -67,9 +68,10 @@ func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (
 	return m.nodeIdToReturn, m.errorToThrow
 }
 
-func (m *MockEngine) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool) (*engine.NodeId, error) {
+func (m *MockEngine) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
 	m.createParent = parent
 	m.createDate = date
 	m.createCompletable = completable
+	m.heading = heading
 	return m.nodeIdToReturn, m.errorToThrow
 }
