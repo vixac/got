@@ -62,6 +62,10 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 	return nil, errors.New("not impl")
 }
 
+func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool) (*engine.NodeId, error) {
+	return nil, errors.New("not impl")
+}
+
 /**
 The cache is going to work like this
 

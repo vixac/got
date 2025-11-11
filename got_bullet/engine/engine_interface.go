@@ -8,6 +8,11 @@ type GotEngine interface {
 	Unalias(alias string) (*NodeId, error)
 	Alias(gid string, alias string) (bool, error)
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
+	CreateBuck(parent *GidLookup, date *DateLookup, completable bool) (*NodeId, error)
+}
+
+type DateLookup struct {
+	UserInput string
 }
 
 // User entered best guess at a gid. Might be the Gid, might be an alias. Might be the title

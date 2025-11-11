@@ -32,6 +32,11 @@ type MockEngine struct {
 
 	moveLookup    engine.GidLookup
 	moveNewParent engine.GidLookup
+
+	// New fields for till command
+	createParent      *engine.GidLookup
+	createDate        *engine.DateLookup
+	createCompletable bool
 }
 
 func (m *MockEngine) Unalias(alias string) (*engine.NodeId, error) {
@@ -59,5 +64,12 @@ func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
 	m.moveLookup = lookup
 	m.moveNewParent = newParent
+	return m.nodeIdToReturn, m.errorToThrow
+}
+
+func (m *MockEngine) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool) (*engine.NodeId, error) {
+	m.createParent = parent
+	m.createDate = date
+	m.createCompletable = completable
 	return m.nodeIdToReturn, m.errorToThrow
 }

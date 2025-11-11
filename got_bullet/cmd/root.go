@@ -34,6 +34,8 @@ func NewRootCommand(deps RootDependencies) *cobra.Command {
 	var gotCommands []*cobra.Command
 
 	gotCommands = append(gotCommands, buildRemoveCommand(deps))
+	gotCommands = append(gotCommands, buildEventCommand(deps))
+	gotCommands = append(gotCommands, buildUnderCommand(deps))
 	gotCommands = append(gotCommands, buildUnaliasCommand(deps))
 	gotCommands = append(gotCommands, buildDoneCommand(deps))
 	gotCommands = append(gotCommands, buildAliasCommand(deps))
