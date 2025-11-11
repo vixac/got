@@ -25,11 +25,6 @@ func buildTillCommand(deps RootDependencies) *cobra.Command {
 			date := args[0]
 			heading := strings.Join(args[1:], " ")
 			println("date is " + date + " and heading is " + heading)
-			if parentAlias == "" {
-				err := errors.New("missing alias")
-				deps.Printer.Error(console.Message{Message: err.Error()})
-				return err
-			}
 			if date == "" {
 				err := errors.New("missing date")
 				deps.Printer.Error(console.Message{Message: err.Error()})
@@ -40,7 +35,12 @@ func buildTillCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			_, err := deps.Engine.CreateBuck(&engine.GidLookup{Input: parentAlias},
+
+			var lookup *engine.GidLookup = nil
+			if parentAlias != "" {
+				lookup = &engine.GidLookup{Input: parentAlias}
+			}
+			_, err := deps.Engine.CreateBuck(lookup,
 				&engine.DateLookup{UserInput: date},
 				true, //this is the only differece between til and event
 				heading,

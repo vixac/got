@@ -7,7 +7,7 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestEventCommand_MissingAlias(t *testing.T) {
+func TestEventCommand_MissingAliasValid(t *testing.T) {
 	var p = MockMessenger{}
 	var e = MockEngine{}
 	deps := RootDependencies{
@@ -19,8 +19,8 @@ func TestEventCommand_MissingAlias(t *testing.T) {
 	cmd.SetArgs([]string{"2025-10-22", "Finish", "report"}) // no --for flag
 
 	_ = cmd.Execute()
-	assert.Equal(t, len(p.errors), 1)
-	assert.Equal(t, p.errors[0].Message, "missing alias")
+	assert.Equal(t, len(p.errors), 0)
+	assert.Assert(t, e.createParent == nil)
 }
 
 func TestEventCommand_MissingDate(t *testing.T) {
