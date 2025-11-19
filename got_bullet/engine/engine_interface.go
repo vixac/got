@@ -5,10 +5,22 @@ type GotEngine interface {
 	Summary(lookup GidLookup) (*GotSummary, error)
 	Resolve(lookup GidLookup) (*NodeId, error)
 	Delete(lookup GidLookup) (*NodeId, error)
+
+	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
+
+	GotAliasInterface
+	GotCreateItemInterface
+}
+
+type GotCreateItemInterface interface {
+	CreateBuck(parent *GidLookup, date *DateLookup, completable bool, heading string) (*NodeId, error)
+}
+
+// The interface for all aliasing functionality
+type GotAliasInterface interface {
+	Lookup(alias string) (*NodeId, error)
 	Unalias(alias string) (*NodeId, error)
 	Alias(gid string, alias string) (bool, error)
-	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
-	CreateBuck(parent *GidLookup, date *DateLookup, completable bool, heading string) (*NodeId, error)
 }
 
 type DateLookup struct {
