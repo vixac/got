@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
 )
@@ -62,6 +64,10 @@ func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 	return false, m.errorToThrow
 }
 
+func (m *MockEngine) Lookup(alias string) (*engine.NodeId, error) {
+	return nil, errors.New("not impl")
+
+}
 func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
 	m.moveLookup = lookup
 	m.moveNewParent = newParent

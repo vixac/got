@@ -3,7 +3,7 @@ package bullet
 import (
 	"errors"
 
-	wayfinder "github.com/vixac/firbolg_clients/bullet/wayfinder"
+	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	"vixac.com/got/engine"
 )
 
@@ -13,15 +13,15 @@ const (
 )
 
 type EngineBullet struct {
-	WayFinder wayfinder.WayFinderClientInterface
+	Client bullet_interface.BulletClientInterface
 }
 
 func (e *EngineBullet) Summary(lookup engine.GidLookup) (*engine.GotSummary, error) {
 
-	query := wayfinder.WayFinderPrefixQueryRequest{
+	query := bullet_interface.WayFinderPrefixQueryRequest{
 		BucketId: nodeBucket,
 	}
-	res, err := e.WayFinder.WayFinderQueryByPrefix(query)
+	res, err := e.Client.WayFinderQueryByPrefix(query)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,17 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 }
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
+	//VX:TODO this should hit both the keys and also hit depot too for the heading.
+
+	err := e.Client.TrackInsertOne(nodeBucket, "VX:WOOOHOO:", 1234, nil, nil)
+
+	//lets
+	return nil, err
+}
+
+func (e *EngineBullet) Lookup(alias string) (*engine.NodeId, error) {
 	return nil, errors.New("not impl")
+
 }
 
 /**
