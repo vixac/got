@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"vixac.com/got/console"
 )
 
 func buildJobsCommand(deps RootDependencies) *cobra.Command {
@@ -20,6 +21,13 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			println("VX: TODO ls items.", underGid)
+			//VX:TODO lookup optional?
+
+			res, err := deps.Engine.Summary(nil)
+			if err != nil {
+				deps.Printer.Error(console.Message{Message: err.Error()})
+			}
+			print("VX: title is " + res.Title)
 		},
 	}
 	jobsCmd.Flags().StringVarP(&underGid, "under", "u", "", "The parent item")

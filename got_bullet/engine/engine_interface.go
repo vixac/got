@@ -2,7 +2,7 @@ package engine
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
-	Summary(lookup GidLookup) (*GotSummary, error)
+	Summary(lookup *GidLookup) (*GotSummary, error)
 	Resolve(lookup GidLookup) (*NodeId, error)
 	Delete(lookup GidLookup) (*NodeId, error)
 

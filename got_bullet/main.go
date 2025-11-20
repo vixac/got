@@ -7,7 +7,7 @@ import (
 	local_bullet "github.com/vixac/firbolg_clients/bullet/local_bullet"
 	"vixac.com/got/cmd"
 	"vixac.com/got/console"
-	"vixac.com/got/engine/bullet"
+	bullet_engine "vixac.com/got/engine/bullet_engine"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 		AppId: 123,
 		Store: boltdb,
 	}
-	ene := bullet.EngineBullet{
+	ene := bullet_engine.EngineBullet{
 		Client: &localBullet,
 	}
 	printer := console.Printer{}

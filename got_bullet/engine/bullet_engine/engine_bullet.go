@@ -1,9 +1,11 @@
-package bullet
+package bullet_engine
 
 import (
 	"errors"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+
 	"vixac.com/got/engine"
 )
 
@@ -16,14 +18,34 @@ type EngineBullet struct {
 	Client bullet_interface.BulletClientInterface
 }
 
-func (e *EngineBullet) Summary(lookup engine.GidLookup) (*engine.GotSummary, error) {
+func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, error) {
 
-	query := bullet_interface.WayFinderPrefixQueryRequest{
-		BucketId: nodeBucket,
+	query := bullet_interface.TrackGetItemsByPrefixRequest{
+		BucketID: nodeBucket,
+		Prefix:   ":",
 	}
-	res, err := e.Client.WayFinderQueryByPrefix(query)
+	res, err := e.Client.TrackGetManyByPrefix(query)
 	if err != nil {
 		return nil, err
+	}
+
+	var foundId *int64 = nil
+	for bucket, values := range res.Values {
+		if bucket != nodeBucket {
+			continue
+		}
+		for _, v := range values {
+			foundId = &v.Value
+		}
+
+	}
+	if foundId != nil {
+		var keys []int64
+		keys = append(keys, *foundId)
+		manyReq := bullet_interface.DepotGetManyRequest{
+			Keys: keys,
+		}
+		e.Client.DepotGetMany(manyReq)
 	}
 	println("VX: res is", res)
 	return nil, errors.New("not implemeneted")
@@ -65,7 +87,25 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
 	//VX:TODO this should hit both the keys and also hit depot too for the heading.
 
-	err := e.Client.TrackInsertOne(nodeBucket, "VX:WOOOHOO:", 1234, nil, nil)
+	newId, err := e.NextId()
+	if err != nil {
+		return nil, err
+	}
+	stringId, err := bullet_stl.BulletIdIntToaasci(newId)
+	if err != nil {
+		return nil, err
+	}
+	//VX:TODO thats not quite right but lets go with it.
+	err = e.Client.TrackInsertOne(nodeBucket, ":"+stringId, newId, nil, nil)
+
+	if err != nil {
+		return nil, err
+	}
+	depotReq := bullet_interface.DepotRequest{
+		Key:   newId,
+		Value: heading,
+	}
+	e.Client.DepotInsertOne(depotReq)
 
 	//lets
 	return nil, err
