@@ -64,6 +64,7 @@ type GotSummary struct {
 	Alias    string
 	Deadline string
 	Path     GotPath
+	NumberGo int
 }
 
 // VX:TODO replace with GotId
