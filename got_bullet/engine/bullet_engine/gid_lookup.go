@@ -1,8 +1,8 @@
 package bullet_engine
 
 import (
-	"errors"
 	"fmt"
+	"strconv"
 	"unicode"
 
 	"vixac.com/got/engine"
@@ -14,11 +14,12 @@ type GidLookupInterface interface {
 
 // VX:TODO wants number<GO> lookup
 type BulletGidLookup struct {
-	AliasStore engine.GotAliasInterface
+	AliasStore    engine.GotAliasInterface
+	NumberGoStore NumberGoStoreInterface
 }
 
-func NewBulletGidLookup(aliasStore engine.GotAliasInterface) (*BulletGidLookup, error) {
-	return &BulletGidLookup{AliasStore: aliasStore}, nil
+func NewBulletGidLookup(aliasStore engine.GotAliasInterface, numberGoStore NumberGoStoreInterface) (*BulletGidLookup, error) {
+	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore}, nil
 }
 
 func CheckNumber(p []byte) bool {
@@ -63,7 +64,11 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 
 	//this is a number<GO> lookup
 	if CheckNumber([]byte(lookup.Input)) {
-		return nil, errors.New("number goes are not yet supported")
+		number, err := strconv.Atoi(lookup.Input)
+		if err != nil {
+			return nil, err
+		}
+		return b.NumberGoStore.GidFor(number)
 
 	}
 	return b.AliasStore.Lookup(lookup.Input)

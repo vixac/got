@@ -14,14 +14,16 @@ const (
 	aliasBucket    int32 = 1001
 	nodeBucket     int32 = 1002
 	ancestorBucket int32 = 1003
+	numberGoBucket int32 = 1004
 )
 
 type EngineBullet struct {
-	Client       bullet_interface.BulletClientInterface
-	AncestorList AncestorListInterface
-	TitleStore   TitleStoreInterface
-	GidLookup    GidLookupInterface
-	AliasStore   engine.GotAliasInterface
+	Client        bullet_interface.BulletClientInterface
+	AncestorList  AncestorListInterface
+	TitleStore    TitleStoreInterface
+	GidLookup     GidLookupInterface
+	AliasStore    engine.GotAliasInterface
+	NumberGoStore NumberGoStoreInterface
 }
 
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
@@ -36,22 +38,28 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 
+	numberGoStore, err := NewBulletNumberGoStore(client, numberGoBucket)
+	if err != nil {
+		return nil, err
+	}
+
 	aliasStore, err := NewBulletAliasStore(client, aliasBucket)
 	if err != nil {
 		return nil, err
 	}
 
-	gidLookup, err := NewBulletGidLookup(aliasStore)
+	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore)
 	if err != nil {
 		return nil, err
 	}
 
 	return &EngineBullet{
-		Client:       client,
-		AncestorList: ancestorList,
-		TitleStore:   titleStore,
-		GidLookup:    gidLookup,
-		AliasStore:   aliasStore,
+		Client:        client,
+		AncestorList:  ancestorList,
+		TitleStore:    titleStore,
+		GidLookup:     gidLookup,
+		AliasStore:    aliasStore,
+		NumberGoStore: numberGoStore,
 	}, nil
 }
 
@@ -142,7 +150,38 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		})
 
 	}
-	res := engine.GotFetchResult{Result: summaries}
+	return e.renderSummaries(summaries)
+
+}
+
+// adds the items to the number go store as well as
+func (e *EngineBullet) renderSummaries(summaries []engine.GotSummary) (*engine.GotFetchResult, error) {
+
+	//VX:TODO sort here?
+	var expandedSummaries []engine.GotSummary
+	var pairs []NumberGoPair
+	for i, s := range summaries {
+
+		num := i + 1
+		pairs = append(pairs, NumberGoPair{
+			Number: num,
+			Gid:    engine.Gid{Id: s.Gid},
+		})
+		expandedSummaries = append(expandedSummaries, engine.GotSummary{
+			Gid:      s.Gid,
+			Alias:    s.Alias,
+			NumberGo: num,
+			Title:    s.Title,
+		})
+
+	}
+	err := e.NumberGoStore.AssignNumberPairs(pairs)
+	if err != nil {
+		return nil, err
+	}
+
+	//the summaries injected dont have number go assigned.
+	res := engine.GotFetchResult{Result: expandedSummaries}
 	return &res, nil
 }
 

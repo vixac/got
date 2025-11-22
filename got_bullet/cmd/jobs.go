@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
@@ -39,11 +40,17 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			for _, v := range res.Result {
-				var msg = "item id:"
+				var msg = ""
+				if v.NumberGo != 0 {
+					numStr := strconv.Itoa(v.NumberGo)
+					msg += (numStr + "<GO>")
+				}
+				msg += ", item Id: "
 				msg += v.Gid
-				msg += ", title: '"
+				msg += "title: '"
 				msg += v.Title
 				msg += "'."
+
 				deps.Printer.Print(console.Message{Message: msg})
 			}
 
