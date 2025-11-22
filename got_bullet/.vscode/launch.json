@@ -8,7 +8,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "env": {},
-            "args": ["it", "hello"]
+            "args": ["jobs", "011"]
         }
     ]
 }

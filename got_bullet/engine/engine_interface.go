@@ -39,13 +39,13 @@ type GotFetchResult struct {
 
 // All the lookup stuff
 type GotFetchInterface interface {
-	FetchItemsBelow(ookup *GidLookup, descendantType int, states []int) (*GotFetchResult, error)
+	FetchItemsBelow(lookup *GidLookup, descendantType int, states []int) (*GotFetchResult, error)
 }
 
 // The interface for all aliasing functionality
 type GotAliasInterface interface {
-	Lookup(alias string) (*NodeId, error)
-	Unalias(alias string) (*NodeId, error)
+	Lookup(alias string) (*GotId, error)
+	Unalias(alias string) (*GotId, error)
 	Alias(gid string, alias string) (bool, error)
 }
 

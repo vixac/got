@@ -21,6 +21,7 @@ type EngineBullet struct {
 	AncestorList AncestorListInterface
 	TitleStore   TitleStoreInterface
 	GidLookup    GidLookupInterface
+	AliasStore   engine.GotAliasInterface
 }
 
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
@@ -35,15 +36,22 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 
-	gidLookup, err := NewBulletGidLookup()
+	aliasStore, err := NewBulletAliasStore(client, aliasBucket)
 	if err != nil {
 		return nil, err
 	}
+
+	gidLookup, err := NewBulletGidLookup(aliasStore)
+	if err != nil {
+		return nil, err
+	}
+
 	return &EngineBullet{
 		Client:       client,
 		AncestorList: ancestorList,
 		TitleStore:   titleStore,
 		GidLookup:    gidLookup,
+		AliasStore:   aliasStore,
 	}, nil
 }
 
@@ -60,6 +68,9 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 	title, err := e.TitleStore.TitleFor(gid.IntValue)
 	if err != nil {
 		return nil, errors.New("no title")
+	}
+	if title == nil {
+		return nil, nil
 	}
 
 	//this is building the path.
@@ -97,6 +108,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("VX: resolved gid is %s\n", gid.AasciValue)
 	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
 	if err != nil {
 		return nil, err
@@ -134,10 +146,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	return &res, nil
 }
 
-func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
-	return false, errors.New(("not impl"))
-}
-
 func (e *EngineBullet) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) {
 	//check if the gid is an exact match for an item id
 	//check int32 parse, check its length is the right length
@@ -147,14 +155,6 @@ func (e *EngineBullet) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) 
 }
 
 func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
-	//check if the gid is an exact match for an item id
-	//check int32 parse, check its length is the right length
-
-	//aliases can't start with a number.
-	return nil, errors.New("not impl")
-}
-
-func (e *EngineBullet) Unalias(alias string) (*engine.NodeId, error) {
 	//check if the gid is an exact match for an item id
 	//check int32 parse, check its length is the right length
 
@@ -211,21 +211,24 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}, nil
 }
 
-func (e *EngineBullet) Lookup(alias string) (*engine.NodeId, error) {
-	return nil, errors.New("not impl")
+func (e *EngineBullet) Lookup(alias string) (*engine.GotId, error) {
+	return e.AliasStore.Lookup(alias)
 
 }
+func (e *EngineBullet) Unalias(alias string) (*engine.GotId, error) {
+	return e.AliasStore.Unalias(alias)
+}
+func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
+	//confirm the gid exists.
+	lookup, err := e.Summary(&engine.GidLookup{
+		Input: gid,
+	})
+	if err != nil {
+		return false, err
+	}
 
-/**
-The cache is going to work like this
-
-asc(n)
-and its only ascendants and descen
-
-*/
-/**
-ok im goina do this the buck way..
-it takes a wayfinder and uses it
-and the business logic for using the wayfinder is reusable.
-its a cool design.
-*/
+	if lookup == nil {
+		return false, errors.New("can't alias a gid that doesn't exist")
+	}
+	return e.AliasStore.Alias(lookup.Gid, alias)
+}
