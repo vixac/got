@@ -1,6 +1,7 @@
 package bullet_engine
 
 import (
+	"fmt"
 	"strconv"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
@@ -17,17 +18,23 @@ const (
 // VX:TODO test, maybe put somewhere else too.
 func (e *EngineBullet) NextId() (int64, error) {
 
+	fmt.Printf("VX NEXT ID \n")
 	list, err := bullet_stl.NewBulletOneWayList(e.Client, bucketId, listName, separator)
 	if err != nil {
 		return 0, err
 	}
 	latest := bullet_stl.ListSubject{Value: latestSubject}
 	currentHighest, err := list.GetObject(latest)
+	fmt.Printf("VX NEXT ID failed at get object?\n")
 	if err != nil {
+		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())
 		return 0, err
 	}
+
 	//base case, start at the beginning.
 	if currentHighest == nil {
+
+		fmt.Printf("VX NEXT ID is upserting?\n")
 		str := strconv.FormatInt(firstId, 10)
 		err := list.Upsert(latest, bullet_stl.ListObject{Value: str})
 		if err != nil {
@@ -35,6 +42,7 @@ func (e *EngineBullet) NextId() (int64, error) {
 		}
 		return firstId, nil
 	} else {
+		fmt.Printf("VX NEXT ID got an id %s\n", currentHighest.Value)
 		//now increment
 		value := currentHighest.Value
 		valueInt, err := strconv.ParseInt(value, 10, 64)

@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -10,45 +11,84 @@ import (
 )
 
 const (
-	aliasBucket int32 = 1001
-	nodeBucket  int32 = 1002
+	aliasBucket    int32 = 1001
+	nodeBucket     int32 = 1002
+	ancestorBucket int32 = 1003
 )
 
 type EngineBullet struct {
-	Client bullet_interface.BulletClientInterface
+	Client       bullet_interface.BulletClientInterface
+	AncestorList AncestorListInterface
+	TitleStore   TitleStoreInterface
+	GidLookup    GidLookupInterface
 }
 
-func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, error) {
+func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
+	ancestorList, err := NewAncestorList(client, "<anc>", ancestorBucket, ":", ">", "<")
 
-	query := bullet_interface.TrackGetItemsByPrefixRequest{
-		BucketID: nodeBucket,
-		Prefix:   ":",
-	}
-	res, err := e.Client.TrackGetManyByPrefix(query)
 	if err != nil {
 		return nil, err
 	}
 
-	var foundId *int64 = nil
-	for bucket, values := range res.Values {
-		if bucket != nodeBucket {
-			continue
-		}
-		for _, v := range values {
-			foundId = &v.Value
+	titleStore, err := NewBulletTitleStore(client)
+	if err != nil {
+		return nil, err
+	}
+
+	gidLookup, err := NewBulletGidLookup()
+	if err != nil {
+		return nil, err
+	}
+	return &EngineBullet{
+		Client:       client,
+		AncestorList: ancestorList,
+		TitleStore:   titleStore,
+		GidLookup:    gidLookup,
+	}, nil
+}
+
+func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, error) {
+
+	gid, err := e.GidLookup.InputToGid(lookup)
+	if err != nil {
+		return nil, err
+	}
+	if gid == nil {
+		return nil, errors.New("no gid")
+	}
+
+	//descendants, err := e.AncestorList.FetchAncestorsOf(*gid)
+	title, err := e.TitleStore.TitleFor(gid.IntValue)
+	if err != nil {
+		return nil, errors.New("no title")
+	}
+
+	//this is building the path.
+	/*
+
+		ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
+		if err != nil {
+			return nil, errors.New("error fetching ancestors")
 		}
 
+		var path string = ""
+		if ancestorResult != nil {
+			var stringIds []string
+			for _, id := range ancestorResult.Ids {
+				stringIds = append(stringIds, id.AasciValue)
+
+			}
+			path = strings.Join(stringIds, "->")
+
+		}*/
+	var theTitle = ""
+	if title != nil {
+		theTitle = *title
 	}
-	if foundId != nil {
-		var keys []int64
-		keys = append(keys, *foundId)
-		manyReq := bullet_interface.DepotGetManyRequest{
-			Keys: keys,
-		}
-		e.Client.DepotGetMany(manyReq)
-	}
-	println("VX: res is", res)
-	return nil, errors.New("not implemeneted")
+	return &engine.GotSummary{
+		Gid:   gid.AasciValue,
+		Title: theTitle,
+	}, nil
 
 }
 
@@ -88,6 +128,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	//VX:TODO this should hit both the keys and also hit depot too for the heading.
 
 	newId, err := e.NextId()
+
 	if err != nil {
 		return nil, err
 	}
@@ -95,20 +136,37 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	if err != nil {
 		return nil, err
 	}
-	//VX:TODO thats not quite right but lets go with it.
-	err = e.Client.TrackInsertOne(nodeBucket, ":"+stringId, newId, nil, nil)
+	fmt.Printf("VX: newId is %s", stringId)
+	gotId := engine.GotId{
+		AasciValue: stringId,
+		IntValue:   newId,
+	}
 
+	//VX:TODO lookup parent
+	if parent != nil {
+		return nil, errors.New("adding under parent not supported yet")
+	}
+
+	//add item to ancestry
+	err = e.AncestorList.AddItem(gotId, nil)
 	if err != nil {
 		return nil, err
 	}
-	depotReq := bullet_interface.DepotRequest{
-		Key:   newId,
-		Value: heading,
-	}
-	e.Client.DepotInsertOne(depotReq)
 
-	//lets
-	return nil, err
+	//add item heading to depot
+	err = e.TitleStore.AddItem(newId, heading)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("VX: buck created.\n")
+	return &engine.NodeId{
+		Gid: engine.Gid{
+			Id: stringId,
+		},
+		Title: heading,
+		Alias: "",
+	}, nil
 }
 
 func (e *EngineBullet) Lookup(alias string) (*engine.NodeId, error) {

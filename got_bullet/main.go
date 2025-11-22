@@ -11,8 +11,7 @@ import (
 )
 
 func main() {
-	//inter := bullet_interface.BulletClientInterface{}
-	boltdb, err := boldtb.NewBoltStore("boom")
+	boltdb, err := boldtb.NewBoltStore("got-bolt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,13 +19,15 @@ func main() {
 		AppId: 123,
 		Store: boltdb,
 	}
-	ene := bullet_engine.EngineBullet{
-		Client: &localBullet,
+
+	ene, err := bullet_engine.NewEngineBullet(&localBullet)
+	if err != nil {
+		log.Fatal(err)
 	}
 	printer := console.Printer{}
 	deps := cmd.RootDependencies{
 		Printer: printer,
-		Engine:  &ene,
+		Engine:  ene,
 	}
 	cmd.Execute(deps)
 	//println("VX: Hello got from go")
