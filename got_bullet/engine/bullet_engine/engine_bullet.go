@@ -69,6 +69,9 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 	if err != nil {
 		return nil, errors.New("no title")
 	}
+	if title == nil {
+		return nil, nil
+	}
 
 	//this is building the path.
 	/*
@@ -223,9 +226,11 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if lookup == nil {
 		return false, errors.New("can't alias a gid that doesn't exist")
 	}
+	fmt.Printf("VX: lookup resuleded in %s\n")
 	//VX:TODO should we check the alias exists?
 	return e.AliasStore.Alias(lookup.Gid, alias)
 }
