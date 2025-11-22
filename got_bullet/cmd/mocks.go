@@ -30,6 +30,7 @@ type MockEngine struct {
 	errorToThrow  error
 
 	nodeIdToReturn *engine.NodeId
+	gotIdToReturn  *engine.GotId
 	unaliasAlias   string
 
 	moveLookup    engine.GidLookup
@@ -46,9 +47,9 @@ func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, descendantType in
 	return nil, errors.New("not impl")
 }
 
-func (m *MockEngine) Unalias(alias string) (*engine.NodeId, error) {
+func (m *MockEngine) Unalias(alias string) (*engine.GotId, error) {
 	m.unaliasAlias = alias
-	return m.nodeIdToReturn, m.errorToThrow
+	return m.gotIdToReturn, m.errorToThrow
 }
 func (m *MockEngine) Summary(lookup *engine.GidLookup) (*engine.GotSummary, error) {
 	m.summaryLookup = lookup
@@ -68,7 +69,7 @@ func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 	return false, m.errorToThrow
 }
 
-func (m *MockEngine) Lookup(alias string) (*engine.NodeId, error) {
+func (m *MockEngine) Lookup(alias string) (*engine.GotId, error) {
 	return nil, errors.New("not impl")
 
 }
