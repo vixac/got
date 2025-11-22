@@ -230,21 +230,5 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	if lookup == nil {
 		return false, errors.New("can't alias a gid that doesn't exist")
 	}
-	fmt.Printf("VX: lookup resuleded in %s\n")
-	//VX:TODO should we check the alias exists?
 	return e.AliasStore.Alias(lookup.Gid, alias)
 }
-
-/**
-The cache is going to work like this
-
-asc(n)
-and its only ascendants and descen
-
-*/
-/**
-ok im goina do this the buck way..
-it takes a wayfinder and uses it
-and the business logic for using the wayfinder is reusable.
-its a cool design.
-*/
