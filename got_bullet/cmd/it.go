@@ -36,6 +36,7 @@ func buildItCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
+			deps.Printer.Print(console.Message{Message: "item created."})
 			return nil
 		},
 	}

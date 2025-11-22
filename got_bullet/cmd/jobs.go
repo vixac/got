@@ -1,28 +1,55 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
+	"vixac.com/got/console"
+	"vixac.com/got/engine"
 )
 
+// VX:TODO test
 func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
-	var underGid string
+	var underLookup string
 	var jobsCmd = &cobra.Command{
 		Use:   "jobs",
-		Short: "List jobs",
+		Short: "fetch jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
-			println("jobs took arg count:", len(args))
-			for _, v := range args {
-				println("VX: jobs args are " + v)
-			}
-			if underGid == "" {
-				print("VX: list jobs from the top lvl")
+			var lookup *engine.GidLookup = nil
+			if underLookup != "" {
+
+				realLookup := engine.GidLookup{
+					Input: underLookup,
+				}
+				lookup = &realLookup
+				fmt.Printf("Jobs lookup si %s\n", underLookup)
 			}
 
-			println("VX: TODO ls items.", underGid)
+			states := []int{engine.Active}
+
+			res, err := deps.Engine.FetchItemsBelow(lookup, engine.AllDescendants, states)
+			if err != nil {
+				deps.Printer.Error(console.Message{Message: err.Error()})
+				return
+			}
+			if res == nil || len(res.Result) == 0 {
+				deps.Printer.Print(console.Message{Message: "no items found"})
+				return
+			}
+
+			for _, v := range res.Result {
+				var msg = "item id:"
+				msg += v.Gid
+				msg += ", title: '"
+				msg += v.Title
+				msg += "'."
+				deps.Printer.Print(console.Message{Message: msg})
+			}
+
 		},
 	}
-	jobsCmd.Flags().StringVarP(&underGid, "under", "u", "", "The parent item")
+	jobsCmd.Flags().StringVarP(&underLookup, "under", "u", "", "The parent item")
 	return jobsCmd
 
 }
