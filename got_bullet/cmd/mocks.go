@@ -42,6 +42,10 @@ type MockEngine struct {
 	heading           string
 }
 
+func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
+	return nil, errors.New("not impl")
+}
+
 func (m *MockEngine) Unalias(alias string) (*engine.NodeId, error) {
 	m.unaliasAlias = alias
 	return m.nodeIdToReturn, m.errorToThrow

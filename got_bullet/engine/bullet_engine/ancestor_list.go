@@ -15,7 +15,7 @@ type AncestorLookupResult struct {
 }
 
 type DescendantLookupResult struct {
-	Ids []engine.GotId
+	Ids []string
 }
 
 // 0 is a bit like a null terminator character. Beacuse ancestor list is forward only
@@ -68,6 +68,7 @@ func NewAncestorList(client bullet_interface.TrackClientInterface, listName stri
 //aah crap it needs to be a two way mesh.
 
 func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) error {
+	fmt.Printf("attempting to insert id %s into ancestry", id.AasciValue)
 	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 	if err != nil {
 		return err
@@ -109,22 +110,32 @@ func (a *BulletAncestorList) FetchAllItems(under engine.GotId) (*DescendantLooku
 		return nil, err
 	}
 	for _, pair := range descendants.Pairs {
-		fmt.Printf("VX: pair is %s -> %s", pair.Subject.Value, pair.Object.Value)
+		fmt.Printf("VX: all pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
 	}
 
 	return nil, errors.New("not impl")
 
 }
 func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
-	descendants, err := a.Mesh.AllPairsForSubject(bullet_stl.ListSubject{Value: id.AasciValue})
+	fmt.Printf("Fetching pairs for %s\n", id.AasciValue)
+	descendants, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: id.AasciValue})
 	if err != nil {
 		return nil, err
 	}
+	if descendants == nil {
+		return nil, nil
+	}
+	var ids []string
 	//VX:TODO
 	for _, pair := range descendants.Pairs {
-		fmt.Printf("VX: pair is %s -> %s", pair.Subject.Value, pair.Object.Value)
+		fmt.Printf("VX: pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
+		ids = append(ids, pair.Object.Value)
 	}
-	return nil, errors.New("not impl")
+
+	res := DescendantLookupResult{
+		Ids: ids,
+	}
+	return &res, nil
 
 }
 

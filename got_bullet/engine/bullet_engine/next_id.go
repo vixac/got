@@ -25,7 +25,6 @@ func (e *EngineBullet) NextId() (int64, error) {
 	}
 	latest := bullet_stl.ListSubject{Value: latestSubject}
 	currentHighest, err := list.GetObject(latest)
-	fmt.Printf("VX NEXT ID failed at get object?\n")
 	if err != nil {
 		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())
 		return 0, err
@@ -55,6 +54,6 @@ func (e *EngineBullet) NextId() (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		return valueInt, nil
+		return incrementedValue, nil
 	}
 }

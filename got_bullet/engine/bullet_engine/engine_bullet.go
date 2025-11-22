@@ -24,7 +24,7 @@ type EngineBullet struct {
 }
 
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
-	ancestorList, err := NewAncestorList(client, "<anc>", ancestorBucket, ":", ">", "<")
+	ancestorList, err := NewAncestorList(client, "anc", ancestorBucket, ":", ">", "<")
 
 	if err != nil {
 		return nil, err
@@ -57,7 +57,6 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 		return nil, errors.New("no gid")
 	}
 
-	//descendants, err := e.AncestorList.FetchAncestorsOf(*gid)
 	title, err := e.TitleStore.TitleFor(gid.IntValue)
 	if err != nil {
 		return nil, errors.New("no title")
@@ -80,7 +79,8 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 			}
 			path = strings.Join(stringIds, "->")
 
-		}*/
+		}
+	*/
 	var theTitle = ""
 	if title != nil {
 		theTitle = *title
@@ -90,6 +90,48 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 		Title: theTitle,
 	}, nil
 
+}
+
+func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
+	gid, err := e.GidLookup.InputToGid(lookup)
+	if err != nil {
+		return nil, err
+	}
+	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
+	if err != nil {
+		return nil, err
+	}
+	if all == nil {
+		return nil, nil
+	}
+
+	var intIds []int64
+	for _, id := range all.Ids {
+		intId, err := bullet_stl.AasciBulletIdToInt(id)
+		if err != nil {
+			return nil, err
+		}
+		intIds = append(intIds, intId)
+	}
+	titles, err := e.TitleStore.TitleForMany(intIds)
+	if err != nil {
+		return nil, err
+	}
+	var summaries []engine.GotSummary
+	for k, v := range titles {
+		stringId, err := bullet_stl.BulletIdIntToaasci(k)
+		if err != nil {
+			return nil, err
+		}
+		//gid := engine.NewCompleteId(stringId, k)
+		summaries = append(summaries, engine.GotSummary{
+			Gid:   stringId,
+			Title: v,
+		})
+
+	}
+	res := engine.GotFetchResult{Result: summaries}
+	return &res, nil
 }
 
 func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
@@ -136,7 +178,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("VX: newId is %s", stringId)
+	fmt.Printf("VX: newId is %s\n", stringId)
 	gotId := engine.GotId{
 		AasciValue: stringId,
 		IntValue:   newId,

@@ -9,6 +9,8 @@ import (
 type TitleStoreInterface interface {
 	AddItem(id int64, title string) error
 	TitleFor(id int64) (*string, error)
+
+	TitleForMany(ids []int64) (map[int64]string, error)
 	RemoveItem(id int64) error
 }
 type BulletTitleStore struct {
@@ -28,6 +30,22 @@ func (s *BulletTitleStore) AddItem(id int64, title string) error {
 	}
 	return s.Depot.DepotInsertOne(req)
 }
+
+func (s *BulletTitleStore) TitleForMany(ids []int64) (map[int64]string, error) {
+
+	req := bullet_interface.DepotGetManyRequest{
+		Keys: ids,
+	}
+	resp, err := s.Depot.DepotGetMany(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, nil
+	}
+	return resp.Values, nil
+}
+
 func (s *BulletTitleStore) TitleFor(id int64) (*string, error) {
 	keys := []int64{id}
 	req := bullet_interface.DepotGetManyRequest{

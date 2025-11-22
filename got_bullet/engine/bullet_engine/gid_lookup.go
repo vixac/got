@@ -54,7 +54,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	if firstChar == '0' {
 		//we trim the first character and move on
 		restOfString := lookup.Input[1:]
-		fmt.Printf("VX: rest of stirng is %s", restOfString)
+		fmt.Printf("VX: rest of stirng is %s\n", restOfString)
 		return engine.NewGotId(restOfString)
 	}
 

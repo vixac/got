@@ -12,10 +12,34 @@ type GotEngine interface {
 
 	GotAliasInterface
 	GotCreateItemInterface
+	GotFetchInterface
 }
 
 type GotCreateItemInterface interface {
 	CreateBuck(parent *GidLookup, date *DateLookup, completable bool, heading string) (*NodeId, error)
+}
+
+// descendant types
+const (
+	AllDescendants           = 0
+	LeafNodesOnly            = 1
+	ImmediateDescendantsOnly = 2
+)
+
+// states
+const (
+	Active   = 0
+	Note     = 8000
+	Complete = 16000
+)
+
+type GotFetchResult struct {
+	Result []GotSummary
+}
+
+// All the lookup stuff
+type GotFetchInterface interface {
+	FetchItemsBelow(ookup *GidLookup, descendantType int, states []int) (*GotFetchResult, error)
 }
 
 // The interface for all aliasing functionality
@@ -59,6 +83,13 @@ type GotPath struct {
 type GotId struct {
 	AasciValue string
 	IntValue   int64
+}
+
+func NewCompleteId(aasci string, intValue int64) GotId {
+	return GotId{
+		AasciValue: aasci,
+		IntValue:   intValue,
+	}
 }
 
 // this is basically a wrapper for BulletId
