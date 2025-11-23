@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	firstId       int32 = 47
+	firstId       int32 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
 	bucketId            = 100
 	listName            = "next-id-list"
 	separator           = ""
