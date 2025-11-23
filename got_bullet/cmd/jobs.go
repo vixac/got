@@ -39,7 +39,7 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 				return
 			}
 
-			deps.Printer.Print(console.Message{Message: "-----------------------"})
+			deps.Printer.Print(console.Message{Message: "-----------------------------------------\n\n"})
 
 			for _, v := range res.Result {
 				var msg = ""

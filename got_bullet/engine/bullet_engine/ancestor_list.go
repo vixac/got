@@ -189,54 +189,6 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 	}, nil
 }
 
-/*
-func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
-	fmt.Printf("Fetching pairs for %s\n", id.AasciValue)
-	//this is wrong. first we need to build the full pair
-	descendants, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: id.AasciValue})
-	if err != nil {
-		return nil, err
-	}
-	if descendants == nil {
-		return nil, nil
-	}
-	//var ids []string
-	result := make(map[string]AncestorLookupResult)
-	//VX:TODO
-	for _, pair := range descendants.Pairs {
-		fmt.Printf("VX: descendant pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
-		//ids = append(ids, pair.Object.Value)
-		gotId, err := engine.NewGotId(pair.Object.Value)
-		if err != nil {
-			return nil, err
-		}
-		if gotId == nil {
-			//no ancestors, curious
-			result[pair.Object.Value] = AncestorLookupResult{}
-		} else {
-			fmt.Printf("VX: fetching ancestors of %s\n", gotId.AasciValue)
-			ancestors, err := a.FetchAncestorsOf(*gotId)
-			if err != nil {
-				return nil, err
-			}
-			if ancestors != nil {
-				result[pair.Object.Value] = *ancestors
-			} else {
-				result[pair.Object.Value] = AncestorLookupResult{}
-			}
-
-		}
-
-	}
-
-	res := DescendantLookupResult{
-		Ids: result,
-	}
-	return &res, nil
-
-}
-*/
-
 func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error) {
 
 	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
