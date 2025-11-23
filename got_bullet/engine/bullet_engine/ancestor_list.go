@@ -33,7 +33,7 @@ var (
 
 // The engine interface for whatever is going to store ancestor and descendant trees
 type AncestorListInterface interface {
-	AddItem(id engine.GotId, under *engine.GotId) error
+	AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error)
 	RemoveItem(id engine.GotId) error
 	FetchAllItems(under engine.GotId) (*DescendantLookupResult, error)
 	FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error)
@@ -66,44 +66,75 @@ func NewAncestorList(client bullet_interface.TrackClientInterface, listName stri
 	}, nil
 }
 
+type Ancestry struct {
+	Ids []engine.GotId
+}
+
 //aah crap it needs to be a two way mesh.
 
-func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) error {
-	fmt.Printf("attempting to insert id %s into ancestry", id.AasciValue)
+func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error) {
+	fmt.Printf("attempting to insert id %s into ancestry\n", id.AasciValue)
 	if id.AasciValue == TheRootNode.Value {
-		return errors.New("inserting the root node is not permitted")
+		return nil, errors.New("inserting the root node is not permitted")
 	}
 
 	ancestorsOfNewItem, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//can't insert an item that exists, and all items have an acnestor besides the root node.
 	if ancestorsOfNewItem != nil && len(ancestorsOfNewItem.Pairs) != 0 {
-		return errors.New("attempted to insert an existing id")
+		return nil, errors.New("attempted to insert an existing id")
 	}
 	//we insert this item to the root node.
 	var parent bullet_stl.ListSubject
+
+	var ancestry *Ancestry = nil
 	if under == nil {
 		parent = TheRootNode
 	} else {
 		//now we construct the ancestor prefix
 		ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: under.AasciValue})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if ancestors == nil {
-			return errors.New("every node bedies the root node should have ancestors")
+			return nil, errors.New("every node bedies the root node should have ancestors")
 		}
+		fmt.Printf("VX: WWTFF+==================\n")
 
 		//VX:TODO finish
+		var ancestorGotIdList []engine.GotId
 		var ancestorList []string
-		for _, a := range ancestors.Pairs {
+		if len(ancestors.Pairs) > 1 {
+			fmt.Printf("VX: IM PRETTY SURE THIS NEVER HAPPENS\n")
+
+		}
+		//		ancestorKey := ancestors.Pairs[0]
+		//VX:TODO just pick the 1st item.
+		for _, a := range ancestors.Pairs { //there's always 1 ancestor here no? Wierd. I think i
+			fmt.Printf("VX: This is an ancestor '%s'\n", a.Subject.Value)
 			ancestorList = append(ancestorList, a.Subject.Value)
 		}
+
 		ancestorList = append(ancestorList, under.AasciValue)
 		parentKey := strings.Join(ancestorList, a.SubjectSeparator)
+
+		eachAncestor := strings.Split(parentKey, a.SubjectSeparator)
+
+		//splitting the parent key at the end is a bit cheap but it works.
+		for _, a := range eachAncestor {
+			gotId, err := engine.NewGotId(a)
+			if err != nil {
+				return nil, err
+			}
+			ancestorGotIdList = append(ancestorGotIdList, *gotId)
+
+		}
+		ancestry = &Ancestry{
+			Ids: ancestorGotIdList,
+		}
 
 		fmt.Printf("VX: complete parent key is %s\n", parentKey)
 		parent = bullet_stl.ListSubject{Value: parentKey}
@@ -112,7 +143,7 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) error
 		deletePairs := []bullet_stl.ManyToManyPair{{Subject: parent, Object: TheLeafChild}}
 		err = a.Mesh.RemovePairs(deletePairs) //VX:TODO make sure deleting doesnt fail if theres nothing to delete.
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	object := bullet_stl.ListObject{Value: id.AasciValue}
@@ -121,7 +152,8 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) error
 		{Subject: parent, Object: object},                //parent -> newItem
 		{Subject: object.Invert(), Object: TheLeafChild}, //newItem -> theLeafNode
 	}
-	return a.Mesh.AppendPairs(pairs)
+
+	return ancestry, a.Mesh.AppendPairs(pairs)
 }
 
 func (a *BulletAncestorList) RemoveItem(id engine.GotId) error {

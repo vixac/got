@@ -17,18 +17,30 @@ const (
 	numberGoBucket int32 = 1004
 )
 
+const (
+	aggregateNamespace int32 = 2000
+)
+
 type EngineBullet struct {
-	Client        bullet_interface.BulletClientInterface
-	AncestorList  AncestorListInterface
-	TitleStore    TitleStoreInterface
-	GidLookup     GidLookupInterface
-	AliasStore    engine.GotAliasInterface
-	NumberGoStore NumberGoStoreInterface
+	Client         bullet_interface.BulletClientInterface
+	AncestorList   AncestorListInterface
+	TitleStore     TitleStoreInterface
+	GidLookup      GidLookupInterface
+	AliasStore     engine.GotAliasInterface
+	NumberGoStore  NumberGoStoreInterface
+	AggregateStore AggStoreInterface
+
+	EventListeners []AggListenerInterface //these will listen to events broadcasted by engineBullet
 }
 
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
 	ancestorList, err := NewAncestorList(client, "anc", ancestorBucket, ":", ">", "<")
 
+	if err != nil {
+		return nil, err
+	}
+	codec := &JSONCodec[Aggregate]{}
+	aggStore, err := NewBulletAggStore(codec, client, aggregateNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -51,15 +63,22 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore)
 	if err != nil {
 		return nil, err
+
 	}
 
+	var listeners []AggListenerInterface
+	aggListener := NewBulletAggListener(aggStore)
+	listeners = append(listeners, aggListener)
+
 	return &EngineBullet{
-		Client:        client,
-		AncestorList:  ancestorList,
-		TitleStore:    titleStore,
-		GidLookup:     gidLookup,
-		AliasStore:    aliasStore,
-		NumberGoStore: numberGoStore,
+		Client:         client,
+		AncestorList:   ancestorList,
+		TitleStore:     titleStore,
+		GidLookup:      gidLookup,
+		AliasStore:     aliasStore,
+		NumberGoStore:  numberGoStore,
+		AggregateStore: aggStore,
+		EventListeners: listeners,
 	}, nil
 }
 
@@ -81,37 +100,18 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 		return nil, nil
 	}
 
-	//this is building the path.
-
 	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
 	if err != nil {
 		return nil, errors.New("error fetching ancestors")
 	}
-
-	/*
-		var
-		var pathStr string = ""
-		if ancestorResult != nil {
-			var stringIds []string
-			for _, id := range ancestorResult.Ids {
-				stringIds = append(stringIds, id.AasciValue)
-
-			}
-			pathStr = strings.Join(stringIds, "->")
-
-		}
-	*/
 	path, err := e.ancestorPathFrom(ancestorResult)
 	if err != nil {
 		return nil, err
 	}
-	var theTitle = ""
-	if title != nil {
-		theTitle = *title
-	}
+
 	return &engine.GotSummary{
 		Gid:   gid.AasciValue,
-		Title: theTitle,
+		Title: *title,
 		Path:  path,
 	}, nil
 
@@ -292,7 +292,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}
 
 	//add item to ancestry
-	err = e.AncestorList.AddItem(gotId, parentGotId)
+	ancestry, err := e.AncestorList.AddItem(gotId, parentGotId)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +303,20 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		return nil, err
 	}
 
-	fmt.Printf("VX: buck created.\n")
+	var aggIds []AggId
+	if ancestry != nil {
+		fmt.Printf("VX: buck created. %+v\n", *ancestry)
+		for _, a := range ancestry.Ids {
+			aggIds = append(aggIds, AggId(a.IntValue))
+		}
+	}
+
+	e.publishEvent(ItemEvent{
+		Type:     EventTypeAdd,
+		Id:       AggId(newId),
+		State:    engine.Active,
+		Ancestry: aggIds,
+	})
 	return &engine.NodeId{
 		Gid: engine.Gid{
 			Id: stringId,
@@ -312,7 +325,15 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		Alias: "",
 	}, nil
 }
-
+func (e *EngineBullet) publishEvent(event ItemEvent) error {
+	for _, l := range e.EventListeners {
+		err := l.ItemEvent(event)
+		if err != nil {
+			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
+		}
+	}
+	return nil
+}
 func (e *EngineBullet) Lookup(alias string) (*engine.GotId, error) {
 	return e.AliasStore.Lookup(alias)
 

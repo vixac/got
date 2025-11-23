@@ -31,6 +31,8 @@ const (
 	ImmediateDescendantsOnly = 2
 )
 
+type GotState int
+
 // states
 const (
 	Active   = 0
