@@ -7,34 +7,38 @@ import (
 )
 
 type TitleStoreInterface interface {
-	AddItem(id int64, title string) error
-	TitleFor(id int64) (*string, error)
+	AddItem(id int32, title string) error
+	TitleFor(id int32) (*string, error)
 
-	TitleForMany(ids []int64) (map[int64]string, error)
-	RemoveItem(id int64) error
+	TitleForMany(ids []int32) (map[int32]string, error)
+	RemoveItem(id int32) error
 }
 type BulletTitleStore struct {
 	Depot bullet_interface.DepotClientInterface
 }
 
-func NewBulletTitleStore(client bullet_interface.DepotClientInterface) (*BulletTitleStore, error) {
+func NewBulletTitleStore(client bullet_interface.DepotClientInterface) (TitleStoreInterface, error) {
 	return &BulletTitleStore{
 		Depot: client,
 	}, nil
 }
 
-func (s *BulletTitleStore) AddItem(id int64, title string) error {
+func (s *BulletTitleStore) AddItem(id int32, title string) error {
 	req := bullet_interface.DepotRequest{
-		Key:   id,
+		Key:   int64(id),
 		Value: title,
 	}
 	return s.Depot.DepotInsertOne(req)
 }
 
-func (s *BulletTitleStore) TitleForMany(ids []int64) (map[int64]string, error) {
+func (s *BulletTitleStore) TitleForMany(ids []int32) (map[int32]string, error) {
 
+	var int64Ids []int64
+	for _, v := range ids {
+		int64Ids = append(int64Ids, int64(v))
+	}
 	req := bullet_interface.DepotGetManyRequest{
-		Keys: ids,
+		Keys: int64Ids,
 	}
 	resp, err := s.Depot.DepotGetMany(req)
 	if err != nil {
@@ -43,11 +47,15 @@ func (s *BulletTitleStore) TitleForMany(ids []int64) (map[int64]string, error) {
 	if resp == nil {
 		return nil, nil
 	}
-	return resp.Values, nil
+	int32Map := make(map[int32]string)
+	for k, v := range resp.Values {
+		int32Map[int32(k)] = v
+	}
+	return int32Map, nil
 }
 
-func (s *BulletTitleStore) TitleFor(id int64) (*string, error) {
-	keys := []int64{id}
+func (s *BulletTitleStore) TitleFor(id int32) (*string, error) {
+	keys := []int64{int64(id)}
 	req := bullet_interface.DepotGetManyRequest{
 		Keys: keys,
 	}
@@ -59,13 +67,13 @@ func (s *BulletTitleStore) TitleFor(id int64) (*string, error) {
 		return nil, nil
 	}
 
-	if title, ok := resp.Values[id]; ok {
+	if title, ok := resp.Values[int64(id)]; ok {
 		return &title, nil
 	}
 	return nil, nil
 }
 
-func (s *BulletTitleStore) RemoveItem(id int64) error {
+func (s *BulletTitleStore) RemoveItem(id int32) error {
 	return errors.New("delete depot not working yet")
 
 }
