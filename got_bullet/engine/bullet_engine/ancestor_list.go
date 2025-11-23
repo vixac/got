@@ -15,7 +15,8 @@ type AncestorLookupResult struct {
 }
 
 type DescendantLookupResult struct {
-	Ids []string
+	//each decendant gid mapped to their AncestorLookupResult
+	Ids map[string]AncestorLookupResult
 }
 
 // 0 is a bit like a null terminator character. Beacuse ancestor list is forward only
@@ -69,13 +70,17 @@ func NewAncestorList(client bullet_interface.TrackClientInterface, listName stri
 
 func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) error {
 	fmt.Printf("attempting to insert id %s into ancestry", id.AasciValue)
-	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
+	if id.AasciValue == TheRootNode.Value {
+		return errors.New("inserting the root node is not permitted")
+	}
+
+	ancestorsOfNewItem, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 	if err != nil {
 		return err
 	}
 
-	//can't insert an item that exists.
-	if ancestors != nil && len(ancestors.Pairs) != 0 {
+	//can't insert an item that exists, and all items have an acnestor besides the root node.
+	if ancestorsOfNewItem != nil && len(ancestorsOfNewItem.Pairs) != 0 {
 		return errors.New("attempted to insert an existing id")
 	}
 	//we insert this item to the root node.
@@ -83,11 +88,29 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) error
 	if under == nil {
 		parent = TheRootNode
 	} else {
-		parent = bullet_stl.ListSubject{Value: under.AasciValue}
+		//now we construct the ancestor prefix
+		ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: under.AasciValue})
+		if err != nil {
+			return err
+		}
+		if ancestors == nil {
+			return errors.New("every node bedies the root node should have ancestors")
+		}
+
+		//VX:TODO finish
+		var ancestorList []string
+		for _, a := range ancestors.Pairs {
+			ancestorList = append(ancestorList, a.Subject.Value)
+		}
+		ancestorList = append(ancestorList, under.AasciValue)
+		parentKey := strings.Join(ancestorList, a.SubjectSeparator)
+
+		fmt.Printf("VX: complete parent key is %s\n", parentKey)
+		parent = bullet_stl.ListSubject{Value: parentKey}
 
 		//we attempt to delete theleafNode from this parent, which will succeed if this item is the first child.
 		deletePairs := []bullet_stl.ManyToManyPair{{Subject: parent, Object: TheLeafChild}}
-		err := a.Mesh.RemovePairs(deletePairs) //VX:TODO make sure deleting doesnt fail if theres nothing to delete.
+		err = a.Mesh.RemovePairs(deletePairs) //VX:TODO make sure deleting doesnt fail if theres nothing to delete.
 		if err != nil {
 			return err
 		}
@@ -112,37 +135,68 @@ func (a *BulletAncestorList) FetchAllItems(under engine.GotId) (*DescendantLooku
 	for _, pair := range descendants.Pairs {
 		fmt.Printf("VX: all pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
 	}
-
 	return nil, errors.New("not impl")
-
 }
+
 func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
-	fmt.Printf("Fetching pairs for %s\n", id.AasciValue)
-	descendants, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: id.AasciValue})
+	//get the subject key for this id, and then use it as a prefix.
+
+	var ancestorKey = "" //this can be left blank for TheRootNote.
+	if id.AasciValue != TheRootNode.Value {
+		ancestorPairs, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
+		if err != nil {
+			return nil, err
+		}
+		if ancestorPairs == nil || len(ancestorPairs.Pairs) != 1 {
+			return nil, errors.New("zero ancestors. Itemas are su")
+		}
+		//append the query to the ancestor Key, so id = c, fetches a:b, and we want to lookup everything prefixed with a:b:c
+		ancestorKey = ancestorPairs.Pairs[0].Subject.Value + a.SubjectSeparator + id.AasciValue
+
+	}
+
+	everythingBelowAncestor, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: ancestorKey})
 	if err != nil {
 		return nil, err
 	}
-	if descendants == nil {
+	if everythingBelowAncestor == nil {
 		return nil, nil
 	}
-	var ids []string
-	//VX:TODO
-	for _, pair := range descendants.Pairs {
-		fmt.Printf("VX: pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
-		ids = append(ids, pair.Object.Value)
+	//VX:TODO FINISH
+	ids := make(map[string]AncestorLookupResult)
+	for _, pair := range everythingBelowAncestor.Pairs {
+		ancestorsIndividualIds := strings.Split(pair.Subject.Value, a.SubjectSeparator)
+		var gids []engine.GotId
+		for _, ancestorId := range ancestorsIndividualIds {
+			gid, err := engine.NewGotId(ancestorId)
+			if err != nil {
+				return nil, err
+			}
+			if gid == nil {
+				return nil, errors.New("empty gid")
+			}
+			gids = append(gids, *gid)
+		}
+		fmt.Printf("VX: Found item under %s,  subject  %s -> object %s\n", id.AasciValue, pair.Subject.Value, pair.Object.Value)
+		ids[pair.Object.Value] = AncestorLookupResult{
+			Ids: gids,
+		}
+
 	}
 
-	res := DescendantLookupResult{
+	return &DescendantLookupResult{
 		Ids: ids,
-	}
-	return &res, nil
-
+	}, nil
 }
 
 func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error) {
+
 	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 	if err != nil {
 		return nil, err
+	}
+	for i, v := range ancestors.Pairs {
+		fmt.Printf("VX: %d ancestor of %s is pair ancestor %s -> %s\n", i, id.AasciValue, v.Subject.Value, v.Object.Value)
 	}
 	if len(ancestors.Pairs) != 1 { //the ancestor list is in the form of the subject of the object, so its 1 key, containing all ancestors.
 		return nil, errors.New("this id seems to appear more than once")

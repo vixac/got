@@ -69,6 +69,10 @@ func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 	return false, m.errorToThrow
 }
 
+func (m *MockEngine) LookupAliasForGid(gid string) (*string, error) {
+	return nil, errors.New("not impl")
+}
+
 func (m *MockEngine) Lookup(alias string) (*engine.GotId, error) {
 	return nil, errors.New("not impl")
 

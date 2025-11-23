@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	firstId       int64 = 37
+	firstId       int64 = 57
 	bucketId            = 100
 	listName            = "next-id-list"
 	separator           = ""

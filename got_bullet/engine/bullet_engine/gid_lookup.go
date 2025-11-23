@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"fmt"
 	"strconv"
 	"unicode"
 
@@ -42,7 +41,6 @@ func CheckNumber(p []byte) bool {
 }
 func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, error) {
 	if lookup == nil || len(lookup.Input) == 0 {
-		fmt.Printf("VX: no lookup, resolving to root node. \n")
 		return engine.NewGotId(TheRootNode.Value)
 	}
 	/**
@@ -52,13 +50,10 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	- An alias. if it starts with an alphanumeric, its an alias
 	*/
 	firstChar := lookup.Input[0]
-	fmt.Printf("resolving lookup for %s\n", lookup.Input)
-
 	//this is a gid
 	if firstChar == '0' {
 		//we trim the first character and move on
 		restOfString := lookup.Input[1:]
-		fmt.Printf("VX: rest of stirng is %s\n", restOfString)
 		return engine.NewGotId(restOfString)
 	}
 

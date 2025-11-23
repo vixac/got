@@ -45,6 +45,7 @@ type GotFetchInterface interface {
 // The interface for all aliasing functionality
 type GotAliasInterface interface {
 	Lookup(alias string) (*GotId, error)
+	LookupAliasForGid(gid string) (*string, error)
 	Unalias(alias string) (*GotId, error)
 	Alias(gid string, alias string) (bool, error)
 }
@@ -63,7 +64,7 @@ type GotSummary struct {
 	Title    string
 	Alias    string
 	Deadline string
-	Path     GotPath
+	Path     *GotPath
 	NumberGo int
 }
 
@@ -71,13 +72,20 @@ type GotSummary struct {
 type Gid struct {
 	Id string
 }
+
+// VX:TODO RM?
 type NodeId struct {
 	Gid   Gid
 	Title string
 	Alias string
 }
+type PathItem struct {
+	Id    string
+	Alias *string
+	//VX:TODO maybe title in here?
+}
 type GotPath struct {
-	Ancestry []NodeId
+	Ancestry []PathItem
 }
 
 // VX:TODO consider using BUlletId semantics to lazy compute these
