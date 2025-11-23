@@ -95,48 +95,38 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 		parent = TheRootNode
 	} else {
 		//now we construct the ancestor prefix
-		ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: under.AasciValue})
+		//its confusing because "allPAirsForObject just returns a single pair, but the subject of which is a:b:c string so it does contain all the ancestors.
+		ancestorSubject, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: under.AasciValue})
 		if err != nil {
 			return nil, err
 		}
-		if ancestors == nil {
+		if ancestorSubject == nil {
 			return nil, errors.New("every node bedies the root node should have ancestors")
 		}
 		fmt.Printf("VX: WWTFF+==================\n")
 
-		//VX:TODO finish
-		var ancestorGotIdList []engine.GotId
-		var ancestorList []string
-		if len(ancestors.Pairs) > 1 {
-			fmt.Printf("VX: IM PRETTY SURE THIS NEVER HAPPENS\n")
-
-		}
-		//		ancestorKey := ancestors.Pairs[0]
-		//VX:TODO just pick the 1st item.
-		for _, a := range ancestors.Pairs { //there's always 1 ancestor here no? Wierd. I think i
-			fmt.Printf("VX: This is an ancestor '%s'\n", a.Subject.Value)
-			ancestorList = append(ancestorList, a.Subject.Value)
+		if len(ancestorSubject.Pairs) != 1 {
+			return nil, errors.New("we expect 1 ancestor for every item")
 		}
 
-		ancestorList = append(ancestorList, under.AasciValue)
-		parentKey := strings.Join(ancestorList, a.SubjectSeparator)
-
+		ancestorKey := ancestorSubject.Pairs[0].Subject.Value
+		parentKey := ancestorKey + ":" + under.AasciValue
 		eachAncestor := strings.Split(parentKey, a.SubjectSeparator)
-
 		//splitting the parent key at the end is a bit cheap but it works.
+
+		var ancestorGotIdList []engine.GotId
 		for _, a := range eachAncestor {
 			gotId, err := engine.NewGotId(a)
 			if err != nil {
 				return nil, err
 			}
 			ancestorGotIdList = append(ancestorGotIdList, *gotId)
-
 		}
 		ancestry = &Ancestry{
 			Ids: ancestorGotIdList,
 		}
 
-		fmt.Printf("VX: complete parent key is %s\n", parentKey)
+		fmt.Printf("VX: complete parent key is '%s'\n", parentKey)
 		parent = bullet_stl.ListSubject{Value: parentKey}
 
 		//we attempt to delete theleafNode from this parent, which will succeed if this item is the first child.

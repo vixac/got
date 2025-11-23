@@ -113,29 +113,3 @@ func (a *BulletAggStore) Fetch(ids []AggId) (map[AggId]Aggregate, error) {
 func (a *BulletAggStore) Delete(ids []AggId) error {
 	return errors.New("not impl")
 }
-
-/*
-// Save writes the struct into a string field in your db (here, just a map)
-func (s *BulletAggStore) Save(key string, value Aggregate) error {
-	str, err := s.codec.Encode(value)
-	if err != nil {
-		return fmt.Errorf("failed to encode value: %w", err)
-	}
-	s.data[key] = str
-	return nil
-}
-
-// Load reads the string field and decodes it into the struct
-func (s *BulletAggStore) Load(key string) (Aggregate, error) {
-	var zero Aggregate
-	str, ok := s.data[key]
-	if !ok {
-		return zero, fmt.Errorf("key not found")
-	}
-	var value Aggregate
-	if err := s.codec.Decode(str, &value); err != nil {
-		return zero, fmt.Errorf("failed to decode value: %w", err)
-	}
-	return value, nil
-}
-*/
