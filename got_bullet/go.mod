@@ -5,7 +5,7 @@ go 1.24.1
 require (
 	github.com/spf13/cobra v1.10.1
 	github.com/vixac/bullet v0.0.9
-	github.com/vixac/firbolg_clients v0.0.15
+	github.com/vixac/firbolg_clients v0.0.16
 	gotest.tools v2.2.0+incompatible
 )
 

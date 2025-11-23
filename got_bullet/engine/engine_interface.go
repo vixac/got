@@ -1,6 +1,11 @@
 package engine
 
-import bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+import (
+	"errors"
+	"math"
+
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+)
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
@@ -91,25 +96,33 @@ type GotPath struct {
 // VX:TODO consider using BUlletId semantics to lazy compute these
 type GotId struct {
 	AasciValue string
-	IntValue   int64
+	IntValue   int32
 }
 
-func NewCompleteId(aasci string, intValue int64) GotId {
+func NewCompleteId(aasci string, intValue int32) GotId {
 	return GotId{
 		AasciValue: aasci,
 		IntValue:   intValue,
 	}
 }
 
+func FitsInInt32(v int64) bool {
+	return v >= math.MinInt32 && v <= math.MaxInt32
+}
+
 // this is basically a wrapper for BulletId
 func NewGotId(aasci string) (*GotId, error) {
 	intVal, err := bullet_stl.AasciBulletIdToInt(aasci)
+	if !FitsInInt32(intVal) {
+		return nil, errors.New("id is too big")
+	}
+
 	if err != nil {
 		return nil, err
 	}
 	return &GotId{
 		AasciValue: aasci,
-		IntValue:   intVal,
+		IntValue:   int32(intVal),
 	}, nil
 }
 

@@ -160,14 +160,14 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, nil
 	}
 
-	var intIds []int64
-	ancestorPaths := make(map[int64]engine.GotPath)
+	var intIds []int32
+	ancestorPaths := make(map[int32]engine.GotPath)
 	for id, ancestorLookup := range all.Ids {
 		intId, err := bullet_stl.AasciBulletIdToInt(id)
 		if err != nil {
 			return nil, err
 		}
-		intIds = append(intIds, intId)
+		intIds = append(intIds, int32(intId))
 
 		fmt.Printf("VX: building ancestor path for %s\n", id)
 		path, err := e.ancestorPathFrom(&ancestorLookup)
@@ -175,7 +175,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			return nil, err
 		}
 		if path != nil {
-			ancestorPaths[intId] = *path
+			ancestorPaths[int32(intId)] = *path
 		}
 
 	}
@@ -185,7 +185,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	}
 	var summaries []engine.GotSummary
 	for k, v := range titles {
-		stringId, err := bullet_stl.BulletIdIntToaasci(k)
+		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
 		if err != nil {
 			return nil, err
 		}
@@ -267,7 +267,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	if err != nil {
 		return nil, err
 	}
-	stringId, err := bullet_stl.BulletIdIntToaasci(newId)
+	stringId, err := bullet_stl.BulletIdIntToaasci(int64(newId))
 	if err != nil {
 		return nil, err
 	}
