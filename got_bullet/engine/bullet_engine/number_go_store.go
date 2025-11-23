@@ -51,6 +51,9 @@ func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
 	if err != nil {
 		return nil, err
 	}
+	if object == nil {
+		return nil, nil
+	}
 	gid, err := engine.NewGotId(object.Value)
 	if err != nil {
 		return nil, err

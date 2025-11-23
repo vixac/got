@@ -39,15 +39,33 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 				return
 			}
 
+			deps.Printer.Print(console.Message{Message: "-----------------------"})
+
 			for _, v := range res.Result {
 				var msg = ""
 				if v.NumberGo != 0 {
 					numStr := strconv.Itoa(v.NumberGo)
 					msg += (numStr + "<GO>")
 				}
-				msg += ", item Id: "
+				msg += ", Path: "
+				if v.Path != nil {
+					for i, a := range v.Path.Ancestry {
+						var id = a.Id
+						if a.Alias != nil {
+							id = *a.Alias
+						}
+						if i != 0 {
+							msg += "->" + id
+						} else {
+							msg += id
+						}
+
+					}
+				}
+
+				msg += ", Gid = "
 				msg += v.Gid
-				msg += "title: '"
+				msg += ", Title = '"
 				msg += v.Title
 				msg += "'."
 

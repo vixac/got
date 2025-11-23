@@ -82,24 +82,29 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 	}
 
 	//this is building the path.
+
+	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
+	if err != nil {
+		return nil, errors.New("error fetching ancestors")
+	}
+
 	/*
-
-		ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
-		if err != nil {
-			return nil, errors.New("error fetching ancestors")
-		}
-
-		var path string = ""
+		var
+		var pathStr string = ""
 		if ancestorResult != nil {
 			var stringIds []string
 			for _, id := range ancestorResult.Ids {
 				stringIds = append(stringIds, id.AasciValue)
 
 			}
-			path = strings.Join(stringIds, "->")
+			pathStr = strings.Join(stringIds, "->")
 
 		}
 	*/
+	path, err := e.ancestorPathFrom(ancestorResult)
+	if err != nil {
+		return nil, err
+	}
 	var theTitle = ""
 	if title != nil {
 		theTitle = *title
@@ -107,14 +112,44 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 	return &engine.GotSummary{
 		Gid:   gid.AasciValue,
 		Title: theTitle,
+		Path:  path,
 	}, nil
 
+}
+
+func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
+	var items []engine.PathItem
+	//VX:TODO are they sorted by ancestry?
+	fmt.Printf("VX: There are %d ancestor Ids here\n", len(ancestors.Ids))
+	for _, id := range ancestors.Ids {
+		alias, err := e.AliasStore.LookupAliasForGid(id.AasciValue)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, engine.PathItem{
+			Id:    id.AasciValue,
+			Alias: alias,
+		})
+	}
+	for i, a := range items {
+		if a.Alias != nil {
+			fmt.Printf("VX: ALIAS %s", *a.Alias)
+		}
+		fmt.Printf("...VX: ancestorPath %d has path item %s\n", i, a.Id)
+
+	}
+	return &engine.GotPath{
+		Ancestry: items,
+	}, nil
 }
 
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 	gid, err := e.GidLookup.InputToGid(lookup)
 	if err != nil {
 		return nil, err
+	}
+	if gid == nil {
+		return nil, nil
 	}
 	fmt.Printf("VX: resolved gid is %s\n", gid.AasciValue)
 	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
@@ -126,12 +161,23 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	}
 
 	var intIds []int64
-	for _, id := range all.Ids {
+	ancestorPaths := make(map[int64]engine.GotPath)
+	for id, ancestorLookup := range all.Ids {
 		intId, err := bullet_stl.AasciBulletIdToInt(id)
 		if err != nil {
 			return nil, err
 		}
 		intIds = append(intIds, intId)
+
+		fmt.Printf("VX: building ancestor path for %s\n", id)
+		path, err := e.ancestorPathFrom(&ancestorLookup)
+		if err != nil {
+			return nil, err
+		}
+		if path != nil {
+			ancestorPaths[intId] = *path
+		}
+
 	}
 	titles, err := e.TitleStore.TitleForMany(intIds)
 	if err != nil {
@@ -143,10 +189,17 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if err != nil {
 			return nil, err
 		}
+		//tricky to get the path back out here
+
 		//gid := engine.NewCompleteId(stringId, k)
+		var path *engine.GotPath = nil
+		if foundPath, ok := ancestorPaths[k]; ok {
+			path = &foundPath
+		}
 		summaries = append(summaries, engine.GotSummary{
 			Gid:   stringId,
 			Title: v,
+			Path:  path,
 		})
 
 	}
@@ -172,6 +225,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotSummary) (*engine.G
 			Alias:    s.Alias,
 			NumberGo: num,
 			Title:    s.Title,
+			Path:     s.Path,
 		})
 
 	}
@@ -223,13 +277,22 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		IntValue:   newId,
 	}
 
-	//VX:TODO lookup parent
+	var parentGotId *engine.GotId = nil
 	if parent != nil {
-		return nil, errors.New("adding under parent not supported yet")
+		fmt.Printf("Looking up parent %s\n", parent.Input)
+		fetchedParent, err := e.GidLookup.InputToGid(parent)
+
+		if err != nil {
+			return nil, err
+		}
+		if fetchedParent == nil {
+			return nil, errors.New("could not find parent")
+		}
+		parentGotId = fetchedParent
 	}
 
 	//add item to ancestry
-	err = e.AncestorList.AddItem(gotId, nil)
+	err = e.AncestorList.AddItem(gotId, parentGotId)
 	if err != nil {
 		return nil, err
 	}
@@ -256,6 +319,11 @@ func (e *EngineBullet) Lookup(alias string) (*engine.GotId, error) {
 }
 func (e *EngineBullet) Unalias(alias string) (*engine.GotId, error) {
 	return e.AliasStore.Unalias(alias)
+}
+
+func (e *EngineBullet) LookupAliasForGid(gid string) (*string, error) {
+	return e.AliasStore.LookupAliasForGid(gid)
+
 }
 func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	//confirm the gid exists.

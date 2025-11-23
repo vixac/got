@@ -21,6 +21,17 @@ func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId i
 
 }
 
+func (e *BulletAliasStore) LookupAliasForGid(gid string) (*string, error) {
+	obj, err := e.TwoWay.GetOSubjectViaObject(bullet_stl.ListObject{Value: gid})
+	if err != nil {
+		return nil, err
+	}
+	if obj == nil {
+		return nil, nil
+	}
+	return &obj.Value, nil
+
+}
 func (a *BulletAliasStore) Lookup(alias string) (*engine.GotId, error) {
 	object, err := a.TwoWay.GetObjectViaSubject(bullet_stl.ListSubject{Value: alias})
 	if err != nil {
