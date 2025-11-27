@@ -183,6 +183,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	if err != nil {
 		return nil, err
 	}
+	//VX:TODO lookup many here.
 	var summaries []engine.GotSummary
 	for k, v := range titles {
 		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
@@ -317,6 +318,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		State:    engine.Active,
 		Ancestry: aggIds,
 	})
+
 	return &engine.NodeId{
 		Gid: engine.Gid{
 			Id: stringId,

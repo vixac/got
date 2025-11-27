@@ -14,6 +14,7 @@ const (
 	EventTypeChangeState = 101
 )
 
+// VX:TODO ADD EVENT
 type ItemEvent struct {
 	Type     ItemEventType
 	Id       AggId
@@ -47,6 +48,18 @@ func (b *BulletAggListener) ItemEvent(e ItemEvent) error {
 }
 
 func (b *BulletAggListener) onAdd(e ItemEvent) error {
-	fmt.Printf("VX: TODO handle event %+v\n", e)
+
+	allAncestors, err := b.store.Fetch(e.Ancestry)
+	if err != nil {
+		return err
+	}
+	for aggId, a := range allAncestors {
+		newCount := allAncestors[aggId].Counts.ChangeState(e.State, 1)
+		newAnc := a.UpdatedCount(newCount)
+		b.store.UpsertAggregate(aggId, newAnc)
+
+	}
+	//each new item gets an empty aggregate.
+	b.store.UpsertAggregate(e.Id, Aggregate{})
 	return nil
 }

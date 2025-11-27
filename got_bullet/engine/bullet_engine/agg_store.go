@@ -34,10 +34,59 @@ type DatedTask struct {
 	Deadline Deadline `json:"d"`
 	Id       AggId    `json:"i,omitempty"`
 }
+
+// VX:TODO its either state OR its counts.
+// deadline is separate. Maybe it doesn't belong here but we'll see.
 type Aggregate struct {
 	State    engine.GotState `json:"s,omitempty"`
 	Counts   AggCount        `json:"c"`
 	Deadline Deadline        `json:"d"`
+}
+
+func (c AggCount) ChangeState(state engine.GotState, inc int) AggCount {
+	comp := c.Complete
+	active := c.Active
+	notes := c.Notes
+	if state == engine.Active {
+		active += inc
+	} else if state == engine.Complete {
+		comp += inc
+	} else if state == engine.Note {
+		notes += inc
+	}
+	return AggCount{
+		Complete: comp,
+		Active:   active,
+		Notes:    notes,
+	}
+}
+func (c AggCount) changeActive(inc int) AggCount {
+	return AggCount{
+		c.Complete,
+		c.Active + inc,
+		c.Notes,
+	}
+}
+func (c AggCount) changeNotes(inc int) AggCount {
+	return AggCount{
+		c.Complete,
+		c.Active,
+		c.Notes + inc,
+	}
+}
+func (c AggCount) changeComplete(inc int) AggCount {
+	return AggCount{
+		c.Complete + inc,
+		c.Active,
+		c.Notes,
+	}
+}
+func (a *Aggregate) UpdatedCount(newCount AggCount) Aggregate {
+	return Aggregate{
+		State:    a.State,
+		Counts:   newCount,
+		Deadline: a.Deadline,
+	}
 }
 
 // namespaces are like bucket Ids but they move separately so the fact that they're both int32 is coincidence. namespcae is a way to

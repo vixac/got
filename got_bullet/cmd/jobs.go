@@ -65,6 +65,7 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
 				msg += ", Gid = "
 				msg += v.Gid
+				msg += "(" + v.Alias + ")"
 				msg += ", Title = '"
 				msg += v.Title
 				msg += "'."
