@@ -10,7 +10,12 @@ import (
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
 	Summary(lookup *GidLookup) (*GotSummary, error)
-	Resolve(lookup GidLookup) (*NodeId, error)
+
+	//state changes
+	MarkResolved(lookup GidLookup) (*NodeId, error)
+	MarkActive(lookup GidLookup) (*NodeId, error)
+	MarkAsNote(lookup GidLookup) (*NodeId, error)
+
 	Delete(lookup GidLookup) (*NodeId, error)
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
