@@ -55,10 +55,20 @@ func (m *MockEngine) Summary(lookup *engine.GidLookup) (*engine.GotSummary, erro
 	m.summaryLookup = lookup
 	return nil, m.errorToThrow
 }
-func (m *MockEngine) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) {
+
+func (m *MockEngine) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
 	m.resolveLookup = lookup
 	return m.nodeIdToReturn, m.errorToThrow
 }
+func (m *MockEngine) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
+	m.resolveLookup = lookup
+	return m.nodeIdToReturn, m.errorToThrow
+}
+func (m *MockEngine) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
+	m.resolveLookup = lookup
+	return m.nodeIdToReturn, m.errorToThrow
+}
+
 func (m *MockEngine) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
 	m.resolveLookup = lookup
 	return m.nodeIdToReturn, m.errorToThrow

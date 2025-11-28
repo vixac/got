@@ -22,15 +22,15 @@ const (
 )
 
 type EngineBullet struct {
-	Client         bullet_interface.BulletClientInterface
-	AncestorList   AncestorListInterface
-	TitleStore     TitleStoreInterface
-	GidLookup      GidLookupInterface
-	AliasStore     engine.GotAliasInterface
-	NumberGoStore  NumberGoStoreInterface
-	AggregateStore AggStoreInterface
+	Client        bullet_interface.BulletClientInterface
+	AncestorList  AncestorListInterface
+	TitleStore    TitleStoreInterface
+	GidLookup     GidLookupInterface
+	AliasStore    engine.GotAliasInterface
+	NumberGoStore NumberGoStoreInterface
+	SummaryStore  SummaryStoreInterface
 
-	EventListeners []AggListenerInterface //these will listen to events broadcasted by engineBullet
+	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
 }
 
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
@@ -40,7 +40,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 	codec := &JSONCodec[Aggregate]{}
-	aggStore, err := NewBulletAggStore(codec, client, aggregateNamespace)
+	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 
 	}
 
-	var listeners []AggListenerInterface
+	var listeners []EventListenerInterface
 	aggListener := NewBulletAggListener(aggStore)
 	listeners = append(listeners, aggListener)
 
@@ -77,7 +77,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		GidLookup:      gidLookup,
 		AliasStore:     aliasStore,
 		NumberGoStore:  numberGoStore,
-		AggregateStore: aggStore,
+		SummaryStore:   aggStore,
 		EventListeners: listeners,
 	}, nil
 }
@@ -240,7 +240,14 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotSummary) (*engine.G
 	return &res, nil
 }
 
-func (e *EngineBullet) Resolve(lookup engine.GidLookup) (*engine.NodeId, error) {
+func (e *EngineBullet) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
+	return nil, errors.New("not impl")
+}
+func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
+	return nil, errors.New("not impl")
+}
+
+func (e *EngineBullet) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
 	//check if the gid is an exact match for an item id
 	//check int32 parse, check its length is the right length
 
@@ -292,6 +299,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		parentGotId = fetchedParent
 	}
 
+	//VX:TODO DELETE
 	//add item to ancestry
 	ancestry, err := e.AncestorList.AddItem(gotId, parentGotId)
 	if err != nil {
@@ -304,19 +312,18 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		return nil, err
 	}
 
-	var aggIds []AggId
+	var summaryIds []SummaryId
 	if ancestry != nil {
 		fmt.Printf("VX: buck created. %+v\n", *ancestry)
 		for _, a := range ancestry.Ids {
-			aggIds = append(aggIds, AggId(a.IntValue))
+			summaryIds = append(summaryIds, SummaryId(a.IntValue))
 		}
 	}
 
-	e.publishEvent(ItemEvent{
-		Type:     EventTypeAdd,
-		Id:       AggId(newId),
+	e.publishAddEvent(AddItemEvent{
+		Id:       SummaryId(newId),
 		State:    engine.Active,
-		Ancestry: aggIds,
+		Ancestry: summaryIds,
 	})
 
 	return &engine.NodeId{
@@ -327,15 +334,16 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		Alias: "",
 	}, nil
 }
-func (e *EngineBullet) publishEvent(event ItemEvent) error {
+func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 	for _, l := range e.EventListeners {
-		err := l.ItemEvent(event)
+		err := l.ItemAdded(event)
 		if err != nil {
 			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
 		}
 	}
 	return nil
 }
+
 func (e *EngineBullet) Lookup(alias string) (*engine.GotId, error) {
 	return e.AliasStore.Lookup(alias)
 
