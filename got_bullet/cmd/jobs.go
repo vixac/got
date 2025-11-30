@@ -52,6 +52,11 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 					numStr := strconv.Itoa(v.NumberGo)
 					msg += (numStr + "<GO>")
 				}
+				summaryMsg := console.Message{
+					Message: v.Summary,
+					Color:   console.BIGreen,
+				}
+				msg += summaryMsg.InColor()
 				msg += ", Path: "
 				if v.Path != nil {
 					for i, a := range v.Path.Ancestry {

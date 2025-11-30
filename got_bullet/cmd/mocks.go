@@ -55,7 +55,7 @@ func (m *MockEngine) Unalias(alias string) (*engine.GotId, error) {
 	m.unaliasAlias = alias
 	return m.gotIdToReturn, m.errorToThrow
 }
-func (m *MockEngine) Summary(lookup *engine.GidLookup) (*engine.GotSummary, error) {
+func (m *MockEngine) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
 	m.summaryLookup = lookup
 	return nil, m.errorToThrow
 }

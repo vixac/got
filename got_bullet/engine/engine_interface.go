@@ -9,7 +9,7 @@ import (
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
-	Summary(lookup *GidLookup) (*GotSummary, error)
+	Summary(lookup *GidLookup) (*GotItemDisplay, error)
 
 	//state changes
 	MarkResolved(lookup GidLookup) (*NodeId, error)
@@ -38,6 +38,19 @@ const (
 
 type GotState int
 
+func (g GotState) ToStr() string {
+	if g == Active {
+		return "Active"
+	}
+	if g == Note {
+		return "Note"
+	}
+	if g == Complete {
+		return "Complete"
+	}
+	return "Unknown"
+}
+
 // states
 const (
 	Active   = 0
@@ -46,7 +59,7 @@ const (
 )
 
 type GotFetchResult struct {
-	Result []GotSummary
+	Result []GotItemDisplay
 }
 
 // All the lookup stuff
@@ -72,11 +85,12 @@ type GidLookup struct {
 	Input string
 }
 
-type GotSummary struct {
+type GotItemDisplay struct {
 	Gid      string
 	Title    string
 	Alias    string
 	Deadline string
+	Summary  string
 	Path     *GotPath
 	NumberGo int
 }
