@@ -13,7 +13,8 @@ import (
 type SummaryId int32
 
 type SummaryStoreInterface interface {
-	UpsertAggregate(id SummaryId, agg Aggregate) error //VX:TODO UpsertMany
+	UpsertAggregate(id SummaryId, agg Aggregate) error
+	UpsertManyAggregates(aggs map[SummaryId]Aggregate) error
 	Fetch(ids []SummaryId) (map[SummaryId]Aggregate, error)
 	Delete(ids []SummaryId) error
 }
@@ -44,7 +45,26 @@ func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) SummaryId {
 	return SummaryId(namespaced.Id)
 }
 
+func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[SummaryId]Aggregate) error {
+
+	var reqs []bullet_interface.DepotRequest
+	for id, agg := range aggs {
+		json, err := a.codec.Encode(agg)
+		if err != nil {
+			return err
+		}
+		spaced := a.aggIdToNamespacedId(id)
+		reqs = append(reqs, bullet_interface.DepotRequest{
+			Key:   spaced,
+			Value: json,
+		})
+	}
+	return a.Client.DepotUpsertMany(reqs)
+}
+
+// VX:TODO RM or call many if we want to keep it
 func (a *BulletSummaryStore) UpsertAggregate(id SummaryId, agg Aggregate) error {
+
 	json, err := a.codec.Encode(agg)
 	if err != nil {
 		return err
