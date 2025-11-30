@@ -103,8 +103,6 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 		if ancestorSubject == nil {
 			return nil, errors.New("every node bedies the root node should have ancestors")
 		}
-		fmt.Printf("VX: WWTFF+==================\n")
-
 		if len(ancestorSubject.Pairs) != 1 {
 			return nil, errors.New("we expect 1 ancestor for every item")
 		}
