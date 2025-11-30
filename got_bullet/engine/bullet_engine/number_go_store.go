@@ -1,10 +1,8 @@
 package bullet_engine
 
 import (
-	"strconv"
-
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
 )
 
@@ -21,42 +19,48 @@ type NumberGoPair struct {
 }
 
 type BulletNumberGoStore struct {
-	OneWay bullet_stl.OneWayList
+	Namespace int32
+	Depot     bullet_interface.DepotClientInterface
 }
 
-func NewBulletNumberGoStore(client bullet_interface.TrackClientInterface, bucketId int32) (NumberGoStoreInterface, error) {
-	oneWay, err := bullet_stl.NewBulletOneWayList(client, bucketId, "numbergoes", ">")
-	if err != nil {
-		return nil, err
-	}
+func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, namespaceId int32) (NumberGoStoreInterface, error) {
 	return &BulletNumberGoStore{
-		OneWay: oneWay,
+		Namespace: namespaceId,
+		Depot:     client,
 	}, nil
 }
 
 func (n *BulletNumberGoStore) AssignNumberPairs(pairs []NumberGoPair) error {
-	//VX:TODO this should be a bulk insert
-	for _, pair := range pairs {
-		numberStr := strconv.Itoa(pair.Number)
-		err := n.OneWay.Upsert(bullet_stl.ListSubject{numberStr}, bullet_stl.ListObject{pair.Gid.Id})
-		if err != nil {
-			return err
-		}
+
+	var reqs []bullet_interface.DepotRequest
+	for _, p := range pairs {
+		namespacedId := bullet_stl.MakeNamespacedId(n.Namespace, int32(p.Number))
+		reqs = append(reqs, bullet_interface.DepotRequest{
+			Key:   namespacedId,
+			Value: p.Gid.Id,
+		})
 	}
-	return nil
+	return n.Depot.DepotUpsertMany(reqs)
 }
+
 func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
-	numberStr := strconv.Itoa(number)
-	object, err := n.OneWay.GetObject(bullet_stl.ListSubject{Value: numberStr})
+	namespacedId := bullet_stl.MakeNamespacedId(n.Namespace, int32(number))
+
+	keys := []int64{namespacedId}
+	manyReq := bullet_interface.DepotGetManyRequest{
+		Keys: keys,
+	}
+	res, err := n.Depot.DepotGetMany(manyReq)
 	if err != nil {
 		return nil, err
 	}
-	if object == nil {
+	if res == nil {
 		return nil, nil
 	}
-	gid, err := engine.NewGotId(object.Value)
-	if err != nil {
-		return nil, err
+	value, ok := res.Values[namespacedId]
+	if !ok {
+		return nil, nil
 	}
-	return gid, nil
+
+	return engine.NewGotId(value)
 }
