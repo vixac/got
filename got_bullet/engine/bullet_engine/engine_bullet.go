@@ -193,12 +193,32 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
+	//get string ids of all items to do the alias lookup
+	stringIds := make([]string, len(all.Ids))
+	i := 0
+	for k := range all.Ids {
+		stringIds[i] = k
+		i++
+	}
+
+	aliases, err := e.LookupAliasForMany(stringIds)
+	if err != nil {
+		return nil, err
+	}
+
 	//VX:TODO lookup many here.
 	var summaries []engine.GotSummary
 	for k, v := range titles {
+
 		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
 		if err != nil {
 			return nil, err
+		}
+
+		var alias string = ""
+		found, ok := aliases[stringId]
+		if ok {
+			alias = *found
 		}
 		var path *engine.GotPath = nil
 		if foundPath, ok := ancestorPaths[k]; ok {
@@ -208,6 +228,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			Gid:   stringId,
 			Title: v,
 			Path:  path,
+			Alias: alias,
 		})
 
 	}
