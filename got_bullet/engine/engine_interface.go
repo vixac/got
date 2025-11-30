@@ -58,6 +58,7 @@ type GotFetchInterface interface {
 type GotAliasInterface interface {
 	Lookup(alias string) (*GotId, error)
 	LookupAliasForGid(gid string) (*string, error)
+	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
 	Alias(gid string, alias string) (bool, error)
 }

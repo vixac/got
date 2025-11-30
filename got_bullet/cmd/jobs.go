@@ -65,7 +65,7 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
 				msg += ", Gid = "
 				msg += v.Gid
-				msg += "(" + v.Alias + ")"
+				msg += "(" + v.Alias + ")" //VX:TODO its empty
 				msg += ", Title = '"
 				msg += v.Title
 				msg += "'."

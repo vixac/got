@@ -47,6 +47,10 @@ func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, descendantType in
 	return nil, errors.New("not impl")
 }
 
+func (m *MockEngine) LookupAliasForMany(gid []string) (map[string]*string, error) {
+	return nil, errors.New("not impl")
+}
+
 func (m *MockEngine) Unalias(alias string) (*engine.GotId, error) {
 	m.unaliasAlias = alias
 	return m.gotIdToReturn, m.errorToThrow
