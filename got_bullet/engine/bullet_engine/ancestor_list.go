@@ -25,6 +25,7 @@ var (
 	TheLeafChild = bullet_stl.ListObject{
 		Value: "00",
 	}
+	TheRootNoteInt32 int32 = 0
 	//if no parent is provided, then the root ancestor is provided.
 	TheRootNode = bullet_stl.ListSubject{
 		Value: "0",
@@ -182,7 +183,6 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 	if everythingBelowAncestor == nil {
 		return nil, nil
 	}
-	//VX:TODO FINISH
 	ids := make(map[string]AncestorLookupResult)
 	for _, pair := range everythingBelowAncestor.Pairs {
 		ancestorsIndividualIds := strings.Split(pair.Subject.Value, a.SubjectSeparator)

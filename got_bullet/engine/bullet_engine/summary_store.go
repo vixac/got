@@ -20,9 +20,9 @@ func NewSummaryId(gotId engine.GotId) SummaryId {
 }
 
 type SummaryStoreInterface interface {
-	UpsertAggregate(id SummaryId, agg Aggregate) error
-	UpsertManyAggregates(aggs map[SummaryId]Aggregate) error
-	Fetch(ids []SummaryId) (map[SummaryId]Aggregate, error)
+	UpsertAggregate(id SummaryId, agg Summary) error
+	UpsertManyAggregates(aggs map[SummaryId]Summary) error
+	Fetch(ids []SummaryId) (map[SummaryId]Summary, error)
 	Delete(ids []SummaryId) error
 }
 
@@ -30,12 +30,12 @@ type SummaryStoreInterface interface {
 // use the int64 space of depot ids to be <namespace><id>. This is fine because 2,147,483,647 is the positive total of int32. Thats plenty for got. If we need to host spaces higher than that, we probably want to
 // break stuff up into spearated sections and use mirroring.
 type BulletSummaryStore struct {
-	codec     Codec[Aggregate]
+	codec     Codec[Summary]
 	Client    bullet_interface.DepotClientInterface
 	Namespace int32
 }
 
-func NewBulletSummaryStore(codec Codec[Aggregate], client bullet_interface.DepotClientInterface, namespace int32) (SummaryStoreInterface, error) {
+func NewBulletSummaryStore(codec Codec[Summary], client bullet_interface.DepotClientInterface, namespace int32) (SummaryStoreInterface, error) {
 	return &BulletSummaryStore{
 		codec:     codec,
 		Client:    client,
@@ -52,7 +52,7 @@ func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) SummaryId {
 	return SummaryId(namespaced.Id)
 }
 
-func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[SummaryId]Aggregate) error {
+func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[SummaryId]Summary) error {
 
 	var reqs []bullet_interface.DepotRequest
 	for id, agg := range aggs {
@@ -70,7 +70,7 @@ func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[SummaryId]Aggregate) 
 }
 
 // VX:TODO RM or call many if we want to keep it
-func (a *BulletSummaryStore) UpsertAggregate(id SummaryId, agg Aggregate) error {
+func (a *BulletSummaryStore) UpsertAggregate(id SummaryId, agg Summary) error {
 
 	json, err := a.codec.Encode(agg)
 	if err != nil {
@@ -84,7 +84,7 @@ func (a *BulletSummaryStore) UpsertAggregate(id SummaryId, agg Aggregate) error 
 	return a.Client.DepotInsertOne(req)
 }
 
-func (a *BulletSummaryStore) Fetch(ids []SummaryId) (map[SummaryId]Aggregate, error) {
+func (a *BulletSummaryStore) Fetch(ids []SummaryId) (map[SummaryId]Summary, error) {
 	var keys []int64
 	for _, id := range ids {
 		spaced := a.aggIdToNamespacedId(id)
@@ -101,9 +101,9 @@ func (a *BulletSummaryStore) Fetch(ids []SummaryId) (map[SummaryId]Aggregate, er
 		return nil, nil
 	}
 
-	result := make(map[SummaryId]Aggregate)
+	result := make(map[SummaryId]Summary)
 	for k, v := range resp.Values {
-		aggObj := &Aggregate{}
+		aggObj := &Summary{}
 		err := a.codec.Decode(v, aggObj)
 		if err != nil {
 			return nil, err

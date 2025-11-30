@@ -38,6 +38,19 @@ const (
 
 type GotState int
 
+func (g GotState) ToStr() string {
+	if g == Active {
+		return "Active"
+	}
+	if g == Note {
+		return "Note"
+	}
+	if g == Complete {
+		return "Complete"
+	}
+	return "Unknown"
+}
+
 // states
 const (
 	Active   = 0
@@ -77,6 +90,7 @@ type GotItemDisplay struct {
 	Title    string
 	Alias    string
 	Deadline string
+	Summary  string
 	Path     *GotPath
 	NumberGo int
 }

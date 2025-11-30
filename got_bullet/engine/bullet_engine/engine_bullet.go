@@ -3,6 +3,7 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -39,7 +40,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	if err != nil {
 		return nil, err
 	}
-	codec := &JSONCodec[Aggregate]{}
+	codec := &JSONCodec[Summary]{}
 	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
 	if err != nil {
 		return nil, err
@@ -199,6 +200,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 
 	//get string ids of all items to do the alias lookup
 	stringIds := make([]string, len(all.Ids))
+
 	i := 0
 	for k := range all.Ids {
 		stringIds[i] = k
@@ -210,10 +212,18 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
+	var summaryIds []SummaryId
+	for _, v := range intIds {
+		summaryIds = append(summaryIds, SummaryId(v))
+	}
+	summaries, err := e.SummaryStore.Fetch(summaryIds)
+	if err != nil {
+		return nil, err
+	}
 	//VX:TODO change summaryId to gotId and then fetch it here. Reusing the word summary is no good.
 	//summaries, err := e.SummaryStore.Fetch()
 	//VX:TODO lookup many here.
-	var summaries []engine.GotItemDisplay
+	var itemDisplays []engine.GotItemDisplay
 	for k, v := range titles {
 
 		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
@@ -230,15 +240,44 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
 		}
-		summaries = append(summaries, engine.GotItemDisplay{
-			Gid:   stringId,
-			Title: v,
-			Path:  path,
-			Alias: alias,
+		summaryText := "["
+		gotId, err := engine.NewGotId(stringId)
+		if err != nil {
+			return nil, err
+		}
+		summaryId := NewSummaryId(*gotId)
+
+		summary, ok := summaries[summaryId]
+		if ok {
+
+			if summary.State != nil {
+				summaryText += "Leaf" + summary.State.ToStr()
+			}
+			if summary.Counts != nil {
+				summaryText += " {Total: "
+				if summary.Counts.Active != 0 {
+					summaryText += "active :" + strconv.Itoa(summary.Counts.Active)
+				}
+				if summary.Counts.Complete != 0 {
+					summaryText += "complete :" + strconv.Itoa(summary.Counts.Complete)
+				}
+				if summary.Counts.Notes != 0 {
+					summaryText += "notes :" + strconv.Itoa(summary.Counts.Notes)
+				}
+				summaryText += "}"
+			}
+		}
+		summaryText += "]"
+		itemDisplays = append(itemDisplays, engine.GotItemDisplay{
+			Gid:     stringId,
+			Title:   v,
+			Path:    path,
+			Alias:   alias,
+			Summary: summaryText,
 		})
 
 	}
-	return e.renderSummaries(summaries)
+	return e.renderSummaries(itemDisplays)
 
 }
 
@@ -261,6 +300,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			NumberGo: num,
 			Title:    s.Title,
 			Path:     s.Path,
+			Summary:  s.Summary,
 		})
 
 	}
@@ -370,6 +410,7 @@ func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemAdded(event)
 		if err != nil {
+			fmt.Printf("VX: Listner error was %s\n", err.Error())
 			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
 		}
 	}
