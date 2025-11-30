@@ -21,8 +21,34 @@ func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId i
 
 }
 
+func (e *BulletAliasStore) LookupAliasForMany(gid []string) (map[string]*string, error) {
+	var objects []bullet_stl.ListObject
+	for _, g := range gid {
+		objects = append(objects, bullet_stl.ListObject{Value: g})
+	}
+
+	res, err := e.TwoWay.GetSubjectsViaObjectForMany(objects)
+
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	resMap := make(map[string]*string)
+	for gid, alias := range res {
+		if alias == nil {
+			continue
+		}
+		resMap[gid.Value] = &alias.Value
+
+	}
+	return resMap, nil
+
+}
+
 func (e *BulletAliasStore) LookupAliasForGid(gid string) (*string, error) {
-	obj, err := e.TwoWay.GetOSubjectViaObject(bullet_stl.ListObject{Value: gid})
+	obj, err := e.TwoWay.GetSubjectViaObject(bullet_stl.ListObject{Value: gid})
 	if err != nil {
 		return nil, err
 	}

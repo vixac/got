@@ -120,29 +120,38 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
 	var items []engine.PathItem
 	//VX:TODO are they sorted by ancestry?
+	//I'm confused. I think there is always 1 item in here
+
 	fmt.Printf("VX: There are %d ancestor Ids here\n", len(ancestors.Ids))
+	var gids []string
+	for _, gid := range ancestors.Ids {
+		gids = append(gids, gid.AasciValue)
+	}
+
+	res, err := e.AliasStore.LookupAliasForMany(gids)
+	if err != nil {
+		return nil, nil
+	}
+	if res == nil {
+		return nil, nil
+	}
 	for _, id := range ancestors.Ids {
-		alias, err := e.AliasStore.LookupAliasForGid(id.AasciValue)
-		if err != nil {
-			return nil, err
+		var alias *string
+		matchedAlias, ok := res[id.AasciValue]
+		if ok {
+			alias = matchedAlias
 		}
 		items = append(items, engine.PathItem{
 			Id:    id.AasciValue,
 			Alias: alias,
 		})
 	}
-	for i, a := range items {
-		if a.Alias != nil {
-			fmt.Printf("VX: ALIAS %s", *a.Alias)
-		}
-		fmt.Printf("...VX: ancestorPath %d has path item %s\n", i, a.Id)
-
-	}
 	return &engine.GotPath{
 		Ancestry: items,
 	}, nil
 }
 
+// lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 	gid, err := e.GidLookup.InputToGid(lookup)
 	if err != nil {
@@ -183,16 +192,34 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	if err != nil {
 		return nil, err
 	}
+
+	//get string ids of all items to do the alias lookup
+	stringIds := make([]string, len(all.Ids))
+	i := 0
+	for k := range all.Ids {
+		stringIds[i] = k
+		i++
+	}
+
+	aliases, err := e.LookupAliasForMany(stringIds)
+	if err != nil {
+		return nil, err
+	}
+
 	//VX:TODO lookup many here.
 	var summaries []engine.GotSummary
 	for k, v := range titles {
+
 		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
 		if err != nil {
 			return nil, err
 		}
-		//tricky to get the path back out here
 
-		//gid := engine.NewCompleteId(stringId, k)
+		var alias string = ""
+		found, ok := aliases[stringId]
+		if ok {
+			alias = *found
+		}
 		var path *engine.GotPath = nil
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
@@ -201,6 +228,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			Gid:   stringId,
 			Title: v,
 			Path:  path,
+			Alias: alias,
 		})
 
 	}
@@ -356,6 +384,11 @@ func (e *EngineBullet) LookupAliasForGid(gid string) (*string, error) {
 	return e.AliasStore.LookupAliasForGid(gid)
 
 }
+
+func (e *EngineBullet) LookupAliasForMany(gid []string) (map[string]*string, error) {
+	return e.AliasStore.LookupAliasForMany(gid)
+}
+
 func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	//confirm the gid exists.
 	lookup, err := e.Summary(&engine.GidLookup{

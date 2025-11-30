@@ -17,6 +17,11 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 		Use:   "jobs",
 		Short: "fetch jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
+			//VX:TODO screw -u, lets got got jobs <id> optinoal.
+			if len(args) != 0 {
+				deps.Printer.Error(console.Message{Message: "jobs takes a -u and nothing else"})
+				return
+			}
 			var lookup *engine.GidLookup = nil
 			if underLookup != "" {
 
@@ -64,8 +69,14 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 				}
 
 				msg += ", Gid = "
+				if v.Alias != "" {
+					msg += v.Alias + "("
+				}
 				msg += v.Gid
-				msg += "(" + v.Alias + ")"
+				if v.Alias != "" {
+					msg += ")"
+				}
+
 				msg += ", Title = '"
 				msg += v.Title
 				msg += "'."
