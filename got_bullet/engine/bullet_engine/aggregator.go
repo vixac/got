@@ -15,7 +15,14 @@ type Aggregator struct {
 	// ancestorStore AncestorListInterface
 }
 
+func NewAggregator(summaryStore SummaryStoreInterface) (*Aggregator, error) {
+	return &Aggregator{
+		summaryStore: summaryStore,
+	}, nil
+}
+
 func (a *Aggregator) ItemAdded(e AddItemEvent) error {
+
 	ancestorAggs, err := a.summaryStore.Fetch(e.Ancestry)
 	if err != nil {
 		return err
@@ -47,7 +54,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	//	separately and test them separately. We should test this shit properly as its business logica
 	//check if parent is a leaf. If so, we need to move it to group state, and delete it
 
-	fmt.Printf("VX:TODO unhandled event ")
+	fmt.Printf("VX:TODO unhandled event aggregator \n ")
 	return nil
 }
 

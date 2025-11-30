@@ -67,8 +67,12 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	}
 
 	var listeners []EventListenerInterface
-	aggListener := NewBulletAggListener(aggStore)
-	listeners = append(listeners, aggListener)
+	aggregator, err := NewAggregator(aggStore)
+	if err != nil {
+		return nil, err
+	}
+
+	listeners = append(listeners, aggregator)
 
 	return &EngineBullet{
 		Client:         client,
@@ -82,7 +86,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	}, nil
 }
 
-func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, error) {
+func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
 
 	gid, err := e.GidLookup.InputToGid(lookup)
 	if err != nil {
@@ -109,7 +113,7 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotSummary, er
 		return nil, err
 	}
 
-	return &engine.GotSummary{
+	return &engine.GotItemDisplay{
 		Gid:   gid.AasciValue,
 		Title: *title,
 		Path:  path,
@@ -206,8 +210,10 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
+	//VX:TODO change summaryId to gotId and then fetch it here. Reusing the word summary is no good.
+	//summaries, err := e.SummaryStore.Fetch()
 	//VX:TODO lookup many here.
-	var summaries []engine.GotSummary
+	var summaries []engine.GotItemDisplay
 	for k, v := range titles {
 
 		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
@@ -224,7 +230,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
 		}
-		summaries = append(summaries, engine.GotSummary{
+		summaries = append(summaries, engine.GotItemDisplay{
 			Gid:   stringId,
 			Title: v,
 			Path:  path,
@@ -237,10 +243,10 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 }
 
 // adds the items to the number go store as well as
-func (e *EngineBullet) renderSummaries(summaries []engine.GotSummary) (*engine.GotFetchResult, error) {
+func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
 	//VX:TODO sort here?
-	var expandedSummaries []engine.GotSummary
+	var expandedSummaries []engine.GotItemDisplay
 	var pairs []NumberGoPair
 	for i, s := range summaries {
 
@@ -249,7 +255,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotSummary) (*engine.G
 			Number: num,
 			Gid:    engine.Gid{Id: s.Gid},
 		})
-		expandedSummaries = append(expandedSummaries, engine.GotSummary{
+		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
 			Gid:      s.Gid,
 			Alias:    s.Alias,
 			NumberGo: num,
@@ -296,8 +302,6 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 }
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
-	//VX:TODO this should hit both the keys and also hit depot too for the heading.
-
 	newId, err := e.NextId()
 
 	if err != nil {

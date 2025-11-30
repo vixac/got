@@ -5,12 +5,19 @@ import (
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	"vixac.com/got/engine"
 )
 
 // VX:TODO https://chatgpt.com/s/t_69236b33d8748191a6dd3c8e67a46a5e
+
+// VX:TODO this should probbaly get gids or gotids or whatever.
 // / This is to make clear that Agg doesn't know about GotIds specifically, although no doubt intValue GotIds will be used 1-1 for Agg.
 // / Agg will just operate with int32 and namespaces which are also int32, and will use firbolg_clients MakeNamespacedId to create the int64 that depot needs.
 type SummaryId int32
+
+func NewSummaryId(gotId engine.GotId) SummaryId {
+	return SummaryId(gotId.IntValue)
+}
 
 type SummaryStoreInterface interface {
 	UpsertAggregate(id SummaryId, agg Aggregate) error

@@ -9,7 +9,7 @@ import (
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
-	Summary(lookup *GidLookup) (*GotSummary, error)
+	Summary(lookup *GidLookup) (*GotItemDisplay, error)
 
 	//state changes
 	MarkResolved(lookup GidLookup) (*NodeId, error)
@@ -46,7 +46,7 @@ const (
 )
 
 type GotFetchResult struct {
-	Result []GotSummary
+	Result []GotItemDisplay
 }
 
 // All the lookup stuff
@@ -72,7 +72,7 @@ type GidLookup struct {
 	Input string
 }
 
-type GotSummary struct {
+type GotItemDisplay struct {
 	Gid      string
 	Title    string
 	Alias    string
