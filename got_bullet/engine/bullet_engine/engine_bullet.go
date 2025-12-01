@@ -3,6 +3,7 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -277,6 +278,25 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		})
 
 	}
+
+	sort.Slice(itemDisplays, func(i, j int) bool {
+		a := itemDisplays[i]
+		b := itemDisplays[j]
+		if a.Path == nil {
+			return true
+		}
+		if b.Path == nil {
+			return false
+		}
+		lenA := len(a.Path.Ancestry)
+		lenB := len(a.Path.Ancestry)
+		if lenA == lenB {
+			//wierd choice, but we just go chronoligal sorting for siblings.
+			return a.Gid < b.Gid
+		}
+		return lenA < lenB
+
+	})
 	return e.renderSummaries(itemDisplays)
 
 }
@@ -302,8 +322,8 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Path:     s.Path,
 			Summary:  s.Summary,
 		})
-
 	}
+
 	err := e.NumberGoStore.AssignNumberPairs(pairs)
 	if err != nil {
 		return nil, err

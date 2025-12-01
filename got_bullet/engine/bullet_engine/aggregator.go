@@ -59,34 +59,74 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 			State:    nil,
 			Deadline: enrichedEvent.Parent().Summary.Deadline,
 		}
-		appliedChange := newParentSummary.ApplyChange(NewCountChange(e.State, true))
+		//newParentSummary.ApplyChange(NewCountChange(e.State, true))
 		//upsert the parent
 		parentId := enrichedEvent.ParentId()
-		upserts[*parentId] = appliedChange
+		fmt.Printf("VX: Leaf parent is changed to %+v -> %+v \n", newParentSummary, *enrichedEvent.Parent())
+		upserts[*parentId] = newParentSummary
+
+		//decrement the parents state on all ancestors
+		for _, a := range enrichedEvent.Ancestry {
+			if a.Id != *parentId {
+				change := NewCountChange(*parentState, false)
+				fmt.Printf("VX: because a leaf changed to group, we are decrementing")
+				increments[a.Id] = change
+			}
+		}
+	}
+	for _, u := range upserts {
+		if u.Counts != nil {
+			fmt.Printf("VX: here is an upsert we need to insert before we do the addition: %+v\n", u.Counts)
+		} else {
+			fmt.Printf("VX: this upsert had no count: %+v\n", u)
+		}
+
 	}
 
+	//VX:TODOT HIS BITIS WRONG
+
+	//increment all parents with the new state
 	for _, a := range enrichedEvent.Ancestry {
 		change := NewCountChange(e.State, true)
-		increments[a.Id] = change
+		//existingUpsert, ok := upserts[a.Id]
+		existingIncrement, ok := increments[a.Id]
+		if ok { //update the existing upsert
+			existingUpsert.ApplyChange(change)
+			upserts[a.Id] = existingUpsert //put the change straight in
+		} else {
+			//store the change as an upsert for later? Why thogh
+			increments[a.Id] = change
+		}
+
 	}
 
 	//now we have all the increment maths, we just need to convert it to upserts.
 	//apply increments to upserts
 	for id, inc := range increments {
-		summary, ok := upserts[id]
+		existingSummary, ok := ancestorAggs[id]
 		if !ok {
-			newSummaryCount := summary.ApplyChange(inc)
-			upserts[id] = newSummaryCount
-		} else {
-			//create new upsert
-			existingSummary, ok := ancestorAggs[id]
-			if !ok {
-				fmt.Printf("VX: Error finding id %d\n", id)
-				return errors.New("dev error. Summary should exist in agg")
-			}
-			updatedSummary := existingSummary.ApplyChange(inc)
-			upserts[id] = updatedSummary
+			fmt.Printf("VX: Error finding id %d\n", id)
+			return errors.New("dev error. Summary should exist in agg")
 		}
+
+		existingUpsert, ok := upserts[id]
+		if !ok { //no upsert to edit. So we create a version of the existing with the increment
+			fmt.Printf("VX: no existingincrement for .. %d\n", id)
+			existingSummary.ApplyChange(inc)
+			if existingUpsert.State == nil {
+				fmt.Printf("VX: this should still be aleaf: %+v \n", existingSummary)
+			}
+			upserts[id] = existingSummary
+		} else { //we just apply the change to the upsert
+			fmt.Printf("VX: existing upsert.. %+v\n", existingUpsert)
+			//create new upsert
+
+			existingUpsert.ApplyChange(inc)
+			upserts[id] = existingUpsert
+		}
+	}
+	for _, a := range upserts {
+		fmt.Printf("VX: upserting this %+v\n", a)
 	}
 
 	//apply all the created changes.

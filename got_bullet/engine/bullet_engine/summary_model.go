@@ -37,7 +37,7 @@ type AggregateCountChange struct {
 	CompleteInc int
 }
 
-func (a Summary) ApplyChange(change AggregateCountChange) Summary {
+func (a *Summary) ApplyChange(change AggregateCountChange) {
 	var count = AggCount{}
 	if a.Counts != nil {
 		count = *a.Counts
@@ -51,10 +51,8 @@ func (a Summary) ApplyChange(change AggregateCountChange) Summary {
 
 	}
 
-	fmt.Printf("VX: COUNT UP CHANGE CHECK IS from %+s ... to %+v\n", old, count)
+	fmt.Printf("VX: COUNT UP CHANGE CHECK IS from %s ... to %+v\n", old, count)
 	a.Counts = &count
-
-	return a
 }
 
 func NewCountChange(state engine.GotState, inc bool) AggregateCountChange {
@@ -78,7 +76,6 @@ func NewCountChange(state engine.GotState, inc bool) AggregateCountChange {
 	}
 }
 
-/*
 func (lhs AggregateCountChange) combine(rhs AggregateCountChange) AggregateCountChange {
 	return AggregateCountChange{
 		ActiveInt:   lhs.ActiveInt + rhs.ActiveInt,
@@ -86,7 +83,7 @@ func (lhs AggregateCountChange) combine(rhs AggregateCountChange) AggregateCount
 		CompleteInc: lhs.CompleteInc + rhs.CompleteInc,
 	}
 }
-*/
+
 // no count, no deadline for some reason
 func NewLeafSummary(state engine.GotState, deadline *Deadline) Summary {
 	return Summary{
