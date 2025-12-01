@@ -282,6 +282,9 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	sort.Slice(itemDisplays, func(i, j int) bool {
 		a := itemDisplays[i]
 		b := itemDisplays[j]
+		if a.Path == nil && b.Path == nil {
+			return a.Gid < b.Gid
+		}
 		if a.Path == nil {
 			return true
 		}

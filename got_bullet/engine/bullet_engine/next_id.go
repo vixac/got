@@ -20,7 +20,6 @@ const (
 // VX:TODO test, maybe put somewhere else too.
 func (e *EngineBullet) NextId() (int32, error) {
 
-	fmt.Printf("VX NEXT ID \n")
 	list, err := bullet_stl.NewBulletOneWayList(e.Client, bucketId, listName, separator)
 	if err != nil {
 		return 0, err
@@ -34,8 +33,6 @@ func (e *EngineBullet) NextId() (int32, error) {
 
 	//base case, start at the beginning.
 	if currentHighest == nil {
-
-		fmt.Printf("VX NEXT ID is upserting?\n")
 		str := fmt.Sprint(firstId)
 		err := list.Upsert(latest, bullet_stl.ListObject{Value: str})
 		if err != nil {
@@ -43,7 +40,6 @@ func (e *EngineBullet) NextId() (int32, error) {
 		}
 		return firstId, nil
 	} else {
-		fmt.Printf("VX NEXT ID got an id %s\n", currentHighest.Value)
 		//now increment
 		value := currentHighest.Value
 		valueInt, err := strconv.ParseInt(value, 10, 32)
