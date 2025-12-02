@@ -59,10 +59,10 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 				msg += summaryMsg.InColor()
 				msg += ", Path: "
 				if v.Path != nil {
-					for i, a := range v.Path.Ancestry {
-						var id = a.Id
-						if a.Alias != nil {
-							id = *a.Alias
+					for i, pathItem := range v.Path.Ancestry {
+						var id = pathItem.Id
+						if pathItem.Alias != nil {
+							id = *pathItem.Alias
 						}
 						if i != 0 {
 							msg += "->" + id

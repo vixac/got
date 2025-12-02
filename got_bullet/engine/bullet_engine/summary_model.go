@@ -48,10 +48,8 @@ func (a *Summary) ApplyChange(change AggregateCountChange) {
 	var old = ""
 	if a.Counts != nil {
 		old = fmt.Sprintf("%+v", *a.Counts)
-
 	}
-
-	fmt.Printf("VX: COUNT UP CHANGE CHECK IS from %s ... to %+v\n", old, count)
+	fmt.Printf("VX: summary count is changed from %s -> to %+v\n", old, count)
 	a.Counts = &count
 }
 
@@ -76,7 +74,7 @@ func NewCountChange(state engine.GotState, inc bool) AggregateCountChange {
 	}
 }
 
-func (lhs AggregateCountChange) combine(rhs AggregateCountChange) AggregateCountChange {
+func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCountChange {
 	return AggregateCountChange{
 		ActiveInt:   lhs.ActiveInt + rhs.ActiveInt,
 		NoteInc:     lhs.NoteInc + rhs.NoteInc,

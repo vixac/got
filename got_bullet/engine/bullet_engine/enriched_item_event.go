@@ -13,47 +13,54 @@ This is an item Event that has its ancestry fetched, and it means it knows what 
 */
 
 // VX:TODO reuse for all events?
-type EnrichedAddItemEvent struct {
-	Event    AddItemEvent
+type EnrichedAncestry struct {
 	Ancestry []EnrichedSummary
 }
+
+type EnrichedStateChangeEvent struct {
+	Event    StateChangeEvent
+	Ancestry []EnrichedSummary
+}
+
 type EnrichedSummary struct {
 	Id      SummaryId
 	Summary Summary
 }
 
-func NewEnrichedAddItemEvent(event AddItemEvent, summaries map[SummaryId]Summary) (EnrichedAddItemEvent, error) {
+func EnrichSummaries(ancestry []SummaryId, summaries map[SummaryId]Summary) (EnrichedAncestry, error) {
+	var enriched []EnrichedSummary
 
-	var ancestry []EnrichedSummary
-
-	for _, summaryId := range event.Ancestry {
+	for _, summaryId := range ancestry {
 		if summaryId == SummaryId(TheRootNoteInt32) {
 			continue
 		}
 		summary, ok := summaries[summaryId]
 		if !ok {
 			fmt.Printf("VX: Error fetching for id %d\n", summaryId)
-			return EnrichedAddItemEvent{}, errors.New("missing summary when creating enriched item")
+
+			return EnrichedAncestry{}, errors.New("missing summary when creating enriched item")
 		}
-		ancestry = append(ancestry, EnrichedSummary{
+		enriched = append(enriched, EnrichedSummary{
 			Id:      summaryId,
 			Summary: summary,
 		})
 	}
-	return EnrichedAddItemEvent{
-		Event:    event,
-		Ancestry: ancestry,
+
+	return EnrichedAncestry{
+		Ancestry: enriched,
 	}, nil
 }
 
-func (e EnrichedAddItemEvent) Parent() *EnrichedSummary {
+//func NewEnrichedEditItemItem
+
+func (e EnrichedAncestry) Parent() *EnrichedSummary {
 	if len(e.Ancestry) == 0 {
 		return nil //parent is root
 	}
 	return &e.Ancestry[len(e.Ancestry)-1]
 }
 
-func (e EnrichedAddItemEvent) ParentIsLeaf() bool {
+func (e EnrichedAncestry) ParentIsLeaf() bool {
 	parent := e.Parent()
 	if parent == nil {
 		return false
@@ -61,18 +68,18 @@ func (e EnrichedAddItemEvent) ParentIsLeaf() bool {
 	return parent.Summary.IsLeaf()
 
 }
-func (e EnrichedAddItemEvent) ParentId() *SummaryId {
+func (e EnrichedAncestry) ParentId() *SummaryId {
 	parent := e.Parent()
 	if parent == nil {
 		return nil
 	}
 	return &parent.Id
 }
-func (e EnrichedAddItemEvent) ParentIsRoot() bool {
+func (e EnrichedAncestry) ParentIsRoot() bool {
 	return e.Parent() == nil
 }
 
-func (e EnrichedAddItemEvent) ParentIsGroup() bool {
+func (e EnrichedAncestry) ParentIsGroup() bool {
 	parent := e.Parent()
 	if parent == nil {
 		return false //root is a group? but not really
@@ -80,7 +87,7 @@ func (e EnrichedAddItemEvent) ParentIsGroup() bool {
 	return parent.Summary.Counts != nil
 }
 
-func (e EnrichedAddItemEvent) ParentState() *engine.GotState {
+func (e EnrichedAncestry) ParentState() *engine.GotState {
 	parent := e.Parent()
 	if parent == nil {
 		return nil

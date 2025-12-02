@@ -24,6 +24,7 @@ type StateChangeEvent struct {
 	Id       SummaryId
 	OldState engine.GotState
 	NewState engine.GotState
+	Ancestry []SummaryId
 }
 
 type ItemDeletedEvent struct {

@@ -21,9 +21,6 @@ func NewAggregator(summaryStore SummaryStoreInterface) (*Aggregator, error) {
 	}, nil
 }
 
-/**
- */
-
 func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 
 	ancestorAggs, err := a.summaryStore.Fetch(e.Ancestry)
@@ -31,7 +28,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 		return err
 	}
 
-	enrichedEvent, err := NewEnrichedAddItemEvent(e, ancestorAggs)
+	enrichedEvent, err := EnrichSummaries(e.Ancestry, ancestorAggs)
 	if err != nil {
 		return err
 	}
@@ -40,16 +37,8 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	upserts := make(map[SummaryId]Summary)
 	upserts[e.Id] = NewLeafSummary(e.State, e.Deadline)
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
-
-	//some counters or somethign?
-	//VX:TODO increment stateCount on all ancestors
-
-	//increments := make(map[SummaryId]AggregateCountChange)
-
 	if enrichedEvent.ParentIsLeaf() {
 		//convert parent to group with a count 1 for e.state
-		//decrement all aggs with the parent state
-		//time to convert it.
 		parentState := enrichedEvent.ParentState()
 		if parentState == nil {
 			return errors.New("missing dev state")
@@ -58,8 +47,6 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 			State:    nil,
 			Deadline: enrichedEvent.Parent().Summary.Deadline,
 		}
-		//newParentSummary.ApplyChange(NewCountChange(e.State, true))
-		//upsert the parent
 		parentId := enrichedEvent.ParentId()
 		fmt.Printf("VX: Leaf parent is changed to %+v from original %+v \n", newParentSummary, *enrichedEvent.Parent())
 		upserts[*parentId] = newParentSummary
@@ -99,45 +86,43 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 		}
 	}
 
-	/*
-		//now we have all the increment maths, we just need to convert it to upserts.
-		//apply increments to upserts
-		for id, inc := range increments {
-			existingSummary, ok := ancestorAggs[id]
-			if !ok {
-				fmt.Printf("VX: Error finding id %d\n", id)
-				return errors.New("dev error. Summary should exist in agg")
-			}
-
-			existingUpsert, ok := upserts[id]
-			if !ok { //no upsert to edit. So we create a version of the existing with the increment
-				fmt.Printf("VX: no existingincrement for .. %d\n", id)
-				existingSummary.ApplyChange(inc)
-				if existingUpsert.State == nil {
-					fmt.Printf("VX: this should still be aleaf: %+v \n", existingSummary)
-				}
-				upserts[id] = existingSummary
-			} else { //we just apply the change to the upsert
-				fmt.Printf("VX: existing upsert.. %+v\n", existingUpsert)
-				//create new upsert
-
-				existingUpsert.ApplyChange(inc)
-				upserts[id] = existingUpsert
-			}
-		}
-	*/
-	for _, a := range upserts {
-		fmt.Printf("VX: upserting this %+v\n", a)
-	}
-
 	//apply all the created changes.
 	return a.summaryStore.UpsertManyAggregates(upserts)
 }
 
+// VX:TODO this is ready to try out.
 func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
-	fmt.Printf("VX:TODO unhandled event ")
-	return nil
+
+	idsIncludingThis := e.Ancestry
+	idsIncludingThis = append(idsIncludingThis, e.Id) //the last item is *THIS*, it's on the end which is wierd.
+	ancestorAggs, err := a.summaryStore.Fetch(idsIncludingThis)
+	if err != nil {
+		return err
+	}
+	//step 1. change the state of this leaf.
+	changedItemSummary, ok := ancestorAggs[e.Id]
+	if !ok {
+		return errors.New("missing summary for state-changed item.s")
+	}
+	changedItemSummary.State = &e.NewState
+	upserts := make(map[SummaryId]Summary)
+	upserts[e.Id] = changedItemSummary
+
+	//step 1  we decrement the old state and increment the new for all its ancestors
+	incChange := NewCountChange(e.NewState, true)
+	decChange := NewCountChange(e.OldState, false)
+	combined := incChange.Combine(decChange)
+	for _, summaryId := range e.Ancestry {
+		summary, ok := ancestorAggs[summaryId]
+		if !ok {
+			return errors.New("missing summary in state-change for ancestor")
+		}
+		summary.ApplyChange(combined)
+		upserts[summaryId] = summary
+	}
+	return a.summaryStore.UpsertManyAggregates(upserts)
 }
+
 func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
 	fmt.Printf("VX:TODO unhandled event ")
 	return nil

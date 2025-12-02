@@ -111,6 +111,14 @@ type PathItem struct {
 	Alias *string
 	//VX:TODO maybe title in here?
 }
+
+func (p PathItem) toStr() string {
+	if p.Alias != nil {
+		return *p.Alias
+	}
+	return p.Id
+}
+
 type GotPath struct {
 	Ancestry []PathItem
 }

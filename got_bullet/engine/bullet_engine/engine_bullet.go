@@ -138,15 +138,15 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 	if err != nil {
 		return nil, nil
 	}
-	if res == nil {
-		return nil, nil
-	}
 	for _, id := range ancestors.Ids {
 		var alias *string
-		matchedAlias, ok := res[id.AasciValue]
-		if ok {
-			alias = matchedAlias
+		if res != nil { //if there are aliases to inspect.
+			matchedAlias, ok := res[id.AasciValue]
+			if ok {
+				alias = matchedAlias
+			}
 		}
+
 		items = append(items, engine.PathItem{
 			Id:    id.AasciValue,
 			Alias: alias,
@@ -240,6 +240,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		var path *engine.GotPath = nil
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
+		} else {
+			fmt.Printf("VX: NO PATH FOR '%s'\n", v)
 		}
 		summaryText := "["
 		gotId, err := engine.NewGotId(stringId)
@@ -307,7 +309,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 // adds the items to the number go store as well as
 func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
-	//VX:TODO sort here?
 	var expandedSummaries []engine.GotItemDisplay
 	var pairs []NumberGoPair
 	for i, s := range summaries {
@@ -338,18 +339,65 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 }
 
 func (e *EngineBullet) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil {
+		return nil, err
+	}
+	if gid == nil {
+		return nil, nil
+	}
 	return nil, errors.New("not impl")
+
 }
+
 func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil {
+		return nil, err
+	}
+	if gid == nil {
+		return nil, nil
+	}
 	return nil, errors.New("not impl")
 }
 
 func (e *EngineBullet) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil {
+		return nil, err
+	}
+	if gid == nil {
+		return nil, nil
+	}
+	summaryId := SummaryId(gid.IntValue)
+	ids := []SummaryId{summaryId}
+	res, err := e.SummaryStore.Fetch(ids)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	summary, ok := res[summaryId]
+	if !ok {
+		return nil, errors.New("no summary for this id")
+	}
+	oldState := summary.State
+	if oldState == nil {
+		return nil, errors.New("cant resolve an item without a state.")
+	}
+	var newState engine.GotState = engine.Complete
+	event := StateChangeEvent{
+		Id:       summaryId,
+		OldState: *oldState,
+		NewState: newState,
+	}
+	return nil, e.publishStateChangeEvent(event)
+
 	//check if the gid is an exact match for an item id
 	//check int32 parse, check its length is the right length
 
 	//aliases can't start with a number.
-	return nil, errors.New("not impl")
 }
 
 func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
@@ -415,9 +463,13 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		}
 	}
 
+	var newState engine.GotState = engine.Note
+	if completable {
+		newState = engine.Active
+	}
 	e.publishAddEvent(AddItemEvent{
 		Id:       SummaryId(newId),
-		State:    engine.Active,
+		State:    newState,
 		Ancestry: summaryIds,
 	})
 
@@ -434,6 +486,16 @@ func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 		err := l.ItemAdded(event)
 		if err != nil {
 			fmt.Printf("VX: Listner error was %s\n", err.Error())
+			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
+		}
+	}
+	return nil
+}
+func (e *EngineBullet) publishStateChangeEvent(event StateChangeEvent) error {
+	for _, l := range e.EventListeners {
+		err := l.ItemStateChanged(event)
+		if err != nil {
+			fmt.Printf("VX:state change  Listner error was %s\n", err.Error())
 			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
 		}
 	}
