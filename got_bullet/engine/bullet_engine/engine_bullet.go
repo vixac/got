@@ -254,7 +254,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if ok {
 
 			if summary.State != nil {
-				summaryText += "Leaf" + summary.State.ToStr()
+				summaryText += "Leaf (" + summary.State.ToStr() + ")"
 			}
 			if summary.Counts != nil {
 				summaryText += " {Total: "
@@ -339,65 +339,72 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 }
 
 func (e *EngineBullet) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
-	gid, err := e.GidLookup.InputToGid(&lookup)
-	if err != nil {
-		return nil, err
-	}
-	if gid == nil {
-		return nil, nil
-	}
-	return nil, errors.New("not impl")
+	var newState engine.GotState = engine.Active
+	return nil, e.updateState(lookup, newState)
 
 }
 
 func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
-	gid, err := e.GidLookup.InputToGid(&lookup)
-	if err != nil {
-		return nil, err
-	}
-	if gid == nil {
-		return nil, nil
-	}
-	return nil, errors.New("not impl")
+	var newState engine.GotState = engine.Note
+	return nil, e.updateState(lookup, newState)
 }
 
-func (e *EngineBullet) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
+func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotState) error {
+	fmt.Printf("VX: updaitng state..\n")
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if gid == nil {
-		return nil, nil
+		return nil
 	}
 	summaryId := SummaryId(gid.IntValue)
 	ids := []SummaryId{summaryId}
 	res, err := e.SummaryStore.Fetch(ids)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if res == nil {
-		return nil, nil
+		return errors.New("missing summary")
 	}
 	summary, ok := res[summaryId]
 	if !ok {
-		return nil, errors.New("no summary for this id")
+		return errors.New("no summary for this id")
 	}
 	oldState := summary.State
 	if oldState == nil {
-		return nil, errors.New("cant resolve an item without a state.")
+		return errors.New("cant resolve an item without a state")
 	}
-	var newState engine.GotState = engine.Complete
+
+	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
+	if err != nil {
+		return errors.New("error fetching ancestors")
+	}
+	var summaryIds []SummaryId
+	for _, id := range ancestorResult.Ids {
+		summaryIds = append(summaryIds, SummaryId(id.IntValue))
+
+	}
+	thisNode, err := e.Summary(&lookup)
+	if err != nil {
+		return err
+	}
+	if thisNode == nil {
+		return errors.New("missing summary")
+	}
+
 	event := StateChangeEvent{
 		Id:       summaryId,
 		OldState: *oldState,
 		NewState: newState,
+		Ancestry: summaryIds, //VX:TODO fetch?
 	}
-	return nil, e.publishStateChangeEvent(event)
+	return e.publishStateChangeEvent(event)
+}
 
-	//check if the gid is an exact match for an item id
-	//check int32 parse, check its length is the right length
-
-	//aliases can't start with a number.
+func (e *EngineBullet) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
+	var newState engine.GotState = engine.Complete
+	return nil, e.updateState(lookup, newState)
 }
 
 func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {

@@ -12,13 +12,7 @@ import (
 This is an item Event that has its ancestry fetched, and it means it knows what it is, and what it's parent is.
 */
 
-// VX:TODO reuse for all events?
 type EnrichedAncestry struct {
-	Ancestry []EnrichedSummary
-}
-
-type EnrichedStateChangeEvent struct {
-	Event    StateChangeEvent
 	Ancestry []EnrichedSummary
 }
 
@@ -50,8 +44,6 @@ func EnrichSummaries(ancestry []SummaryId, summaries map[SummaryId]Summary) (Enr
 		Ancestry: enriched,
 	}, nil
 }
-
-//func NewEnrichedEditItemItem
 
 func (e EnrichedAncestry) Parent() *EnrichedSummary {
 	if len(e.Ancestry) == 0 {

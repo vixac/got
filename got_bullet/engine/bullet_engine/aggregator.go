@@ -93,6 +93,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 // VX:TODO this is ready to try out.
 func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 
+	fmt.Printf("VX: state change called to %d\n", e.NewState)
 	idsIncludingThis := e.Ancestry
 	idsIncludingThis = append(idsIncludingThis, e.Id) //the last item is *THIS*, it's on the end which is wierd.
 	ancestorAggs, err := a.summaryStore.Fetch(idsIncludingThis)
@@ -113,12 +114,16 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	decChange := NewCountChange(e.OldState, false)
 	combined := incChange.Combine(decChange)
 	for _, summaryId := range e.Ancestry {
+		if summaryId == SummaryId(TheRootNoteInt32) {
+			continue
+		}
 		summary, ok := ancestorAggs[summaryId]
 		if !ok {
 			return errors.New("missing summary in state-change for ancestor")
 		}
 		summary.ApplyChange(combined)
 		upserts[summaryId] = summary
+		fmt.Printf("VX: Aggregate is here %+v with change %+v\n", summary, combined)
 	}
 	return a.summaryStore.UpsertManyAggregates(upserts)
 }
