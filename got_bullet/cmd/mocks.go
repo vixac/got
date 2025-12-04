@@ -17,6 +17,9 @@ type MockMessenger struct {
 func (m *MockMessenger) Print(message console.Message) {
 	m.messages = append(m.messages, message)
 }
+func (m *MockMessenger) PrintInLine(line []console.Message) {
+	//m.messages = append(m.messages, message)
+}
 func (m *MockMessenger) Error(message console.Message) {
 	m.errors = append(m.errors, message)
 }

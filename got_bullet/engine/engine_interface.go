@@ -86,13 +86,14 @@ type GidLookup struct {
 }
 
 type GotItemDisplay struct {
-	Gid      string
-	Title    string
-	Alias    string
-	Deadline string
-	Summary  string
-	Path     *GotPath
-	NumberGo int
+	Gid        string
+	Title      string
+	Alias      string
+	Deadline   string
+	Summary    string
+	SummaryObj Summary
+	Path       *GotPath
+	NumberGo   int
 }
 
 // VX:TODO replace with GotId

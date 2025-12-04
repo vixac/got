@@ -6,9 +6,17 @@ import (
 
 type Messenger interface {
 	Print(message Message)
+	PrintInLine(line []Message)
 	Error(message Message)
 }
 type Printer struct {
+}
+
+func (p Printer) PrintInLine(line []Message) {
+	for _, m := range line {
+		fmt.Printf(m.InColor())
+	}
+	fmt.Printf("\n")
 }
 
 func (p Printer) Print(message Message) {

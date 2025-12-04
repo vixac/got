@@ -9,6 +9,7 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 
+	"vixac.com/got/console"
 	"vixac.com/got/engine"
 )
 
@@ -302,6 +303,9 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return lenA < lenB
 
 	})
+	fmt.Println("<<<<<<<<<<>>>>>>>>>>>><<<<<<<<<>>>>>>>>>>>>>>>>>>>")
+
+	fmt.Println("<<<<<<<<<<>>>>>>>>>>>><<<<<<<<<>>>>>>>>>>>>>>>>>>>")
 	return e.renderSummaries(itemDisplays)
 
 }
@@ -498,6 +502,7 @@ func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 	}
 	return nil
 }
+
 func (e *EngineBullet) publishStateChangeEvent(event StateChangeEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemStateChanged(event)
@@ -539,4 +544,43 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 		return false, errors.New("can't alias a gid that doesn't exist")
 	}
 	return e.AliasStore.Alias(lookup.Gid, alias)
+}
+
+// VX:TODO where to put this?
+func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
+	var rows []console.TableRow
+	for _, item := range items {
+		var cells []console.TableCell
+
+		//number go
+		numSnippets := []console.Snippet{
+			console.NewSnippet(strconv.Itoa(item.NumberGo)+"<GO>", console.TokenBrand{}),
+		}
+		cells = append(cells, console.NewTableCell(numSnippets))
+
+		path := item.Path
+		var pathSnippets []console.Snippet
+		for i, node := range path.Ancestry {
+			if i != 0 {
+				pathSnippets = append(pathSnippets, console.NewSnippet("->", console.TokenSecondary{}))
+			}
+			if node.Alias != nil {
+				pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenPrimary{}))
+			} else {
+				pathSnippets = append(pathSnippets, console.NewSnippet(node.Id, console.TokenSecondary{}))
+			}
+		}
+
+		cells = append(cells, console.NewTableCell(pathSnippets))
+		//summar
+		// path
+
+		//gid
+		//title
+
+		row := console.NewTableRow(cells)
+		rows = append(rows, row)
+	}
+	table := console.NewConsoleTable(rows)
+	return table
 }
