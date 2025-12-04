@@ -14,29 +14,28 @@ import (
 // VX:TODO this should probbaly get gids or gotids or whatever.
 // / This is to make clear that Agg doesn't know about GotIds specifically, although no doubt intValue GotIds will be used 1-1 for Agg.
 // / Agg will just operate with int32 and namespaces which are also int32, and will use firbolg_clients MakeNamespacedId to create the int64 that depot needs.
-type SummaryId int32
 
-func NewSummaryId(gotId engine.GotId) SummaryId {
-	return SummaryId(gotId.IntValue)
+func NewSummaryId(gotId engine.GotId) engine.SummaryId {
+	return engine.SummaryId(gotId.IntValue)
 }
 
 type SummaryStoreInterface interface {
-	UpsertAggregate(id SummaryId, agg Summary) error
-	UpsertManyAggregates(aggs map[SummaryId]Summary) error
-	Fetch(ids []SummaryId) (map[SummaryId]Summary, error)
-	Delete(ids []SummaryId) error
+	UpsertAggregate(id engine.SummaryId, agg engine.Summary) error
+	UpsertManyAggregates(aggs map[engine.SummaryId]engine.Summary) error
+	Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error)
+	Delete(ids []engine.SummaryId) error
 }
 
 // namespaces are like bucket Ids but they move separately so the fact that they're both int32 is coincidence. namespcae is a way to
 // use the int64 space of depot ids to be <namespace><id>. This is fine because 2,147,483,647 is the positive total of int32. Thats plenty for got. If we need to host spaces higher than that, we probably want to
 // break stuff up into spearated sections and use mirroring.
 type BulletSummaryStore struct {
-	codec     Codec[Summary]
+	codec     Codec[engine.Summary]
 	Client    bullet_interface.DepotClientInterface
 	Namespace int32
 }
 
-func NewBulletSummaryStore(codec Codec[Summary], client bullet_interface.DepotClientInterface, namespace int32) (SummaryStoreInterface, error) {
+func NewBulletSummaryStore(codec Codec[engine.Summary], client bullet_interface.DepotClientInterface, namespace int32) (SummaryStoreInterface, error) {
 	return &BulletSummaryStore{
 		codec:     codec,
 		Client:    client,
@@ -44,16 +43,16 @@ func NewBulletSummaryStore(codec Codec[Summary], client bullet_interface.DepotCl
 	}, nil
 }
 
-func (a *BulletSummaryStore) aggIdToNamespacedId(id SummaryId) int64 {
+func (a *BulletSummaryStore) aggIdToNamespacedId(id engine.SummaryId) int64 {
 	return bullet_stl.MakeNamespacedId(a.Namespace, int32(id))
 }
 
-func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) SummaryId {
+func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) engine.SummaryId {
 	namespaced := bullet_stl.ParseNamespacedId(spaced)
-	return SummaryId(namespaced.Id)
+	return engine.SummaryId(namespaced.Id)
 }
 
-func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[SummaryId]Summary) error {
+func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[engine.SummaryId]engine.Summary) error {
 
 	var reqs []bullet_interface.DepotRequest
 	for id, agg := range aggs {
@@ -72,7 +71,7 @@ func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[SummaryId]Summary) er
 }
 
 // VX:TODO RM or call many if we want to keep it
-func (a *BulletSummaryStore) UpsertAggregate(id SummaryId, agg Summary) error {
+func (a *BulletSummaryStore) UpsertAggregate(id engine.SummaryId, agg engine.Summary) error {
 
 	json, err := a.codec.Encode(agg)
 	if err != nil {
@@ -86,7 +85,7 @@ func (a *BulletSummaryStore) UpsertAggregate(id SummaryId, agg Summary) error {
 	return a.Client.DepotInsertOne(req)
 }
 
-func (a *BulletSummaryStore) Fetch(ids []SummaryId) (map[SummaryId]Summary, error) {
+func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error) {
 	var keys []int64
 	for _, id := range ids {
 		spaced := a.aggIdToNamespacedId(id)
@@ -103,9 +102,9 @@ func (a *BulletSummaryStore) Fetch(ids []SummaryId) (map[SummaryId]Summary, erro
 		return nil, nil
 	}
 
-	result := make(map[SummaryId]Summary)
+	result := make(map[engine.SummaryId]engine.Summary)
 	for k, v := range resp.Values {
-		aggObj := &Summary{}
+		aggObj := &engine.Summary{}
 		err := a.codec.Decode(v, aggObj)
 		if err != nil {
 			return nil, err
@@ -117,6 +116,6 @@ func (a *BulletSummaryStore) Fetch(ids []SummaryId) (map[SummaryId]Summary, erro
 
 }
 
-func (a *BulletSummaryStore) Delete(ids []SummaryId) error {
+func (a *BulletSummaryStore) Delete(ids []engine.SummaryId) error {
 	return errors.New("not impl")
 }

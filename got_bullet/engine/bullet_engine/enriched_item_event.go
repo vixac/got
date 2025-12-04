@@ -17,15 +17,15 @@ type EnrichedAncestry struct {
 }
 
 type EnrichedSummary struct {
-	Id      SummaryId
-	Summary Summary
+	Id      engine.SummaryId
+	Summary engine.Summary
 }
 
-func EnrichSummaries(ancestry []SummaryId, summaries map[SummaryId]Summary) (EnrichedAncestry, error) {
+func EnrichSummaries(ancestry []engine.SummaryId, summaries map[engine.SummaryId]engine.Summary) (EnrichedAncestry, error) {
 	var enriched []EnrichedSummary
 
 	for _, summaryId := range ancestry {
-		if summaryId == SummaryId(TheRootNoteInt32) {
+		if summaryId == engine.SummaryId(TheRootNoteInt32) {
 			continue
 		}
 		summary, ok := summaries[summaryId]
@@ -60,7 +60,7 @@ func (e EnrichedAncestry) ParentIsLeaf() bool {
 	return parent.Summary.IsLeaf()
 
 }
-func (e EnrichedAncestry) ParentId() *SummaryId {
+func (e EnrichedAncestry) ParentId() *engine.SummaryId {
 	parent := e.Parent()
 	if parent == nil {
 		return nil

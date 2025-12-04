@@ -15,25 +15,25 @@ const (
 
 // VX:TODO ADD EVENT
 type AddItemEvent struct {
-	Id       SummaryId
+	Id       engine.SummaryId
 	State    engine.GotState
-	Ancestry []SummaryId
-	Deadline *Deadline
+	Ancestry []engine.SummaryId
+	Deadline *engine.Deadline
 }
 type StateChangeEvent struct {
-	Id       SummaryId
+	Id       engine.SummaryId
 	OldState engine.GotState
 	NewState engine.GotState
-	Ancestry []SummaryId
+	Ancestry []engine.SummaryId
 }
 
 type ItemDeletedEvent struct {
-	Id SummaryId
+	Id engine.SummaryId
 }
 type ItemMovedEvent struct {
-	Id        SummaryId
-	OldParent *SummaryId
-	NewParent *SummaryId
+	Id        engine.SummaryId
+	OldParent *engine.SummaryId
+	NewParent *engine.SummaryId
 }
 
 // VX:TODO flesh this out with all the events that might be interesting

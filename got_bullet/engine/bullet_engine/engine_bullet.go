@@ -42,7 +42,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	if err != nil {
 		return nil, err
 	}
-	codec := &JSONCodec[Summary]{}
+	codec := &JSONCodec[engine.Summary]{}
 	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
 	if err != nil {
 		return nil, err
@@ -214,9 +214,9 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
-	var summaryIds []SummaryId
+	var summaryIds []engine.SummaryId
 	for _, v := range intIds {
-		summaryIds = append(summaryIds, SummaryId(v))
+		summaryIds = append(summaryIds, engine.SummaryId(v))
 	}
 	summaries, err := e.SummaryStore.Fetch(summaryIds)
 	if err != nil {
@@ -273,11 +273,12 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		}
 		summaryText += "]"
 		itemDisplays = append(itemDisplays, engine.GotItemDisplay{
-			Gid:     stringId,
-			Title:   v,
-			Path:    path,
-			Alias:   alias,
-			Summary: summaryText,
+			Gid:        stringId,
+			Title:      v,
+			Path:       path,
+			Alias:      alias,
+			Summary:    summaryText,
+			SummaryObj: summary,
 		})
 
 	}
@@ -362,8 +363,8 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 	if gid == nil {
 		return nil
 	}
-	summaryId := SummaryId(gid.IntValue)
-	ids := []SummaryId{summaryId}
+	summaryId := engine.SummaryId(gid.IntValue)
+	ids := []engine.SummaryId{summaryId}
 	res, err := e.SummaryStore.Fetch(ids)
 	if err != nil {
 		return err
@@ -384,9 +385,9 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 	if err != nil {
 		return errors.New("error fetching ancestors")
 	}
-	var summaryIds []SummaryId
+	var summaryIds []engine.SummaryId
 	for _, id := range ancestorResult.Ids {
-		summaryIds = append(summaryIds, SummaryId(id.IntValue))
+		summaryIds = append(summaryIds, engine.SummaryId(id.IntValue))
 
 	}
 	thisNode, err := e.Summary(&lookup)
@@ -466,11 +467,11 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		return nil, err
 	}
 
-	var summaryIds []SummaryId
+	var summaryIds []engine.SummaryId
 	if ancestry != nil {
 		fmt.Printf("VX: buck created. %+v\n", *ancestry)
 		for _, a := range ancestry.Ids {
-			summaryIds = append(summaryIds, SummaryId(a.IntValue))
+			summaryIds = append(summaryIds, engine.SummaryId(a.IntValue))
 		}
 	}
 
@@ -479,7 +480,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		newState = engine.Active
 	}
 	e.publishAddEvent(AddItemEvent{
-		Id:       SummaryId(newId),
+		Id:       engine.SummaryId(newId),
 		State:    newState,
 		Ancestry: summaryIds,
 	})
@@ -558,6 +559,7 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		}
 		cells = append(cells, console.NewTableCell(numSnippets))
 
+		//path
 		path := item.Path
 		var pathSnippets []console.Snippet
 		for i, node := range path.Ancestry {
@@ -572,8 +574,10 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		}
 
 		cells = append(cells, console.NewTableCell(pathSnippets))
-		//summar
-		// path
+
+		//summary
+
+		//obj := item.SummaryObj
 
 		//gid
 		//title

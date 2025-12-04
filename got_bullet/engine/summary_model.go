@@ -1,9 +1,7 @@
-package bullet_engine
+package engine
 
 import (
 	"fmt"
-
-	"vixac.com/got/engine"
 )
 
 // First pass of the kinds of things we'll count
@@ -13,6 +11,14 @@ type AggCount struct {
 	Notes    int `json:"n,omitempty"`
 }
 
+// VX:TODO its either state OR its counts.
+// deadline is separate. Maybe it doesn't belong here but we'll see.
+type Summary struct {
+	State    *GotState `json:"s,omitempty"`
+	Counts   *AggCount `json:"c"`
+	Deadline *Deadline `json:"d"`
+}
+
 type Deadline struct {
 	Date string `json:"d,omitempty"`
 }
@@ -20,14 +26,6 @@ type Deadline struct {
 type DatedTask struct {
 	Deadline Deadline  `json:"d"`
 	Id       SummaryId `json:"i,omitempty"`
-}
-
-// VX:TODO its either state OR its counts.
-// deadline is separate. Maybe it doesn't belong here but we'll see.
-type Summary struct {
-	State    *engine.GotState `json:"s,omitempty"`
-	Counts   *AggCount        `json:"c"`
-	Deadline *Deadline        `json:"d"`
 }
 
 // something which can be combined and chained to form a single agg
@@ -53,18 +51,18 @@ func (a *Summary) ApplyChange(change AggregateCountChange) {
 	a.Counts = &count
 }
 
-func NewCountChange(state engine.GotState, inc bool) AggregateCountChange {
+func NewCountChange(state GotState, inc bool) AggregateCountChange {
 
 	var change = 1
 	if !inc {
 		change = -1
 	}
-	if state == engine.Active {
+	if state == Active {
 		return AggregateCountChange{
 			ActiveInt: change,
 		}
 	}
-	if state == engine.Complete {
+	if state == Complete {
 		return AggregateCountChange{
 			CompleteInc: change,
 		}
@@ -83,22 +81,22 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 }
 
 // no count, no deadline for some reason
-func NewLeafSummary(state engine.GotState, deadline *Deadline) Summary {
+func NewLeafSummary(state GotState, deadline *Deadline) Summary {
 	return Summary{
 		State:    &state,
 		Deadline: deadline,
 	}
 }
 
-func (c AggCount) ChangeState(state engine.GotState, inc int) AggCount {
+func (c AggCount) ChangeState(state GotState, inc int) AggCount {
 	comp := c.Complete
 	active := c.Active
 	notes := c.Notes
-	if state == engine.Active {
+	if state == Active {
 		active += inc
-	} else if state == engine.Complete {
+	} else if state == Complete {
 		comp += inc
-	} else if state == engine.Note {
+	} else if state == Note {
 		notes += inc
 	}
 	return AggCount{

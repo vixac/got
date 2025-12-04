@@ -7,6 +7,8 @@ import (
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
 
+type SummaryId int32
+
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
 	Summary(lookup *GidLookup) (*GotItemDisplay, error)

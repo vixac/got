@@ -3,6 +3,8 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+
+	"vixac.com/got/engine"
 )
 
 /*
@@ -34,8 +36,8 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	}
 
 	//step 1. We create the new summary object for the new item
-	upserts := make(map[SummaryId]Summary)
-	upserts[e.Id] = NewLeafSummary(e.State, e.Deadline)
+	upserts := make(map[engine.SummaryId]engine.Summary)
+	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline)
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
 	if enrichedEvent.ParentIsLeaf() {
 		//convert parent to group with a count 1 for e.state
@@ -43,7 +45,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 		if parentState == nil {
 			return errors.New("missing dev state")
 		}
-		newParentSummary := Summary{
+		newParentSummary := engine.Summary{
 			State:    nil,
 			Deadline: enrichedEvent.Parent().Summary.Deadline,
 		}
@@ -54,7 +56,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 		//decrement the parents state on all ancestors
 		for _, a := range enrichedEvent.Ancestry {
 			if a.Id != *parentId {
-				change := NewCountChange(*parentState, false)
+				change := engine.NewCountChange(*parentState, false)
 				fmt.Printf("VX: because a leaf changed to group, we are decrementing")
 				a.Summary.ApplyChange(change)
 				upserts[a.Id] = a.Summary
@@ -70,7 +72,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	}
 
 	//increment all parents with the new state
-	change := NewCountChange(e.State, true)
+	change := engine.NewCountChange(e.State, true)
 	for _, a := range enrichedEvent.Ancestry {
 		existingUpsert, ok := upserts[a.Id]
 		if ok {
@@ -106,15 +108,15 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 		return errors.New("missing summary for state-changed item.s")
 	}
 	changedItemSummary.State = &e.NewState
-	upserts := make(map[SummaryId]Summary)
+	upserts := make(map[engine.SummaryId]engine.Summary)
 	upserts[e.Id] = changedItemSummary
 
 	//step 1  we decrement the old state and increment the new for all its ancestors
-	incChange := NewCountChange(e.NewState, true)
-	decChange := NewCountChange(e.OldState, false)
+	incChange := engine.NewCountChange(e.NewState, true)
+	decChange := engine.NewCountChange(e.OldState, false)
 	combined := incChange.Combine(decChange)
 	for _, summaryId := range e.Ancestry {
-		if summaryId == SummaryId(TheRootNoteInt32) {
+		if summaryId == engine.SummaryId(TheRootNoteInt32) {
 			continue
 		}
 		summary, ok := ancestorAggs[summaryId]
