@@ -23,10 +23,12 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 				}
 				messages = append(messages, message)
 			}
+			paddingRequired := c.ColumnWidths[i] - cell.Length
+			paddingStr := FitString("", paddingRequired, " ")
+			messages = append(messages, Message{Message: paddingStr})
 		}
 		printer.PrintInLine(messages)
 	}
-
 }
 
 func NewConsoleTable(rows []TableRow) ConsoleTable {
@@ -45,7 +47,7 @@ func NewConsoleTable(rows []TableRow) ConsoleTable {
 	}
 
 	var padding = ""
-	for range 10 {
+	for range 3 {
 		padding += " "
 	}
 	return ConsoleTable{
@@ -85,6 +87,15 @@ func NewSnippet(text string, token Token) Snippet {
 type TableCell struct {
 	Content []Snippet
 	Length  int
+}
+
+func (c *TableCell) PlainStr() string {
+	var str = "{"
+	for _, s := range c.Content {
+		str += s.Text + ","
+	}
+	str += "}"
+	return str
 }
 
 func NewTableCell(snippets []Snippet) TableCell {

@@ -93,7 +93,7 @@ type GotItemDisplay struct {
 	Alias      string
 	Deadline   string
 	Summary    string
-	SummaryObj Summary
+	SummaryObj *Summary
 	Path       *GotPath
 	NumberGo   int
 }

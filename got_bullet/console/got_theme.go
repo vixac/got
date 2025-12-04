@@ -11,6 +11,8 @@ func (t *GotTheme) ColorFor(token Token) Color {
 		return RedColor{}
 	case "secondary":
 		return Resetcolor{}
+	case "complete":
+		return MagentaColor{}
 	}
 	return Resetcolor{}
 }

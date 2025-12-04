@@ -27,8 +27,20 @@ func (c GreenColor) Col() string {
 
 type BlueColor struct{}
 
-func (c BlueColor) Color() string {
+func (c BlueColor) Col() string {
 	return "\033[34m"
+}
+
+type MagentaColor struct{}
+
+func (c MagentaColor) Col() string {
+	return "\033[35m"
+}
+
+type NoteColor struct{}
+
+func (c NoteColor) Col() string {
+	return "\033[36m"
 }
 
 const resetColor = "\033[0m"

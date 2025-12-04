@@ -272,13 +272,18 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			}
 		}
 		summaryText += "]"
+
+		var summaryPointer *engine.Summary = nil
+		if ok {
+			summaryPointer = &summary
+		}
 		itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 			Gid:        stringId,
 			Title:      v,
 			Path:       path,
 			Alias:      alias,
 			Summary:    summaryText,
-			SummaryObj: summary,
+			SummaryObj: summaryPointer,
 		})
 
 	}
@@ -304,9 +309,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return lenA < lenB
 
 	})
-	fmt.Println("<<<<<<<<<<>>>>>>>>>>>><<<<<<<<<>>>>>>>>>>>>>>>>>>>")
-
-	fmt.Println("<<<<<<<<<<>>>>>>>>>>>><<<<<<<<<>>>>>>>>>>>>>>>>>>>")
 	return e.renderSummaries(itemDisplays)
 
 }
@@ -324,12 +326,13 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Gid:    engine.Gid{Id: s.Gid},
 		})
 		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
-			Gid:      s.Gid,
-			Alias:    s.Alias,
-			NumberGo: num,
-			Title:    s.Title,
-			Path:     s.Path,
-			Summary:  s.Summary,
+			Gid:        s.Gid,
+			Alias:      s.Alias,
+			NumberGo:   num,
+			Title:      s.Title,
+			Path:       s.Path,
+			Summary:    s.Summary,
+			SummaryObj: s.SummaryObj,
 		})
 	}
 
@@ -577,8 +580,32 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 
 		//summary
 
-		//obj := item.SummaryObj
+		/*
+			if item.SummaryObj == nil {
+				snippet := []console.Snippet{console.NewSnippet("[its nil] "+item.Summary, console.TokenSecondary{})}
+				cells = append(cells, console.NewTableCell(snippet))
+			}
+		*/
+		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
+			snippet := []console.Snippet{console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{})}
 
+			cells = append(cells, console.NewTableCell(snippet))
+		} else {
+			snippet := []console.Snippet{console.NewSnippet("Leaf", console.TokenBrand{})}
+
+			cells = append(cells, console.NewTableCell(snippet))
+		}
+
+		//summarySnippets = append(summarySnippets, console.NewSnippet("Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}))
+		//summarySnippets = append(summarySnippets, console.NewSnippet("Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}))
+		/*
+			var summarySnippets []console.Snippet
+			if item.SummaryObj.Counts != nil {
+				summarySnippets = append(summarySnippets, console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{}))
+				summarySnippets = append(summarySnippets, console.NewSnippet("Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}))
+				summarySnippets = append(summarySnippets, console.NewSnippet("Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}))
+			}
+		*/
 		//gid
 		//title
 

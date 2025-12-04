@@ -24,3 +24,9 @@ type TokenBrand struct{}
 func (t TokenBrand) Name() string {
 	return "brand"
 }
+
+type TokenComplete struct{}
+
+func (t TokenComplete) Name() string {
+	return "complete"
+}
