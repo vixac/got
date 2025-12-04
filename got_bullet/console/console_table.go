@@ -98,6 +98,11 @@ func (c *TableCell) PlainStr() string {
 	return str
 }
 
+func NewTableCellFromStr(str string, token Token) TableCell {
+	s := []Snippet{NewSnippet(str, token)}
+	return NewTableCell(s)
+}
+
 func NewTableCell(snippets []Snippet) TableCell {
 	var len = 0
 	for _, s := range snippets {

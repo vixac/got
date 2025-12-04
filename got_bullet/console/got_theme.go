@@ -13,6 +13,8 @@ func (t *GotTheme) ColorFor(token Token) Color {
 		return Resetcolor{}
 	case "complete":
 		return MagentaColor{}
+	case "gid":
+		return GidColor{}
 	}
 	return Resetcolor{}
 }

@@ -43,6 +43,12 @@ func (c NoteColor) Col() string {
 	return "\033[36m"
 }
 
+type GidColor struct{}
+
+func (c GidColor) Col() string {
+	return "\033[34m"
+}
+
 const resetColor = "\033[0m"
 const BIGreen = "\033[1;92m"
 

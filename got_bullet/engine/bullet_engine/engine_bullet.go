@@ -277,14 +277,20 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if ok {
 			summaryPointer = &summary
 		}
-		itemDisplays = append(itemDisplays, engine.GotItemDisplay{
-			Gid:        stringId,
-			Title:      v,
-			Path:       path,
-			Alias:      alias,
-			Summary:    summaryText,
-			SummaryObj: summaryPointer,
-		})
+
+		//here we filter complete leafs from the jobs list. VX:Note we want to have completes
+		//not even appear in the search, because thats more scalable.
+		isCompleteLeaf := summary.Counts == nil && summary.State != nil && *summary.State == engine.Complete
+		if !isCompleteLeaf {
+			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
+				Gid:        stringId,
+				Title:      v,
+				Path:       path,
+				Alias:      alias,
+				Summary:    summaryText,
+				SummaryObj: summaryPointer,
+			})
+		}
 
 	}
 
@@ -326,7 +332,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Gid:    engine.Gid{Id: s.Gid},
 		})
 		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
-			Gid:        s.Gid,
+			Gid:        "0" + s.Gid, //VX:TODO here is the "0 prefix on the gid."
 			Alias:      s.Alias,
 			NumberGo:   num,
 			Title:      s.Title,
@@ -553,12 +559,23 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 // VX:TODO where to put this?
 func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 	var rows []console.TableRow
+
+	titleCells := []console.TableCell{
+		console.NewTableCellFromStr("Num<GO>", console.TokenGid{}),
+		console.NewTableCellFromStr("Path", console.TokenSecondary{}),
+		console.NewTableCellFromStr("Summary", console.TokenBrand{}),
+		console.NewTableCellFromStr("Alias", console.TokenPrimary{}),
+		console.NewTableCellFromStr("Gid", console.TokenGid{}),
+		console.NewTableCellFromStr("Title", console.TokenSecondary{}),
+	}
+	titleRow := console.NewTableRow(titleCells)
+	rows = append(rows, titleRow)
 	for _, item := range items {
 		var cells []console.TableCell
 
 		//number go
 		numSnippets := []console.Snippet{
-			console.NewSnippet(strconv.Itoa(item.NumberGo)+"<GO>", console.TokenBrand{}),
+			console.NewSnippet(strconv.Itoa(item.NumberGo)+"<GO>", console.TokenGid{}),
 		}
 		cells = append(cells, console.NewTableCell(numSnippets))
 
@@ -579,33 +596,40 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		cells = append(cells, console.NewTableCell(pathSnippets))
 
 		//summary
+		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
+			snippets := []console.Snippet{
+				console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenPrimary{}),
+				console.NewSnippet(" Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenGid{}),
+				console.NewSnippet(" Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}),
+			}
+			cells = append(cells, console.NewTableCell(snippets))
+		} else {
+			state := item.SummaryObj.State
+			if state == nil {
+				fmt.Printf("VX: ERRORR should not happen. Either a count or a state.")
+				snippet := []console.Snippet{console.NewSnippet("<VX:err>", console.TokenBrand{})}
 
-		/*
-			if item.SummaryObj == nil {
-				snippet := []console.Snippet{console.NewSnippet("[its nil] "+item.Summary, console.TokenSecondary{})}
+				cells = append(cells, console.NewTableCell(snippet))
+			} else {
+				var token console.Token
+				if *state == engine.Active {
+					token = console.TokenPrimary{}
+				} else if *state == engine.Note {
+					token = console.TokenGid{}
+				} else {
+					token = console.TokenComplete{}
+				}
+				snippet := []console.Snippet{console.NewSnippet(state.ToStr(), token)}
+
 				cells = append(cells, console.NewTableCell(snippet))
 			}
-		*/
-		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
-			snippet := []console.Snippet{console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{})}
 
-			cells = append(cells, console.NewTableCell(snippet))
-		} else {
-			snippet := []console.Snippet{console.NewSnippet("Leaf", console.TokenBrand{})}
-
-			cells = append(cells, console.NewTableCell(snippet))
 		}
 
-		//summarySnippets = append(summarySnippets, console.NewSnippet("Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}))
-		//summarySnippets = append(summarySnippets, console.NewSnippet("Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}))
-		/*
-			var summarySnippets []console.Snippet
-			if item.SummaryObj.Counts != nil {
-				summarySnippets = append(summarySnippets, console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{}))
-				summarySnippets = append(summarySnippets, console.NewSnippet("Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}))
-				summarySnippets = append(summarySnippets, console.NewSnippet("Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}))
-			}
-		*/
+		cells = append(cells, console.NewTableCellFromStr(item.Alias, console.TokenPrimary{}))
+		cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
+		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
+
 		//gid
 		//title
 

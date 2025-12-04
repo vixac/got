@@ -25,6 +25,12 @@ func (t TokenBrand) Name() string {
 	return "brand"
 }
 
+type TokenGid struct{}
+
+func (t TokenGid) Name() string {
+	return "gid"
+}
+
 type TokenComplete struct{}
 
 func (t TokenComplete) Name() string {
