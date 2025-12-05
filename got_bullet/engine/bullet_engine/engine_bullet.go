@@ -556,39 +556,39 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	return e.AliasStore.Alias(lookup.Gid, alias)
 }
 
-// VX:TODO where to put this?
+// VX:TODO Move this.
 func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 	var rows []console.TableRow
 
 	titleCells := []console.TableCell{
-		console.NewTableCellFromStr("Num<GO>", console.TokenGid{}),
+		console.NewTableCellFromStr("Num<GO>", console.TokenSecondary{}),
+		console.NewTableCellFromStr("ID", console.TokenGid{}),
 		console.NewTableCellFromStr("Path", console.TokenSecondary{}),
-		console.NewTableCellFromStr("Summary", console.TokenBrand{}),
+		console.NewTableCellFromStr("Summary", console.TokenSecondary{}),
 		console.NewTableCellFromStr("Alias", console.TokenPrimary{}),
-		console.NewTableCellFromStr("Gid", console.TokenGid{}),
 		console.NewTableCellFromStr("Title", console.TokenSecondary{}),
 	}
 	titleRow := console.NewCellTableRow(titleCells)
+	rows = append(rows, console.NewDividerRow('-'))
 	rows = append(rows, titleRow)
 
-	dividerRow := console.NewDividerRow('-')
-
-	rows = append(rows, dividerRow)
+	rows = append(rows, console.NewDividerRow('.'))
 	for _, item := range items {
 		var cells []console.TableCell
 
 		//number go
 		numSnippets := []console.Snippet{
-			console.NewSnippet(strconv.Itoa(item.NumberGo)+"<GO>", console.TokenGid{}),
+			console.NewSnippet(strconv.Itoa(item.NumberGo)+"»", console.TokenSecondary{}),
 		}
 		cells = append(cells, console.NewTableCell(numSnippets))
+		cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
 
 		//path
 		path := item.Path
 		var pathSnippets []console.Snippet
 		for i, node := range path.Ancestry {
 			if i != 0 {
-				pathSnippets = append(pathSnippets, console.NewSnippet("->", console.TokenSecondary{}))
+				pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenSecondary{}))
 			}
 			if node.Alias != nil {
 				pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenPrimary{}))
@@ -602,8 +602,8 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		//summary
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 			snippets := []console.Snippet{
-				console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenPrimary{}),
-				console.NewSnippet(" Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenGid{}),
+				console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{}),
+				console.NewSnippet(" Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}),
 				console.NewSnippet(" Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}),
 			}
 			cells = append(cells, console.NewTableCell(snippets))
@@ -612,14 +612,13 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 			if state == nil {
 				fmt.Printf("VX: ERRORR should not happen. Either a count or a state.")
 				snippet := []console.Snippet{console.NewSnippet("<VX:err>", console.TokenBrand{})}
-
 				cells = append(cells, console.NewTableCell(snippet))
 			} else {
 				var token console.Token
 				if *state == engine.Active {
 					token = console.TokenPrimary{}
 				} else if *state == engine.Note {
-					token = console.TokenGid{}
+					token = console.TokenSecondary{}
 				} else {
 					token = console.TokenComplete{}
 				}
@@ -631,14 +630,10 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		}
 
 		cells = append(cells, console.NewTableCellFromStr(item.Alias, console.TokenPrimary{}))
-		cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
-		cells = append(cells, console.NewTableCellFromStr(item.Title+"|", console.TokenSecondary{}))
+		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
 
-		//gid
-		//title
+		rows = append(rows, console.NewCellTableRow(cells))
 
-		row := console.NewCellTableRow(cells)
-		rows = append(rows, row)
 	}
 	table := console.NewConsoleTable(rows)
 	return table

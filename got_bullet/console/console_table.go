@@ -1,7 +1,5 @@
 package console
 
-import "fmt"
-
 type ConsoleTable struct {
 	Rows          []TableRow
 	ColumnWidths  []int
@@ -9,7 +7,7 @@ type ConsoleTable struct {
 }
 
 const (
-	paddingSize = 0
+	paddingSize = 10
 )
 
 func nchars(b byte, n int) string {
@@ -21,49 +19,9 @@ func nchars(b byte, n int) string {
 }
 func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 
-	/*
-		//calculate max row length for the sake of rendering divider rows.
-		maxRowLength := 0
-		for _, row := range c.Rows {
-			if row.CellRow != nil {
-				if row.CellRow.RowLength > maxRowLength {
-					maxRowLength = row.CellRow.RowLength
-				}
-			}
-		}
-
-		/
-		//assumes all rows have the same number
-		if len(c.Rows) != 0 {
-			for range len(c.Rows) - 1 {
-				maxRowLength += paddingSize //VX:TODO some missing padding it seems.
-
-			}
-		}
-	*/
-	var rowLength = 0
-	// all rows should be the same length. grab row length from the first row that isn;t a divider, so we know how long the dividers should be
-	for _, row := range c.Rows {
-		if row.CellRow != nil {
-			rowLength = row.CellRow.RowLength
-			break
-		}
-	}
-
 	//the int is the index, and the message group is the rendered row.
 	contentRows := make(map[int]MessageGroup)
-
-	/*
-		//	dividerIndexes = append(dividerIndexes, i)
-		dividerStr := nchars(row.DividerRow.Separator, maxRowLength)
-		fmt.Printf("VX: Max row length is %d\n", maxRowLength)
-		dividerMessage := Message{
-			Message: dividerStr,
-			Color:   scheme.ColorFor(TokenPrimary{}).Col(),
-		}
-		printer.Print(dividerMessage)
-	*/
-	for _, row := range c.Rows {
+	for rowNumber, row := range c.Rows {
 
 		if row.CellRow == nil {
 
@@ -94,22 +52,36 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 			for _, m := range messages {
 				total += len(m.Message)
 			}
-			fmt.Printf("VX: THIS ROW IS LEN %d\n", total)
-			printer.PrintInLine(messages)
-			//rowGroups = append(rowGroups, NewMessageGroup(messages))
+			contentRows[rowNumber] = NewMessageGroup(messages)
 		}
 	}
-	//we use the rowGroups to work out how long the dividers are supposed to be.
+	if len(contentRows) == 0 {
+		//nothing to render besides maybe dividers. We should render nothin.
+		return
+	}
 
-	/*
-		var lengthOfLongestRow = 0
-		for _, g := range rowGroups {
-			if g.TextLen > lengthOfLongestRow {
-				lengthOfLongestRow = g.TextLen
+	var renderedRowLength = 0
+	// we just look at one of these rows to get its length
+	for _, val := range contentRows {
+		renderedRowLength = val.TextLen
+		break
+	}
+
+	//now we actually print
+	for i, row := range c.Rows {
+		if row.DividerRow != nil {
+			dividerStr := nchars(row.DividerRow.Separator, renderedRowLength)
+			dividerMessage := Message{
+				Message: dividerStr,
+				Color:   scheme.ColorFor(TokenPrimary{}).Col(),
 			}
+			printer.Print(dividerMessage)
+		} else {
+			group := contentRows[i] //if this doesn't exist its a dev error, as we just populated this.
+			printer.PrintInLine(group.Messages)
 		}
-	*/
 
+	}
 }
 
 func NewConsoleTable(rows []TableRow) ConsoleTable {

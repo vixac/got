@@ -27,5 +27,5 @@ func NewMessageGroup(messages []Message) MessageGroup {
 }
 
 func (m Message) InColor() string {
-	return fmt.Sprintf("%s%s%s", m.Color, m.Message, resetColor)
+	return fmt.Sprintf("%s%s%s", m.Color, m.Message, ResetColor{}.Col())
 }

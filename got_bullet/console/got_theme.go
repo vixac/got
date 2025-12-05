@@ -8,13 +8,13 @@ func (t *GotTheme) ColorFor(token Token) Color {
 	case "primary":
 		return GreenColor{}
 	case "brand":
-		return RedColor{}
+		return BigGreenColor{}
 	case "secondary":
-		return Resetcolor{}
+		return ResetColor{}
 	case "complete":
 		return MagentaColor{}
 	case "gid":
-		return GidColor{}
+		return BlueColor{}
 	}
-	return Resetcolor{}
+	return ResetColor{}
 }
