@@ -568,8 +568,12 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		console.NewTableCellFromStr("Gid", console.TokenGid{}),
 		console.NewTableCellFromStr("Title", console.TokenSecondary{}),
 	}
-	titleRow := console.NewTableRow(titleCells)
+	titleRow := console.NewCellTableRow(titleCells)
 	rows = append(rows, titleRow)
+
+	dividerRow := console.NewDividerRow('-')
+
+	rows = append(rows, dividerRow)
 	for _, item := range items {
 		var cells []console.TableCell
 
@@ -628,12 +632,12 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 
 		cells = append(cells, console.NewTableCellFromStr(item.Alias, console.TokenPrimary{}))
 		cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
-		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
+		cells = append(cells, console.NewTableCellFromStr(item.Title+"|", console.TokenSecondary{}))
 
 		//gid
 		//title
 
-		row := console.NewTableRow(cells)
+		row := console.NewCellTableRow(cells)
 		rows = append(rows, row)
 	}
 	table := console.NewConsoleTable(rows)

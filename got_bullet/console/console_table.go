@@ -1,42 +1,126 @@
 package console
 
+import "fmt"
+
 type ConsoleTable struct {
 	Rows          []TableRow
 	ColumnWidths  []int
 	ColumnPadding string
 }
 
+const (
+	paddingSize = 0
+)
+
+func nchars(b byte, n int) string {
+	s := make([]byte, n)
+	for i := 0; i < n; i++ {
+		s[i] = b
+	}
+	return string(s)
+}
 func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 
-	for _, row := range c.Rows {
-		var messages []Message
-
-		for i, cell := range row.Cells {
-			if i != 0 {
-				messages = append(messages, Message{Message: c.ColumnPadding})
-			}
-
-			for _, snippet := range cell.Content {
-				message := Message{
-					Color:   scheme.ColorFor(snippet.Token).Col(),
-					Message: snippet.Text,
+	/*
+		//calculate max row length for the sake of rendering divider rows.
+		maxRowLength := 0
+		for _, row := range c.Rows {
+			if row.CellRow != nil {
+				if row.CellRow.RowLength > maxRowLength {
+					maxRowLength = row.CellRow.RowLength
 				}
-				messages = append(messages, message)
 			}
-			paddingRequired := c.ColumnWidths[i] - cell.Length
-			paddingStr := FitString("", paddingRequired, " ")
-			messages = append(messages, Message{Message: paddingStr})
 		}
-		printer.PrintInLine(messages)
+
+		/
+		//assumes all rows have the same number
+		if len(c.Rows) != 0 {
+			for range len(c.Rows) - 1 {
+				maxRowLength += paddingSize //VX:TODO some missing padding it seems.
+
+			}
+		}
+	*/
+	var rowLength = 0
+	// all rows should be the same length. grab row length from the first row that isn;t a divider, so we know how long the dividers should be
+	for _, row := range c.Rows {
+		if row.CellRow != nil {
+			rowLength = row.CellRow.RowLength
+			break
+		}
 	}
+
+	//the int is the index, and the message group is the rendered row.
+	contentRows := make(map[int]MessageGroup)
+
+	/*
+		//	dividerIndexes = append(dividerIndexes, i)
+		dividerStr := nchars(row.DividerRow.Separator, maxRowLength)
+		fmt.Printf("VX: Max row length is %d\n", maxRowLength)
+		dividerMessage := Message{
+			Message: dividerStr,
+			Color:   scheme.ColorFor(TokenPrimary{}).Col(),
+		}
+		printer.Print(dividerMessage)
+	*/
+	for _, row := range c.Rows {
+
+		if row.CellRow == nil {
+
+		} else {
+			var messages []Message
+
+			for i, cell := range row.CellRow.Cells {
+
+				if i != 0 {
+					messages = append(messages, Message{Message: c.ColumnPadding})
+				}
+
+				for _, snippet := range cell.Content {
+					message := Message{
+						Color:   scheme.ColorFor(snippet.Token).Col(),
+						Message: snippet.Text,
+					}
+					messages = append(messages, message)
+
+				}
+				paddingRequired := c.ColumnWidths[i] - cell.Length
+				spaceCharacter := " " //useful for debugging to make this and X or something.
+				paddingStr := FitString("", paddingRequired, spaceCharacter)
+				messages = append(messages, Message{Message: paddingStr})
+
+			}
+			var total = 0
+			for _, m := range messages {
+				total += len(m.Message)
+			}
+			fmt.Printf("VX: THIS ROW IS LEN %d\n", total)
+			printer.PrintInLine(messages)
+			//rowGroups = append(rowGroups, NewMessageGroup(messages))
+		}
+	}
+	//we use the rowGroups to work out how long the dividers are supposed to be.
+
+	/*
+		var lengthOfLongestRow = 0
+		for _, g := range rowGroups {
+			if g.TextLen > lengthOfLongestRow {
+				lengthOfLongestRow = g.TextLen
+			}
+		}
+	*/
+
 }
 
 func NewConsoleTable(rows []TableRow) ConsoleTable {
 	var maxWidths []int
 	for _, r := range rows {
-		numCells := len(r.Cells)
+		if r.CellRow == nil {
+			continue
+		}
+		numCells := len(r.CellRow.Cells)
 		for col := 0; col < numCells; col++ {
-			minColWidthThisCell := r.Cells[col].Length
+			minColWidthThisCell := r.CellRow.Cells[col].Length
 			if len(maxWidths) <= col {
 				maxWidths = append(maxWidths, 0)
 			}
@@ -47,7 +131,8 @@ func NewConsoleTable(rows []TableRow) ConsoleTable {
 	}
 
 	var padding = ""
-	for range 3 {
+
+	for range paddingSize {
 		padding += " "
 	}
 	return ConsoleTable{
@@ -58,15 +143,39 @@ func NewConsoleTable(rows []TableRow) ConsoleTable {
 }
 
 // this becomes a bit of an enum eventually. cells or divider
+type CellRow struct {
+	Cells     []TableCell
+	NumCells  int
+	RowLength int
+}
+type DividerRow struct {
+	Separator byte
+}
 type TableRow struct {
-	Cells    []TableCell
-	NumCells int
+	CellRow    *CellRow
+	DividerRow *DividerRow
 }
 
-func NewTableRow(cells []TableCell) TableRow {
+func NewDividerRow(separator byte) TableRow {
+	div := DividerRow{
+		Separator: separator,
+	}
 	return TableRow{
-		Cells:    cells,
-		NumCells: len(cells),
+		DividerRow: &div,
+	}
+}
+func NewCellTableRow(cells []TableCell) TableRow {
+	rowLength := 0
+	for _, cell := range cells {
+		rowLength += cell.Length
+	}
+	cellRow := CellRow{
+		Cells:     cells,
+		NumCells:  len(cells),
+		RowLength: rowLength,
+	}
+	return TableRow{
+		CellRow: &cellRow,
 	}
 }
 
