@@ -92,7 +92,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	return a.summaryStore.UpsertManyAggregates(upserts)
 }
 
-// VX:TODO this is ready to try out.
+// VX:TODO Test
 func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 
 	fmt.Printf("VX: state change called to %d\n", e.NewState)

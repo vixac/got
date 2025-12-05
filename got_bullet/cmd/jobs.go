@@ -48,51 +48,6 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			table := bullet_engine.NewTable(res.Result)
 			table.Render(deps.Printer, &console.GotTheme{})
 
-			/*
-				for _, v := range res.Result {
-					var msg = ""
-					if v.NumberGo != 0 {
-						numStr := strconv.Itoa(v.NumberGo)
-						msg += (numStr + "<GO>")
-					}
-					msg += ", Path: "
-					if v.Path != nil {
-						for i, pathItem := range v.Path.Ancestry {
-							var id = pathItem.Id
-							if pathItem.Alias != nil {
-								id = *pathItem.Alias
-							}
-							if i != 0 {
-								msg += "->" + id
-							} else {
-								msg += id
-							}
-
-						}
-					}
-					summaryMsg := console.Message{
-						Message: v.Summary,
-						Color:   console.BIGreen,
-					}
-					msg += summaryMsg.InColor()
-
-					msg += ", Gid = "
-					if v.Alias != "" {
-						msg += v.Alias + "("
-					}
-					msg += v.Gid
-					if v.Alias != "" {
-						msg += ")"
-					}
-
-					msg += ", Title = '"
-					msg += v.Title
-					msg += "'."
-
-					deps.Printer.Print(console.Message{Message: msg})
-
-				}*/
-
 		},
 	}
 	jobsCmd.Flags().StringVarP(&underLookup, "under", "u", "", "The parent item")
