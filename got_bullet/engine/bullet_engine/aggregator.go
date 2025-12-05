@@ -3,6 +3,8 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+
+	"vixac.com/got/engine"
 )
 
 /*
@@ -13,7 +15,6 @@ changes in the aggstore.
 
 type Aggregator struct {
 	summaryStore SummaryStoreInterface
-	// ancestorStore AncestorListInterface
 }
 
 func NewAggregator(summaryStore SummaryStoreInterface) (*Aggregator, error) {
@@ -22,9 +23,6 @@ func NewAggregator(summaryStore SummaryStoreInterface) (*Aggregator, error) {
 	}, nil
 }
 
-/**
- */
-
 func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 
 	ancestorAggs, err := a.summaryStore.Fetch(e.Ancestry)
@@ -32,60 +30,61 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 		return err
 	}
 
-	enrichedEvent, err := NewEnrichedAddItemEvent(e, ancestorAggs)
+	enrichedEvent, err := EnrichSummaries(e.Ancestry, ancestorAggs)
 	if err != nil {
 		return err
 	}
 
 	//step 1. We create the new summary object for the new item
-	upserts := make(map[SummaryId]Summary)
-	upserts[e.Id] = NewLeafSummary(e.State, e.Deadline)
+	upserts := make(map[engine.SummaryId]engine.Summary)
+	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline)
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
-
-	//some counters or somethign?
-	//VX:TODO increment stateCount on all ancestors
-
-	increments := make(map[SummaryId]AggregateCountChange)
-
 	if enrichedEvent.ParentIsLeaf() {
 		//convert parent to group with a count 1 for e.state
-		//decrement all aggs with the parent state
-		//time to convert it.
 		parentState := enrichedEvent.ParentState()
 		if parentState == nil {
 			return errors.New("missing dev state")
 		}
-		newParentSummary := Summary{
+		newParentSummary := engine.Summary{
 			State:    nil,
 			Deadline: enrichedEvent.Parent().Summary.Deadline,
 		}
-		appliedChange := newParentSummary.ApplyChange(NewCountChange(e.State, true))
-		//upsert the parent
 		parentId := enrichedEvent.ParentId()
-		upserts[*parentId] = appliedChange
-	}
+		fmt.Printf("VX: Leaf parent is changed to %+v from original %+v \n", newParentSummary, *enrichedEvent.Parent())
+		upserts[*parentId] = newParentSummary
 
-	for _, a := range enrichedEvent.Ancestry {
-		change := NewCountChange(e.State, true)
-		increments[a.Id] = change
-	}
-
-	//now we have all the increment maths, we just need to convert it to upserts.
-	//apply increments to upserts
-	for id, inc := range increments {
-		summary, ok := upserts[id]
-		if !ok {
-			newSummaryCount := summary.ApplyChange(inc)
-			upserts[id] = newSummaryCount
-		} else {
-			//create new upsert
-			existingSummary, ok := ancestorAggs[id]
-			if !ok {
-				fmt.Printf("VX: Error finding id %d\n", id)
-				return errors.New("dev error. Summary should exist in agg")
+		//decrement the parents state on all ancestors
+		for _, a := range enrichedEvent.Ancestry {
+			if a.Id != *parentId {
+				change := engine.NewCountChange(*parentState, false)
+				fmt.Printf("VX: because a leaf changed to group, we are decrementing")
+				a.Summary.ApplyChange(change)
+				upserts[a.Id] = a.Summary
 			}
-			updatedSummary := existingSummary.ApplyChange(inc)
-			upserts[id] = updatedSummary
+		}
+	}
+	for _, u := range upserts {
+		if u.Counts != nil {
+			fmt.Printf("VX: here is an upsert we need to insert before we do the addition: %+v\n", u.Counts)
+		} else {
+			fmt.Printf("VX: this upsert had no count: %+v\n", u)
+		}
+	}
+
+	//increment all parents with the new state
+	change := engine.NewCountChange(e.State, true)
+	for _, a := range enrichedEvent.Ancestry {
+		existingUpsert, ok := upserts[a.Id]
+		if ok {
+			fmt.Printf("VX: we have an upsert for this one already: %d, %+v", a.Id, existingUpsert)
+			existingUpsert.ApplyChange(change)
+			upserts[a.Id] = existingUpsert
+			fmt.Printf("VX: summary is now: %d, %+v", a.Id, existingUpsert)
+		} else {
+			fmt.Printf("VX: icnremting for the first time: %+v\n", a.Summary.Counts)
+			a.Summary.ApplyChange(change)
+			fmt.Printf("VX: incremened for the first time is now: %+v\n", a.Summary.Counts)
+			upserts[a.Id] = a.Summary
 		}
 	}
 
@@ -93,10 +92,44 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	return a.summaryStore.UpsertManyAggregates(upserts)
 }
 
+// VX:TODO this is ready to try out.
 func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
-	fmt.Printf("VX:TODO unhandled event ")
-	return nil
+
+	fmt.Printf("VX: state change called to %d\n", e.NewState)
+	idsIncludingThis := e.Ancestry
+	idsIncludingThis = append(idsIncludingThis, e.Id) //the last item is *THIS*, it's on the end which is wierd.
+	ancestorAggs, err := a.summaryStore.Fetch(idsIncludingThis)
+	if err != nil {
+		return err
+	}
+	//step 1. change the state of this leaf.
+	changedItemSummary, ok := ancestorAggs[e.Id]
+	if !ok {
+		return errors.New("missing summary for state-changed item.s")
+	}
+	changedItemSummary.State = &e.NewState
+	upserts := make(map[engine.SummaryId]engine.Summary)
+	upserts[e.Id] = changedItemSummary
+
+	//step 1  we decrement the old state and increment the new for all its ancestors
+	incChange := engine.NewCountChange(e.NewState, true)
+	decChange := engine.NewCountChange(e.OldState, false)
+	combined := incChange.Combine(decChange)
+	for _, summaryId := range e.Ancestry {
+		if summaryId == engine.SummaryId(TheRootNoteInt32) {
+			continue
+		}
+		summary, ok := ancestorAggs[summaryId]
+		if !ok {
+			return errors.New("missing summary in state-change for ancestor")
+		}
+		summary.ApplyChange(combined)
+		upserts[summaryId] = summary
+		fmt.Printf("VX: Aggregate is here %+v with change %+v\n", summary, combined)
+	}
+	return a.summaryStore.UpsertManyAggregates(upserts)
 }
+
 func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
 	fmt.Printf("VX:TODO unhandled event ")
 	return nil

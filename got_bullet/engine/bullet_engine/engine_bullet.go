@@ -3,11 +3,13 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 
+	"vixac.com/got/console"
 	"vixac.com/got/engine"
 )
 
@@ -40,7 +42,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	if err != nil {
 		return nil, err
 	}
-	codec := &JSONCodec[Summary]{}
+	codec := &JSONCodec[engine.Summary]{}
 	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
 	if err != nil {
 		return nil, err
@@ -137,15 +139,15 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 	if err != nil {
 		return nil, nil
 	}
-	if res == nil {
-		return nil, nil
-	}
 	for _, id := range ancestors.Ids {
 		var alias *string
-		matchedAlias, ok := res[id.AasciValue]
-		if ok {
-			alias = matchedAlias
+		if res != nil { //if there are aliases to inspect.
+			matchedAlias, ok := res[id.AasciValue]
+			if ok {
+				alias = matchedAlias
+			}
 		}
+
 		items = append(items, engine.PathItem{
 			Id:    id.AasciValue,
 			Alias: alias,
@@ -212,9 +214,9 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
-	var summaryIds []SummaryId
+	var summaryIds []engine.SummaryId
 	for _, v := range intIds {
-		summaryIds = append(summaryIds, SummaryId(v))
+		summaryIds = append(summaryIds, engine.SummaryId(v))
 	}
 	summaries, err := e.SummaryStore.Fetch(summaryIds)
 	if err != nil {
@@ -239,6 +241,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		var path *engine.GotPath = nil
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
+		} else {
+			fmt.Printf("VX: NO PATH FOR '%s'\n", v)
 		}
 		summaryText := "["
 		gotId, err := engine.NewGotId(stringId)
@@ -251,7 +255,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if ok {
 
 			if summary.State != nil {
-				summaryText += "Leaf" + summary.State.ToStr()
+				summaryText += "Leaf (" + summary.State.ToStr() + ")"
 			}
 			if summary.Counts != nil {
 				summaryText += " {Total: "
@@ -268,15 +272,49 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			}
 		}
 		summaryText += "]"
-		itemDisplays = append(itemDisplays, engine.GotItemDisplay{
-			Gid:     stringId,
-			Title:   v,
-			Path:    path,
-			Alias:   alias,
-			Summary: summaryText,
-		})
+
+		var summaryPointer *engine.Summary = nil
+		if ok {
+			summaryPointer = &summary
+		}
+
+		//here we filter complete leafs from the jobs list. VX:Note we want to have completes
+		//not even appear in the search, because thats more scalable.
+		isCompleteLeaf := summary.Counts == nil && summary.State != nil && *summary.State == engine.Complete
+		if !isCompleteLeaf {
+			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
+				Gid:        stringId,
+				Title:      v,
+				Path:       path,
+				Alias:      alias,
+				Summary:    summaryText,
+				SummaryObj: summaryPointer,
+			})
+		}
 
 	}
+
+	sort.Slice(itemDisplays, func(i, j int) bool {
+		a := itemDisplays[i]
+		b := itemDisplays[j]
+		if a.Path == nil && b.Path == nil {
+			return a.Gid < b.Gid
+		}
+		if a.Path == nil {
+			return true
+		}
+		if b.Path == nil {
+			return false
+		}
+		lenA := len(a.Path.Ancestry)
+		lenB := len(a.Path.Ancestry)
+		if lenA == lenB {
+			//wierd choice, but we just go chronoligal sorting for siblings.
+			return a.Gid < b.Gid
+		}
+		return lenA < lenB
+
+	})
 	return e.renderSummaries(itemDisplays)
 
 }
@@ -284,7 +322,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 // adds the items to the number go store as well as
 func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
-	//VX:TODO sort here?
 	var expandedSummaries []engine.GotItemDisplay
 	var pairs []NumberGoPair
 	for i, s := range summaries {
@@ -295,15 +332,16 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Gid:    engine.Gid{Id: s.Gid},
 		})
 		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
-			Gid:      s.Gid,
-			Alias:    s.Alias,
-			NumberGo: num,
-			Title:    s.Title,
-			Path:     s.Path,
-			Summary:  s.Summary,
+			Gid:        "0" + s.Gid, //VX:TODO here is the "0 prefix on the gid."
+			Alias:      s.Alias,
+			NumberGo:   num,
+			Title:      s.Title,
+			Path:       s.Path,
+			Summary:    s.Summary,
+			SummaryObj: s.SummaryObj,
 		})
-
 	}
+
 	err := e.NumberGoStore.AssignNumberPairs(pairs)
 	if err != nil {
 		return nil, err
@@ -315,18 +353,72 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 }
 
 func (e *EngineBullet) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
-	return nil, errors.New("not impl")
+	var newState engine.GotState = engine.Active
+	return nil, e.updateState(lookup, newState)
+
 }
+
 func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
-	return nil, errors.New("not impl")
+	var newState engine.GotState = engine.Note
+	return nil, e.updateState(lookup, newState)
+}
+
+func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotState) error {
+	fmt.Printf("VX: updaitng state..\n")
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil {
+		return err
+	}
+	if gid == nil {
+		return nil
+	}
+	summaryId := engine.SummaryId(gid.IntValue)
+	ids := []engine.SummaryId{summaryId}
+	res, err := e.SummaryStore.Fetch(ids)
+	if err != nil {
+		return err
+	}
+	if res == nil {
+		return errors.New("missing summary")
+	}
+	summary, ok := res[summaryId]
+	if !ok {
+		return errors.New("no summary for this id")
+	}
+	oldState := summary.State
+	if oldState == nil {
+		return errors.New("cant resolve an item without a state")
+	}
+
+	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
+	if err != nil {
+		return errors.New("error fetching ancestors")
+	}
+	var summaryIds []engine.SummaryId
+	for _, id := range ancestorResult.Ids {
+		summaryIds = append(summaryIds, engine.SummaryId(id.IntValue))
+
+	}
+	thisNode, err := e.Summary(&lookup)
+	if err != nil {
+		return err
+	}
+	if thisNode == nil {
+		return errors.New("missing summary")
+	}
+
+	event := StateChangeEvent{
+		Id:       summaryId,
+		OldState: *oldState,
+		NewState: newState,
+		Ancestry: summaryIds, //VX:TODO fetch?
+	}
+	return e.publishStateChangeEvent(event)
 }
 
 func (e *EngineBullet) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
-	//check if the gid is an exact match for an item id
-	//check int32 parse, check its length is the right length
-
-	//aliases can't start with a number.
-	return nil, errors.New("not impl")
+	var newState engine.GotState = engine.Complete
+	return nil, e.updateState(lookup, newState)
 }
 
 func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
@@ -384,17 +476,21 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		return nil, err
 	}
 
-	var summaryIds []SummaryId
+	var summaryIds []engine.SummaryId
 	if ancestry != nil {
 		fmt.Printf("VX: buck created. %+v\n", *ancestry)
 		for _, a := range ancestry.Ids {
-			summaryIds = append(summaryIds, SummaryId(a.IntValue))
+			summaryIds = append(summaryIds, engine.SummaryId(a.IntValue))
 		}
 	}
 
+	var newState engine.GotState = engine.Note
+	if completable {
+		newState = engine.Active
+	}
 	e.publishAddEvent(AddItemEvent{
-		Id:       SummaryId(newId),
-		State:    engine.Active,
+		Id:       engine.SummaryId(newId),
+		State:    newState,
 		Ancestry: summaryIds,
 	})
 
@@ -411,6 +507,17 @@ func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 		err := l.ItemAdded(event)
 		if err != nil {
 			fmt.Printf("VX: Listner error was %s\n", err.Error())
+			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
+		}
+	}
+	return nil
+}
+
+func (e *EngineBullet) publishStateChangeEvent(event StateChangeEvent) error {
+	for _, l := range e.EventListeners {
+		err := l.ItemStateChanged(event)
+		if err != nil {
+			fmt.Printf("VX:state change  Listner error was %s\n", err.Error())
 			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
 		}
 	}
@@ -447,4 +554,87 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 		return false, errors.New("can't alias a gid that doesn't exist")
 	}
 	return e.AliasStore.Alias(lookup.Gid, alias)
+}
+
+// VX:TODO Move this.
+func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
+	var rows []console.TableRow
+
+	titleCells := []console.TableCell{
+		console.NewTableCellFromStr("Num<GO>", console.TokenSecondary{}),
+		console.NewTableCellFromStr("ID", console.TokenGid{}),
+		console.NewTableCellFromStr("Path", console.TokenSecondary{}),
+		console.NewTableCellFromStr("Summary", console.TokenSecondary{}),
+		console.NewTableCellFromStr("Alias", console.TokenPrimary{}),
+		console.NewTableCellFromStr("Title", console.TokenSecondary{}),
+	}
+	titleRow := console.NewCellTableRow(titleCells)
+	rows = append(rows, console.NewDividerRow('-'))
+	rows = append(rows, titleRow)
+
+	rows = append(rows, console.NewDividerRow('.'))
+	for _, item := range items {
+		var cells []console.TableCell
+
+		//number go
+		numSnippets := []console.Snippet{
+			console.NewSnippet(strconv.Itoa(item.NumberGo)+"»", console.TokenSecondary{}),
+		}
+		cells = append(cells, console.NewTableCell(numSnippets))
+		cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
+
+		//path
+		path := item.Path
+		var pathSnippets []console.Snippet
+		for i, node := range path.Ancestry {
+			if i != 0 {
+				pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenSecondary{}))
+			}
+			if node.Alias != nil {
+				pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenPrimary{}))
+			} else {
+				pathSnippets = append(pathSnippets, console.NewSnippet(node.Id, console.TokenSecondary{}))
+			}
+		}
+
+		cells = append(cells, console.NewTableCell(pathSnippets))
+
+		//summary
+		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
+			snippets := []console.Snippet{
+				console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{}),
+				console.NewSnippet(" Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}),
+				console.NewSnippet(" Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}),
+			}
+			cells = append(cells, console.NewTableCell(snippets))
+		} else {
+			state := item.SummaryObj.State
+			if state == nil {
+				fmt.Printf("VX: ERRORR should not happen. Either a count or a state.")
+				snippet := []console.Snippet{console.NewSnippet("<VX:err>", console.TokenBrand{})}
+				cells = append(cells, console.NewTableCell(snippet))
+			} else {
+				var token console.Token
+				if *state == engine.Active {
+					token = console.TokenPrimary{}
+				} else if *state == engine.Note {
+					token = console.TokenSecondary{}
+				} else {
+					token = console.TokenComplete{}
+				}
+				snippet := []console.Snippet{console.NewSnippet(state.ToStr(), token)}
+
+				cells = append(cells, console.NewTableCell(snippet))
+			}
+
+		}
+
+		cells = append(cells, console.NewTableCellFromStr(item.Alias, console.TokenPrimary{}))
+		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
+
+		rows = append(rows, console.NewCellTableRow(cells))
+
+	}
+	table := console.NewConsoleTable(rows)
+	return table
 }

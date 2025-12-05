@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/bullet_engine"
 )
 
 // VX:TODO test
@@ -45,49 +45,53 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			deps.Printer.Print(console.Message{Message: "-----------------------------------------\n\n"})
+			table := bullet_engine.NewTable(res.Result)
+			table.Render(deps.Printer, &console.GotTheme{})
 
-			for _, v := range res.Result {
-				var msg = ""
-				if v.NumberGo != 0 {
-					numStr := strconv.Itoa(v.NumberGo)
-					msg += (numStr + "<GO>")
-				}
-				summaryMsg := console.Message{
-					Message: v.Summary,
-					Color:   console.BIGreen,
-				}
-				msg += summaryMsg.InColor()
-				msg += ", Path: "
-				if v.Path != nil {
-					for i, a := range v.Path.Ancestry {
-						var id = a.Id
-						if a.Alias != nil {
-							id = *a.Alias
-						}
-						if i != 0 {
-							msg += "->" + id
-						} else {
-							msg += id
-						}
-
+			/*
+				for _, v := range res.Result {
+					var msg = ""
+					if v.NumberGo != 0 {
+						numStr := strconv.Itoa(v.NumberGo)
+						msg += (numStr + "<GO>")
 					}
-				}
+					msg += ", Path: "
+					if v.Path != nil {
+						for i, pathItem := range v.Path.Ancestry {
+							var id = pathItem.Id
+							if pathItem.Alias != nil {
+								id = *pathItem.Alias
+							}
+							if i != 0 {
+								msg += "->" + id
+							} else {
+								msg += id
+							}
 
-				msg += ", Gid = "
-				if v.Alias != "" {
-					msg += v.Alias + "("
-				}
-				msg += v.Gid
-				if v.Alias != "" {
-					msg += ")"
-				}
+						}
+					}
+					summaryMsg := console.Message{
+						Message: v.Summary,
+						Color:   console.BIGreen,
+					}
+					msg += summaryMsg.InColor()
 
-				msg += ", Title = '"
-				msg += v.Title
-				msg += "'."
+					msg += ", Gid = "
+					if v.Alias != "" {
+						msg += v.Alias + "("
+					}
+					msg += v.Gid
+					if v.Alias != "" {
+						msg += ")"
+					}
 
-				deps.Printer.Print(console.Message{Message: msg})
-			}
+					msg += ", Title = '"
+					msg += v.Title
+					msg += "'."
+
+					deps.Printer.Print(console.Message{Message: msg})
+
+				}*/
 
 		},
 	}

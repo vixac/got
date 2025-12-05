@@ -1,9 +1,7 @@
-package bullet_engine
+package engine
 
 import (
 	"fmt"
-
-	"vixac.com/got/engine"
 )
 
 // First pass of the kinds of things we'll count
@@ -11,6 +9,14 @@ type AggCount struct {
 	Complete int `json:"c,omitempty"`
 	Active   int `json:"a,omitempty"`
 	Notes    int `json:"n,omitempty"`
+}
+
+// VX:TODO its either state OR its counts.
+// deadline is separate. Maybe it doesn't belong here but we'll see.
+type Summary struct {
+	State    *GotState `json:"s,omitempty"`
+	Counts   *AggCount `json:"c"`
+	Deadline *Deadline `json:"d"`
 }
 
 type Deadline struct {
@@ -22,14 +28,6 @@ type DatedTask struct {
 	Id       SummaryId `json:"i,omitempty"`
 }
 
-// VX:TODO its either state OR its counts.
-// deadline is separate. Maybe it doesn't belong here but we'll see.
-type Summary struct {
-	State    *engine.GotState `json:"s,omitempty"`
-	Counts   *AggCount        `json:"c"`
-	Deadline *Deadline        `json:"d"`
-}
-
 // something which can be combined and chained to form a single agg
 type AggregateCountChange struct {
 	NoteInc     int
@@ -37,7 +35,7 @@ type AggregateCountChange struct {
 	CompleteInc int
 }
 
-func (a Summary) ApplyChange(change AggregateCountChange) Summary {
+func (a *Summary) ApplyChange(change AggregateCountChange) {
 	var count = AggCount{}
 	if a.Counts != nil {
 		count = *a.Counts
@@ -48,27 +46,23 @@ func (a Summary) ApplyChange(change AggregateCountChange) Summary {
 	var old = ""
 	if a.Counts != nil {
 		old = fmt.Sprintf("%+v", *a.Counts)
-
 	}
-
-	fmt.Printf("VX: COUNT UP CHANGE CHECK IS from %+s ... to %+v\n", old, count)
+	fmt.Printf("VX: summary count is changed from %s -> to %+v\n", old, count)
 	a.Counts = &count
-
-	return a
 }
 
-func NewCountChange(state engine.GotState, inc bool) AggregateCountChange {
+func NewCountChange(state GotState, inc bool) AggregateCountChange {
 
 	var change = 1
 	if !inc {
 		change = -1
 	}
-	if state == engine.Active {
+	if state == Active {
 		return AggregateCountChange{
 			ActiveInt: change,
 		}
 	}
-	if state == engine.Complete {
+	if state == Complete {
 		return AggregateCountChange{
 			CompleteInc: change,
 		}
@@ -78,32 +72,31 @@ func NewCountChange(state engine.GotState, inc bool) AggregateCountChange {
 	}
 }
 
-/*
-func (lhs AggregateCountChange) combine(rhs AggregateCountChange) AggregateCountChange {
+func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCountChange {
 	return AggregateCountChange{
 		ActiveInt:   lhs.ActiveInt + rhs.ActiveInt,
 		NoteInc:     lhs.NoteInc + rhs.NoteInc,
 		CompleteInc: lhs.CompleteInc + rhs.CompleteInc,
 	}
 }
-*/
+
 // no count, no deadline for some reason
-func NewLeafSummary(state engine.GotState, deadline *Deadline) Summary {
+func NewLeafSummary(state GotState, deadline *Deadline) Summary {
 	return Summary{
 		State:    &state,
 		Deadline: deadline,
 	}
 }
 
-func (c AggCount) ChangeState(state engine.GotState, inc int) AggCount {
+func (c AggCount) ChangeState(state GotState, inc int) AggCount {
 	comp := c.Complete
 	active := c.Active
 	notes := c.Notes
-	if state == engine.Active {
+	if state == Active {
 		active += inc
-	} else if state == engine.Complete {
+	} else if state == Complete {
 		comp += inc
-	} else if state == engine.Note {
+	} else if state == Note {
 		notes += inc
 	}
 	return AggCount{

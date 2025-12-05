@@ -7,6 +7,8 @@ import (
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
 
+type SummaryId int32
+
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
 	Summary(lookup *GidLookup) (*GotItemDisplay, error)
@@ -86,13 +88,14 @@ type GidLookup struct {
 }
 
 type GotItemDisplay struct {
-	Gid      string
-	Title    string
-	Alias    string
-	Deadline string
-	Summary  string
-	Path     *GotPath
-	NumberGo int
+	Gid        string
+	Title      string
+	Alias      string
+	Deadline   string
+	Summary    string
+	SummaryObj *Summary
+	Path       *GotPath
+	NumberGo   int
 }
 
 // VX:TODO replace with GotId
@@ -111,6 +114,14 @@ type PathItem struct {
 	Alias *string
 	//VX:TODO maybe title in here?
 }
+
+func (p PathItem) toStr() string {
+	if p.Alias != nil {
+		return *p.Alias
+	}
+	return p.Id
+}
+
 type GotPath struct {
 	Ancestry []PathItem
 }
