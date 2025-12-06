@@ -1,6 +1,9 @@
 package console
 
-import "unicode/utf8"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 // max length of input items
 func MaxLen(items []string) int {
@@ -15,12 +18,17 @@ func MaxLen(items []string) int {
 }
 
 func FitString(s string, length int, pad string) string {
-	if utf8.RuneCountInString(s) > length {
+	runeCount := utf8.RuneCountInString(s)
+	if length == runeCount {
+		//		fmt.Printf("VX: This string wants to be zero '%s', %d \n", s, length)
+		//		return s
+	}
+	if runeCount >= length {
+		fmt.Printf("VX: shortcutting")
 		return s[:length]
 	}
 	var str = s
-	leng := utf8.RuneCountInString(s)
-	for i := leng; i <= length; i++ {
+	for i := runeCount; i < length; i++ {
 		str = str + pad
 	}
 	return str
