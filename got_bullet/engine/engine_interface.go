@@ -105,6 +105,27 @@ type GotItemDisplay struct {
 	NumberGo   int
 }
 
+// VX:TODO not tested, used for sorting the items.
+func (i *GotItemDisplay) FullPathString() string {
+	var path = ""
+	for _, p := range i.Path.Ancestry {
+		s, _ := p.Shortcut()
+		path += "/" + s
+	}
+	s, _ := i.Shortcut()
+	return path + "/" + s
+}
+
+// either alias or gid, and true for alias, false for gid
+func (i *PathItem) Shortcut() (string, bool) {
+	if i.Alias != nil {
+		return *i.Alias, true
+	} else {
+		return i.Id, false
+	}
+
+}
+
 // either alias or gid, and true for alias, false for gid
 func (i *GotItemDisplay) Shortcut() (string, bool) {
 	if i.Alias != "" {
@@ -129,14 +150,6 @@ type NodeId struct {
 type PathItem struct {
 	Id    string
 	Alias *string
-	//VX:TODO maybe title in here?
-}
-
-func (p PathItem) toStr() string {
-	if p.Alias != nil {
-		return *p.Alias
-	}
-	return p.Id
 }
 
 type GotPath struct {

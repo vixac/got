@@ -37,9 +37,7 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		path := item.Path
 		var pathSnippets []console.Snippet
 		for i, node := range path.Ancestry {
-			if i != 0 {
-				pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenTextTertiary{}))
-			}
+
 			if node.Alias != nil {
 				pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenAlias{}))
 			} else {
@@ -47,9 +45,13 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 					pathSnippets = append(pathSnippets, console.NewSnippet("0"+node.Id, console.TokenGid{}))
 				}
 			}
+			if i > 0 {
+				pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenTextTertiary{}))
+			}
 		}
 		//add the gid or alias of this item into it's own path.
-		pathSnippets = append(pathSnippets, console.NewSnippet(":", console.TokenTextTertiary{}))
+
+		//pathSnippets = append(pathSnippets, console.NewSnippet(":", console.TokenTextTertiary{}))
 		pathSuffixShortcut, isAlias := item.Shortcut()
 		var pathSuffixToken console.Token
 		if isAlias {

@@ -3,7 +3,6 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -293,41 +292,33 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 
 	}
 
-	sort.Slice(itemDisplays, func(i, j int) bool {
-		a := itemDisplays[i]
-		b := itemDisplays[j]
+	sorted := SortTheseIntoDFS(itemDisplays)
+	/*
+		sort.Slice(itemDisplays, func(i, j int) bool {
+			a := itemDisplays[i]
+			b := itemDisplays[j]
 
-		// Handle nil paths
-		if a.Path == nil && b.Path == nil {
-			return a.Gid < b.Gid
-		}
-		if a.Path == nil {
-			return true
-		}
-		if b.Path == nil {
-			return false
-		}
+			pa := a.Path.Ancestry
+			pb := b.Path.Ancestry
 
-		pa := a.Path.Ancestry
-		pb := b.Path.Ancestry
-
-		// Compare lexicographically
-		for k := 0; k < len(pa) && k < len(pb); k++ {
-			if pa[k] != pb[k] {
-				return pa[k].Id < pb[k].Id
+			// Compare path segments one by one
+			for k := 0; k < len(pa) && k < len(pb); k++ {
+				if pa[k] != pb[k] {
+					return pa[k].Id < pb[k].Id
+				}
 			}
-		}
 
-		// If one is a prefix of the other, shorter goes first
-		if len(pa) != len(pb) {
-			return len(pa) < len(pb)
-		}
+			// All shared segments equal so far:
+			// Parent comes before child
+			if len(pa) != len(pb) {
+				return len(pa) < len(pb)
+			}
 
-		// Same exact path, fall back to GID
-		return a.Gid < b.Gid
-	})
-	return e.renderSummaries(itemDisplays)
-
+			// Last resort: sort by GID
+			return a.Gid < b.Gid
+		})
+	*/
+	return e.renderSummaries(sorted)
 }
 
 // adds the items to the number go store as well as
