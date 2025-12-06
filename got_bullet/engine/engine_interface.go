@@ -40,17 +40,24 @@ const (
 
 type GotState int
 
+const (
+	CompleteChar = "©"
+	ActiveChar   = "•"
+	//bulletChar = "!"
+	NoteChar = "~"
+)
+
 func (g GotState) ToStr() string {
 	if g == Active {
-		return "Active"
+		return ActiveChar
 	}
 	if g == Note {
-		return "Note"
+		return NoteChar
 	}
 	if g == Complete {
-		return "Complete"
+		return CompleteChar
 	}
-	return "Unknown"
+	return "<?>"
 }
 
 // states
@@ -96,6 +103,16 @@ type GotItemDisplay struct {
 	SummaryObj *Summary
 	Path       *GotPath
 	NumberGo   int
+}
+
+// either alias or gid, and true for alias, false for gid
+func (i *GotItemDisplay) Shortcut() (string, bool) {
+	if i.Alias != "" {
+		return i.Alias, true
+	} else {
+		return i.Gid, false
+	}
+
 }
 
 // VX:TODO replace with GotId

@@ -2,6 +2,7 @@ package console
 
 import (
 	"fmt"
+	"unicode/utf8"
 )
 
 type Message struct {
@@ -18,7 +19,7 @@ type MessageGroup struct {
 func NewMessageGroup(messages []Message) MessageGroup {
 	var length = 0
 	for _, m := range messages {
-		length += len(m.Message)
+		length += utf8.RuneCountInString(m.Message)
 	}
 	return MessageGroup{
 		Messages: messages,

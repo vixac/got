@@ -1,5 +1,7 @@
 package console
 
+import "unicode/utf8"
+
 type ConsoleTable struct {
 	Rows          []TableRow
 	ColumnWidths  []int
@@ -7,7 +9,7 @@ type ConsoleTable struct {
 }
 
 const (
-	paddingSize = 10
+	paddingSize = 1
 )
 
 func nchars(b byte, n int) string {
@@ -50,7 +52,7 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 			}
 			var total = 0
 			for _, m := range messages {
-				total += len(m.Message)
+				total += utf8.RuneCountInString(m.Message)
 			}
 			contentRows[rowNumber] = NewMessageGroup(messages)
 		}
@@ -161,7 +163,7 @@ func NewSnippet(text string, token Token) Snippet {
 	return Snippet{
 		Text:  text,
 		Token: token,
-		Len:   len(text),
+		Len:   utf8.RuneCountInString(text),
 	}
 }
 

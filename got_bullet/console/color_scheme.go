@@ -49,10 +49,10 @@ func (c BigGreenColor) Col() string {
 	return "\033[1;92m"
 }
 
-type LightPurpleColor struct{}
+type TealColor struct{}
 
-func (c LightPurpleColor) Col() string {
-	return "\033[1;35m"
+func (c TealColor) Col() string {
+	return "\033[36m"
 }
 
 /*

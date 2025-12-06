@@ -36,3 +36,9 @@ type TokenComplete struct{}
 func (t TokenComplete) Name() string {
 	return "complete"
 }
+
+type TokenAlias struct{}
+
+func (t TokenAlias) Name() string {
+	return "alias"
+}
