@@ -24,6 +24,7 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 			_, err := deps.Engine.Alias(gid, alias)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
+				return
 			}
 			msg := "Success: " + gid + " is now aliased to " + alias + "."
 			deps.Printer.Print(console.Message{Message: msg})

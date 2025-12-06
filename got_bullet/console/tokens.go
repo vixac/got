@@ -7,6 +7,12 @@ type Token interface {
 	Name() string
 }
 
+type TokenTextTertiary struct{}
+
+func (t TokenTextTertiary) Name() string {
+	return "tertiary"
+}
+
 type TokenSecondary struct{}
 
 func (t TokenSecondary) Name() string {
@@ -35,4 +41,10 @@ type TokenComplete struct{}
 
 func (t TokenComplete) Name() string {
 	return "complete"
+}
+
+type TokenAlias struct{}
+
+func (t TokenAlias) Name() string {
+	return "alias"
 }

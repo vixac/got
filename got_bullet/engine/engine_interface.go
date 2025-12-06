@@ -40,17 +40,24 @@ const (
 
 type GotState int
 
+const (
+	CompleteChar = "©"
+	ActiveChar   = "•"
+	//bulletChar = "!"
+	NoteChar = "~"
+)
+
 func (g GotState) ToStr() string {
 	if g == Active {
-		return "Active"
+		return ActiveChar
 	}
 	if g == Note {
-		return "Note"
+		return NoteChar
 	}
 	if g == Complete {
-		return "Complete"
+		return CompleteChar
 	}
-	return "Unknown"
+	return "<?>"
 }
 
 // states
@@ -98,6 +105,37 @@ type GotItemDisplay struct {
 	NumberGo   int
 }
 
+// VX:TODO not tested, used for sorting the items.
+func (i *GotItemDisplay) FullPathString() string {
+	var path = ""
+	for _, p := range i.Path.Ancestry {
+		s, _ := p.Shortcut()
+		path += "/" + s
+	}
+	s, _ := i.Shortcut()
+	return path + "/" + s
+}
+
+// either alias or gid, and true for alias, false for gid
+func (i *PathItem) Shortcut() (string, bool) {
+	if i.Alias != nil {
+		return *i.Alias, true
+	} else {
+		return i.Id, false
+	}
+
+}
+
+// either alias or gid, and true for alias, false for gid
+func (i *GotItemDisplay) Shortcut() (string, bool) {
+	if i.Alias != "" {
+		return i.Alias, true
+	} else {
+		return i.Gid, false
+	}
+
+}
+
 // VX:TODO replace with GotId
 type Gid struct {
 	Id string
@@ -112,14 +150,6 @@ type NodeId struct {
 type PathItem struct {
 	Id    string
 	Alias *string
-	//VX:TODO maybe title in here?
-}
-
-func (p PathItem) toStr() string {
-	if p.Alias != nil {
-		return *p.Alias
-	}
-	return p.Id
 }
 
 type GotPath struct {

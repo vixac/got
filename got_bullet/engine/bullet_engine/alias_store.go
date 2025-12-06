@@ -1,6 +1,8 @@
 package bullet_engine
 
 import (
+	"errors"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
@@ -76,5 +78,14 @@ func (a *BulletAliasStore) Unalias(alias string) (*engine.GotId, error) {
 
 // VX:TODO no need for bool here.
 func (a *BulletAliasStore) Alias(gid string, alias string) (bool, error) {
+	existing, err := a.Lookup(alias)
+
+	if err != nil {
+		return false, err
+	}
+	if existing != nil {
+		return false, errors.New("this alias is already being used. unalias it first")
+	}
+
 	return true, a.TwoWay.Upsert(bullet_stl.ListSubject{Value: alias}, bullet_stl.ListObject{Value: gid})
 }

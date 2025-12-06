@@ -1,5 +1,7 @@
 package console
 
+import "unicode/utf8"
+
 type ConsoleTable struct {
 	Rows          []TableRow
 	ColumnWidths  []int
@@ -7,7 +9,7 @@ type ConsoleTable struct {
 }
 
 const (
-	paddingSize = 10
+	paddingSize = 0
 )
 
 func nchars(b byte, n int) string {
@@ -50,7 +52,7 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 			}
 			var total = 0
 			for _, m := range messages {
-				total += len(m.Message)
+				total += utf8.RuneCountInString(m.Message)
 			}
 			contentRows[rowNumber] = NewMessageGroup(messages)
 		}
@@ -73,7 +75,7 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 			dividerStr := nchars(row.DividerRow.Separator, renderedRowLength)
 			dividerMessage := Message{
 				Message: dividerStr,
-				Color:   scheme.ColorFor(TokenPrimary{}).Col(),
+				Color:   scheme.ColorFor(row.DividerRow.Token).Col(),
 			}
 			printer.Print(dividerMessage)
 		} else {
@@ -122,20 +124,23 @@ type CellRow struct {
 }
 type DividerRow struct {
 	Separator byte
+	Token     Token
 }
 type TableRow struct {
 	CellRow    *CellRow
 	DividerRow *DividerRow
 }
 
-func NewDividerRow(separator byte) TableRow {
+func NewDividerRow(separator byte, token Token) TableRow {
 	div := DividerRow{
 		Separator: separator,
+		Token:     token,
 	}
 	return TableRow{
 		DividerRow: &div,
 	}
 }
+
 func NewCellTableRow(cells []TableCell) TableRow {
 	rowLength := 0
 	for _, cell := range cells {
@@ -161,7 +166,7 @@ func NewSnippet(text string, token Token) Snippet {
 	return Snippet{
 		Text:  text,
 		Token: token,
-		Len:   len(text),
+		Len:   utf8.RuneCountInString(text),
 	}
 }
 

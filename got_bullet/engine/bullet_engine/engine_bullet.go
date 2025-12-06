@@ -3,13 +3,11 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 
-	"vixac.com/got/console"
 	"vixac.com/got/engine"
 )
 
@@ -294,29 +292,33 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 
 	}
 
-	sort.Slice(itemDisplays, func(i, j int) bool {
-		a := itemDisplays[i]
-		b := itemDisplays[j]
-		if a.Path == nil && b.Path == nil {
-			return a.Gid < b.Gid
-		}
-		if a.Path == nil {
-			return true
-		}
-		if b.Path == nil {
-			return false
-		}
-		lenA := len(a.Path.Ancestry)
-		lenB := len(a.Path.Ancestry)
-		if lenA == lenB {
-			//wierd choice, but we just go chronoligal sorting for siblings.
-			return a.Gid < b.Gid
-		}
-		return lenA < lenB
+	sorted := SortTheseIntoDFS(itemDisplays)
+	/*
+		sort.Slice(itemDisplays, func(i, j int) bool {
+			a := itemDisplays[i]
+			b := itemDisplays[j]
 
-	})
-	return e.renderSummaries(itemDisplays)
+			pa := a.Path.Ancestry
+			pb := b.Path.Ancestry
 
+			// Compare path segments one by one
+			for k := 0; k < len(pa) && k < len(pb); k++ {
+				if pa[k] != pb[k] {
+					return pa[k].Id < pb[k].Id
+				}
+			}
+
+			// All shared segments equal so far:
+			// Parent comes before child
+			if len(pa) != len(pb) {
+				return len(pa) < len(pb)
+			}
+
+			// Last resort: sort by GID
+			return a.Gid < b.Gid
+		})
+	*/
+	return e.renderSummaries(sorted)
 }
 
 // adds the items to the number go store as well as
@@ -556,85 +558,4 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	return e.AliasStore.Alias(lookup.Gid, alias)
 }
 
-// VX:TODO Move this.
-func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
-	var rows []console.TableRow
-
-	titleCells := []console.TableCell{
-		console.NewTableCellFromStr("Num<GO>", console.TokenSecondary{}),
-		console.NewTableCellFromStr("ID", console.TokenGid{}),
-		console.NewTableCellFromStr("Path", console.TokenSecondary{}),
-		console.NewTableCellFromStr("Summary", console.TokenSecondary{}),
-		console.NewTableCellFromStr("Alias", console.TokenPrimary{}),
-		console.NewTableCellFromStr("Title", console.TokenSecondary{}),
-	}
-	titleRow := console.NewCellTableRow(titleCells)
-	rows = append(rows, console.NewDividerRow('-'))
-	rows = append(rows, titleRow)
-
-	rows = append(rows, console.NewDividerRow('.'))
-	for _, item := range items {
-		var cells []console.TableCell
-
-		//number go
-		numSnippets := []console.Snippet{
-			console.NewSnippet(strconv.Itoa(item.NumberGo)+"»", console.TokenSecondary{}),
-		}
-		cells = append(cells, console.NewTableCell(numSnippets))
-		cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
-
-		//path
-		path := item.Path
-		var pathSnippets []console.Snippet
-		for i, node := range path.Ancestry {
-			if i != 0 {
-				pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenSecondary{}))
-			}
-			if node.Alias != nil {
-				pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenPrimary{}))
-			} else {
-				pathSnippets = append(pathSnippets, console.NewSnippet(node.Id, console.TokenSecondary{}))
-			}
-		}
-
-		cells = append(cells, console.NewTableCell(pathSnippets))
-
-		//summary
-		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
-			snippets := []console.Snippet{
-				console.NewSnippet("Active: "+strconv.Itoa(item.SummaryObj.Counts.Active), console.TokenBrand{}),
-				console.NewSnippet(" Notes: "+strconv.Itoa(item.SummaryObj.Counts.Notes), console.TokenSecondary{}),
-				console.NewSnippet(" Complete: "+strconv.Itoa(item.SummaryObj.Counts.Complete), console.TokenComplete{}),
-			}
-			cells = append(cells, console.NewTableCell(snippets))
-		} else {
-			state := item.SummaryObj.State
-			if state == nil {
-				fmt.Printf("VX: ERRORR should not happen. Either a count or a state.")
-				snippet := []console.Snippet{console.NewSnippet("<VX:err>", console.TokenBrand{})}
-				cells = append(cells, console.NewTableCell(snippet))
-			} else {
-				var token console.Token
-				if *state == engine.Active {
-					token = console.TokenPrimary{}
-				} else if *state == engine.Note {
-					token = console.TokenSecondary{}
-				} else {
-					token = console.TokenComplete{}
-				}
-				snippet := []console.Snippet{console.NewSnippet(state.ToStr(), token)}
-
-				cells = append(cells, console.NewTableCell(snippet))
-			}
-
-		}
-
-		cells = append(cells, console.NewTableCellFromStr(item.Alias, console.TokenPrimary{}))
-		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
-
-		rows = append(rows, console.NewCellTableRow(cells))
-
-	}
-	table := console.NewConsoleTable(rows)
-	return table
-}
+//
