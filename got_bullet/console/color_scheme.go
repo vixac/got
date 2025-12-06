@@ -53,6 +53,19 @@ type TealColor struct{}
 
 func (c TealColor) Col() string {
 	return "\033[36m"
+
+}
+
+type LightGrayColor struct{}
+
+func (c LightGrayColor) Col() string {
+	return "\033[0;37m"
+}
+
+type DarkGrayColor struct{}
+
+func (c DarkGrayColor) Col() string {
+	return "\033[1;30m"
 }
 
 /*

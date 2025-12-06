@@ -9,7 +9,7 @@ type ConsoleTable struct {
 }
 
 const (
-	paddingSize = 1
+	paddingSize = 0
 )
 
 func nchars(b byte, n int) string {
@@ -124,20 +124,23 @@ type CellRow struct {
 }
 type DividerRow struct {
 	Separator byte
+	Token     Token
 }
 type TableRow struct {
 	CellRow    *CellRow
 	DividerRow *DividerRow
 }
 
-func NewDividerRow(separator byte) TableRow {
+func NewDividerRow(separator byte, token Token) TableRow {
 	div := DividerRow{
 		Separator: separator,
+		Token:     token,
 	}
 	return TableRow{
 		DividerRow: &div,
 	}
 }
+
 func NewCellTableRow(cells []TableCell) TableRow {
 	rowLength := 0
 	for _, cell := range cells {
