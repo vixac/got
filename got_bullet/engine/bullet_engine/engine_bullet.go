@@ -296,6 +296,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	sort.Slice(itemDisplays, func(i, j int) bool {
 		a := itemDisplays[i]
 		b := itemDisplays[j]
+
+		// Handle nil paths
 		if a.Path == nil && b.Path == nil {
 			return a.Gid < b.Gid
 		}
@@ -305,14 +307,24 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if b.Path == nil {
 			return false
 		}
-		lenA := len(a.Path.Ancestry)
-		lenB := len(a.Path.Ancestry)
-		if lenA == lenB {
-			//wierd choice, but we just go chronoligal sorting for siblings.
-			return a.Gid < b.Gid
-		}
-		return lenA < lenB
 
+		pa := a.Path.Ancestry
+		pb := b.Path.Ancestry
+
+		// Compare lexicographically
+		for k := 0; k < len(pa) && k < len(pb); k++ {
+			if pa[k] != pb[k] {
+				return pa[k].Id < pb[k].Id
+			}
+		}
+
+		// If one is a prefix of the other, shorter goes first
+		if len(pa) != len(pb) {
+			return len(pa) < len(pb)
+		}
+
+		// Same exact path, fall back to GID
+		return a.Gid < b.Gid
 	})
 	return e.renderSummaries(itemDisplays)
 

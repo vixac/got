@@ -20,7 +20,7 @@ func (p Printer) PrintInLine(line []Message) {
 }
 
 func (p Printer) Print(message Message) {
-	fmt.Println(message.Message)
+	fmt.Println(message.InColor())
 }
 
 func (p Printer) Error(message Message) {

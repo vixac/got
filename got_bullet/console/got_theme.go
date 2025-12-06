@@ -15,7 +15,6 @@ func (t *GotTheme) ColorFor(token Token) Color {
 		return MagentaColor{}
 	case "gid":
 		return BlueColor{}
-		//return DarkGrayColor{}
 	case "alias":
 		return TealColor{}
 	case "tertiary":

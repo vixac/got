@@ -14,18 +14,16 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 	titleCells := []console.TableCell{
 		console.NewTableCellFromStr("#", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("Path", console.TokenTextTertiary{}),
-		//console.NewTableCellFromStr("Alias", console.TokenPrimary{}),
 		console.NewTableCellFromStr(engine.CompleteChar, console.TokenComplete{}),
 		console.NewTableCellFromStr(engine.NoteChar, console.TokenTextTertiary{}),
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
-		//console.NewTableCellFromStr("ID", console.TokenGid{}),
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
 	titleRow := console.NewCellTableRow(titleCells)
-	rows = append(rows, console.NewDividerRow('-', console.TokenGid{}))
+	rows = append(rows, console.NewDividerRow('=', console.TokenTextTertiary{}))
 	rows = append(rows, titleRow)
 
-	rows = append(rows, console.NewDividerRow('.', console.TokenGid{}))
+	rows = append(rows, console.NewDividerRow('-', console.TokenTextTertiary{}))
 	for _, item := range items {
 		var cells []console.TableCell
 
@@ -64,9 +62,6 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 
 		cells = append(cells, console.NewTableCell(pathSnippets))
 
-		//alias
-		//		cells = append(cells, console.NewTableCellFromStr(item.Alias, console.TokenPrimary{}))
-
 		//summary
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 			//complete
@@ -77,7 +72,6 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 			endOfSummaryPadding := "  " //we shove some padding on the final one to make these seem grouped
 			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active)+endOfSummaryPadding, console.TokenPrimary{}))
 
-			//cells = append(cells, console.NewTableCell(snippets))
 		} else {
 			state := item.SummaryObj.State
 			if state == nil {
@@ -93,22 +87,17 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 
 				if *state == engine.Active {
 					activeCell = console.NewTableCellFromStr(state.ToStr(), console.TokenPrimary{})
-					//token = console.TokenPrimary{}
 				} else if *state == engine.Note {
 					noteCell = console.NewTableCellFromStr(state.ToStr(), console.TokenTextTertiary{})
-					//token = console.TokenSecondary{}
 				} else {
 
 					completeCell = console.NewTableCellFromStr(state.ToStr(), console.TokenComplete{})
-					//token = console.TokenComplete{}
 				}
-				//	snippet := []console.Snippet{console.NewSnippet(state.ToStr(), token)}
 				cells = append(cells, completeCell)
 				cells = append(cells, noteCell)
 				cells = append(cells, activeCell)
 			}
 		}
-		//gid cells = append(cells, console.NewTableCellFromStr(item.Gid, console.TokenGid{}))
 		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
 		rows = append(rows, console.NewCellTableRow(cells))
 

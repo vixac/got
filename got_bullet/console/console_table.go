@@ -75,7 +75,7 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 			dividerStr := nchars(row.DividerRow.Separator, renderedRowLength)
 			dividerMessage := Message{
 				Message: dividerStr,
-				Color:   scheme.ColorFor(TokenPrimary{}).Col(),
+				Color:   scheme.ColorFor(row.DividerRow.Token).Col(),
 			}
 			printer.Print(dividerMessage)
 		} else {
