@@ -77,32 +77,7 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 				treePattern += "└"
 				treePattern += console.FitString("", halfWordLength-1, separatorChar)
 				treePattern += " "
-				//treePattern += console.FitString("", wordLength-1, "─")
 			}
-
-			/*
-				if wordLength == 1 {
-					treePattern += "└"
-				} else if wordLength == 2 {
-					treePattern += "└"
-
-				} else {
-					treePattern += console.FitString("", wordLength, "─")
-				}*/
-
-			///this prints the path correctly. I'm going to try to print it as tree structure.
-			/*
-				if i > 1 { //first node is 0 (i think, and we don't want to start with a slash on the second, so the first 2 items have no slash)
-					pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenTextTertiary{}))
-				}
-				if node.Alias != nil {
-					pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenAlias{}))
-				} else {
-					if node.Id != "0" {
-						pathSnippets = append(pathSnippets, console.NewSnippet("0"+node.Id, console.TokenGid{}))
-					}
-				}*/
-
 		}
 		//add the gid or alias of this item into it's own path.
 		if len(pathSnippets) > 0 { //we don't want the ":" at top level items because it screws alignment, but otherwise we use ":" instead of "/" to show that this is the id of this node.
