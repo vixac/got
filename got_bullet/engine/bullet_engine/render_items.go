@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"fmt"
 	"strconv"
 
 	"vixac.com/got/console"
@@ -12,22 +11,30 @@ const (
 	separatorChar = "─"
 )
 
-func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
+func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
+
+	if len(items) == 0 {
+		return console.ConsoleTable{}, nil
+	}
+
 	var rows []console.TableRow
 
 	mediumPadding := "  "
 	smallPadding := " "
+	emptyCell := console.NewTableCellFromStr("", console.TokenPrimary{})
 
 	titleCells := []console.TableCell{
 		console.NewTableCellFromStr("#", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("Path", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("[", console.TokenTextTertiary{}), //"[" placeholder title
-		console.NewTableCellFromStr(engine.CompleteChar, console.TokenComplete{}),
-		console.NewTableCellFromStr(engine.NoteChar, console.TokenTextTertiary{}),
+		console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{}),
+		console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenTextTertiary{}),
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
+		console.NewTableCellFromStr("✔ ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
+
 	titleRow := console.NewCellTableRow(titleCells)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow)
@@ -36,7 +43,6 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 	for _, item := range items {
 		var cells []console.TableCell
 
-		//number go
 		numSnippets := []console.Snippet{
 			console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenTextTertiary{}),
 		}
@@ -95,6 +101,7 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 		cells = append(cells, console.NewTableCell(pathSnippets))
 
 		//summary
+		//group aggregate
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 			cells = append(cells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
 			//complete
@@ -108,8 +115,15 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 			cells = append(cells, console.NewTableCellFromStr("]"+mediumPadding, console.TokenTextTertiary{}))
 
 		} else {
+			cells = append(cells, emptyCell) //[ placeholder
+			cells = append(cells, emptyCell) //complete placeholder
+			cells = append(cells, emptyCell) //note placeholder
+			cells = append(cells, emptyCell) //active placeholder
+			cells = append(cells, emptyCell) //] plceholdere
+		}
+		cells = append(cells, stateToCell(item.SummaryObj.State))
 
-			cells = append(cells, console.NewTableCellFromStr("", console.TokenSecondary{})) //"[" placeholder
+		/*
 			//complete
 			state := item.SummaryObj.State
 			if state == nil {
@@ -136,13 +150,36 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 				cells = append(cells, activeCell)
 				cells = append(cells, console.NewTableCellFromStr("", console.TokenSecondary{})) //"]" placeholder
 			}
-		}
+		*/
 		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
 		rows = append(rows, console.NewCellTableRow(cells))
-
 	}
-	table := console.NewConsoleTable(rows)
-	return table
+	return console.NewConsoleTable(rows)
+}
+
+func stateToToken(state *engine.GotState) console.Token {
+	if state == nil {
+		return console.TokenPrimary{}
+	}
+	switch *state {
+	case engine.Active:
+		return console.TokenPrimary{}
+	case engine.Note:
+		return console.TokenTextTertiary{}
+	case engine.Complete:
+		return console.TokenComplete{}
+	}
+	return console.TokenPrimary{}
+}
+func stateToStr(state *engine.GotState) string {
+	if state == nil {
+		return ""
+	}
+	return state.ToStr()
+}
+
+func stateToCell(state *engine.GotState) console.TableCell {
+	return console.NewTableCellFromStr(stateToStr(state), stateToToken(state))
 }
 
 func zeroIsEmpty(input int) string {
