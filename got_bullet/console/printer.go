@@ -14,7 +14,7 @@ type Printer struct {
 
 func (p Printer) PrintInLine(line []Message) {
 	for _, m := range line {
-		fmt.Printf(m.InColor())
+		fmt.Printf("%s", m.InColor())
 	}
 	fmt.Printf("\n")
 }

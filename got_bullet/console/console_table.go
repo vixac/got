@@ -1,6 +1,9 @@
 package console
 
-import "unicode/utf8"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 type ConsoleTable struct {
 	Rows          []TableRow
@@ -12,12 +15,23 @@ const (
 	paddingSize = 0
 )
 
-func nchars(b byte, n int) string {
-	s := make([]byte, n)
-	for i := 0; i < n; i++ {
-		s[i] = b
+func nchars(s string, n int) string {
+	if len(s) == 0 {
+		return ""
 	}
-	return string(s)
+
+	// Convert the first rune of the string
+	r, _ := utf8.DecodeRuneInString(s)
+
+	// Efficiently build a repeated rune string
+	var b strings.Builder
+	b.Grow(n * utf8.RuneLen(r))
+
+	for i := 0; i < n; i++ {
+		b.WriteRune(r)
+	}
+
+	return b.String()
 }
 func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 
@@ -25,9 +39,8 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 	contentRows := make(map[int]MessageGroup)
 	for rowNumber, row := range c.Rows {
 
-		if row.CellRow == nil {
+		if row.CellRow != nil {
 
-		} else {
 			var messages []Message
 
 			for i, cell := range row.CellRow.Cells {
@@ -45,7 +58,7 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 
 				}
 				paddingRequired := c.ColumnWidths[i] - cell.Length
-				spaceCharacter := " " //useful for debugging to make this and X or something.
+				spaceCharacter := " " // //useful for debugging to make this and "X" or something.
 				paddingStr := FitString("", paddingRequired, spaceCharacter)
 				messages = append(messages, Message{Message: paddingStr})
 
@@ -123,7 +136,7 @@ type CellRow struct {
 	RowLength int
 }
 type DividerRow struct {
-	Separator byte
+	Separator string
 	Token     Token
 }
 type TableRow struct {
@@ -131,7 +144,7 @@ type TableRow struct {
 	DividerRow *DividerRow
 }
 
-func NewDividerRow(separator byte, token Token) TableRow {
+func NewDividerRow(separator string, token Token) TableRow {
 	div := DividerRow{
 		Separator: separator,
 		Token:     token,

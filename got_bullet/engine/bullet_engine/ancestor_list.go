@@ -197,7 +197,6 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 			}
 			gids = append(gids, *gid)
 		}
-		fmt.Printf("VX: Found item under %s,  subject  %s -> object %s\n", id.AasciValue, pair.Subject.Value, pair.Object.Value)
 		ids[pair.Object.Value] = AncestorLookupResult{
 			Ids: gids,
 		}
