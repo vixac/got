@@ -54,16 +54,13 @@ func NewTable(items []engine.GotItemDisplay) console.ConsoleTable {
 			} else if node.Id != "0" {
 				wordLength = len(node.Id)
 			}
-
 			if i != parentIndex {
 				treePattern += console.FitString("", wordLength, " ")
 				continue
 			}
-
 			if wordLength == 0 {
 				continue
 			}
-
 			if wordLength == 1 {
 				treePattern += "└"
 			} else if wordLength == 2 {

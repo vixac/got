@@ -127,7 +127,6 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 	//VX:TODO are they sorted by ancestry?
 	//I'm confused. I think there is always 1 item in here
 
-	fmt.Printf("VX: There are %d ancestor Ids here\n", len(ancestors.Ids))
 	var gids []string
 	for _, gid := range ancestors.Ids {
 		gids = append(gids, gid.AasciValue)
@@ -165,7 +164,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	if gid == nil {
 		return nil, nil
 	}
-	fmt.Printf("VX: resolved gid is %s\n", gid.AasciValue)
 	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
 	if err != nil {
 		return nil, err
@@ -183,7 +181,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		}
 		intIds = append(intIds, int32(intId))
 
-		fmt.Printf("VX: building ancestor path for %s\n", id)
 		path, err := e.ancestorPathFrom(&ancestorLookup)
 		if err != nil {
 			return nil, err
@@ -291,33 +288,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		}
 
 	}
-
 	sorted := SortTheseIntoDFS(itemDisplays)
-	/*
-		sort.Slice(itemDisplays, func(i, j int) bool {
-			a := itemDisplays[i]
-			b := itemDisplays[j]
-
-			pa := a.Path.Ancestry
-			pb := b.Path.Ancestry
-
-			// Compare path segments one by one
-			for k := 0; k < len(pa) && k < len(pb); k++ {
-				if pa[k] != pb[k] {
-					return pa[k].Id < pb[k].Id
-				}
-			}
-
-			// All shared segments equal so far:
-			// Parent comes before child
-			if len(pa) != len(pb) {
-				return len(pa) < len(pb)
-			}
-
-			// Last resort: sort by GID
-			return a.Gid < b.Gid
-		})
-	*/
 	return e.renderSummaries(sorted)
 }
 
@@ -366,7 +337,6 @@ func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, erro
 }
 
 func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotState) error {
-	fmt.Printf("VX: updaitng state..\n")
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil {
 		return err

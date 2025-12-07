@@ -1,7 +1,6 @@
 package console
 
 import (
-	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -58,12 +57,9 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 					messages = append(messages, message)
 
 				}
-				fmt.Printf("VX: COL WIDTH IS %d\n", c.ColumnWidths[i])
 				paddingRequired := c.ColumnWidths[i] - cell.Length
-				fmt.Printf("VX: PADDINT REQUIRES IS %d\n", paddingRequired)
 				spaceCharacter := " " // //useful for debugging to make this and "X" or something.
 				paddingStr := FitString("", paddingRequired, spaceCharacter)
-				fmt.Printf("VX: PADDED STRING IS '%s'\n", paddingStr)
 				messages = append(messages, Message{Message: paddingStr})
 
 			}
