@@ -31,15 +31,15 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenTextTertiary{}),
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
-		console.NewTableCellFromStr("✔ ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
+		console.NewTableCellFromStr("  ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
 
 	titleRow := console.NewCellTableRow(titleCells)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow)
-
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
+
 	for _, item := range items {
 		var cells []console.TableCell
 
@@ -82,12 +82,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 				treePattern += " "
 			}
 		}
-		//add the gid or alias of this item into it's own path.
-		if len(pathSnippets) > 0 { //we don't want the ":" at top level items because it screws alignment, but otherwise we use ":" instead of "/" to show that this is the id of this node.
-			pathSnippets = append(pathSnippets, console.NewSnippet(":", console.TokenTextTertiary{}))
-		} else {
-			pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
-		}
+		pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
 
 		pathSuffixShortcut, isAlias := item.Shortcut()
 		var pathSuffixToken console.Token
@@ -100,18 +95,11 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 
 		cells = append(cells, console.NewTableCell(pathSnippets))
 
-		//summary
-		//group aggregate
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 			cells = append(cells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
-			//complete
 			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{}))
-			//note
 			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Notes)+smallPadding, console.TokenTextTertiary{}))
-
-			//active
 			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active), console.TokenPrimary{}))
-
 			cells = append(cells, console.NewTableCellFromStr("]"+mediumPadding, console.TokenTextTertiary{}))
 
 		} else {
@@ -122,36 +110,13 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			cells = append(cells, emptyCell) //] plceholdere
 		}
 		cells = append(cells, stateToCell(item.SummaryObj.State))
-
-		/*
-			//complete
-			state := item.SummaryObj.State
-			if state == nil {
-				fmt.Printf("VX: ERRORR should not happen. Either a count or a state.")
-				snippet := []console.Snippet{console.NewSnippet("<VX:err>", console.TokenBrand{})}
-				cells = append(cells, console.NewTableCell(snippet))
-			} else {
-				emptyCell := console.NewTableCellFromStr("", console.TokenPrimary{})
-
-				noteCell := emptyCell
-				activeCell := emptyCell
-				completeCell := emptyCell
-
-				if *state == engine.Active {
-					activeCell = console.NewTableCellFromStr(state.ToStr(), console.TokenPrimary{})
-				} else if *state == engine.Note {
-					noteCell = console.NewTableCellFromStr(state.ToStr(), console.TokenTextTertiary{})
-				} else {
-
-					completeCell = console.NewTableCellFromStr(state.ToStr(), console.TokenComplete{})
-				}
-				cells = append(cells, completeCell)
-				cells = append(cells, noteCell)
-				cells = append(cells, activeCell)
-				cells = append(cells, console.NewTableCellFromStr("", console.TokenSecondary{})) //"]" placeholder
-			}
-		*/
-		cells = append(cells, console.NewTableCellFromStr(item.Title, console.TokenSecondary{}))
+		var titleToken console.Token
+		if item.IsNote() {
+			titleToken = console.TokenTextTertiary{}
+		} else {
+			titleToken = console.TokenSecondary{}
+		}
+		cells = append(cells, console.NewTableCellFromStr(item.Title, titleToken))
 		rows = append(rows, console.NewCellTableRow(cells))
 	}
 	return console.NewConsoleTable(rows)
