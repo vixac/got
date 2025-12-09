@@ -67,19 +67,20 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			if wordLength == 0 {
 				continue
 			}
-			if wordLength == 1 {
+			switch wordLength {
+			case 1:
 				treePattern += "└"
-			} else if wordLength == 2 {
+			case 2:
 				treePattern += "└ "
-			} else if wordLength == 3 {
-				treePattern += " └" + separatorChar
-			} else {
-				//3 parts
+			case 3:
+				treePattern += "└ "
+			default:
 				halfWordLength := wordLength / 2
 				treePattern += console.FitString("", halfWordLength-1, " ")
 				treePattern += "└"
 				treePattern += console.FitString("", halfWordLength-1, separatorChar)
 				treePattern += " "
+
 			}
 		}
 		pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))

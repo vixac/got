@@ -275,8 +275,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 
 		//here we filter complete leafs from the jobs list. VX:Note we want to have completes
 		//not even appear in the search, because thats more scalable.
-		isCompleteLeaf := summary.Counts == nil && summary.State != nil && *summary.State == engine.Complete
-		if !isCompleteLeaf {
+		isComplete := summary.State != nil && *summary.State == engine.Complete
+		if !isComplete {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 				Gid:        stringId,
 				Title:      v,

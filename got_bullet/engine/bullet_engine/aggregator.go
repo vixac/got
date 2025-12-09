@@ -59,6 +59,12 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 				change := engine.NewCountChange(*parentState, false)
 				fmt.Printf("VX: because a leaf changed to group, we are decrementing")
 				a.Summary.ApplyChange(change)
+
+				//if we've added an active item then all its parents are deactivated
+				if e.State == engine.Active && a.Summary.State != nil && *a.Summary.State == engine.Active {
+					a.Summary.State = nil
+
+				}
 				upserts[a.Id] = a.Summary
 			}
 		}
@@ -111,11 +117,36 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	upserts := make(map[engine.SummaryId]engine.Summary)
 	upserts[e.Id] = changedItemSummary
 
+	parentIndex := len(e.Ancestry) - 1
+
+	hasAParent := parentIndex > -1
 	//step 1  we decrement the old state and increment the new for all its ancestors
 	incChange := engine.NewCountChange(e.NewState, true)
 	decChange := engine.NewCountChange(e.OldState, false)
-	combined := incChange.Combine(decChange)
-	for _, summaryId := range e.Ancestry {
+
+	var parentAggChange engine.AggregateCountChange
+	var greatAncestorsChange engine.AggregateCountChange
+
+	if hasAParent {
+
+		//we decrement the number of active only if the parent didnt activate due to this statestate change
+		isStateChangeAwayFromActive := e.OldState == engine.Active && e.NewState != engine.Active
+		parentSummaryId := e.Ancestry[parentIndex]
+		parentSummary := ancestorAggs[parentSummaryId]
+
+		//VX:Note ok is  isStateChangeAwayFromActive then this line isn't correct, but we don't care
+		parentHasOtherActive := parentSummary.Counts != nil && parentSummary.Counts.Active > 1 // 1 because the one thats changing is active
+
+		if isStateChangeAwayFromActive && !parentHasOtherActive {
+			totalAggChange = 
+		} else {
+			totalAggChange = incChange.Combine(decChange)
+		}
+	
+
+	}
+
+	for i, summaryId := range e.Ancestry { //noop if theres no parent
 		if summaryId == engine.SummaryId(TheRootNoteInt32) {
 			continue
 		}
@@ -124,6 +155,18 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 			return errors.New("missing summary in state-change for ancestor")
 		}
 		summary.ApplyChange(combined)
+
+		fmt.Printf("VX: parent index is %d and i is %d\n", parentIndex, i)
+		//if you have no active nodes below you, then are you considered active yourself.
+
+		if i == parentIndex && summary.Counts.Active == 0 && summary.State == nil {
+
+			var newState engine.GotState = engine.Active
+			summary.State = &newState
+			fmt.Printf("VX: updating parent state %s\n", summary.State.ToStr())
+		} else {
+			fmt.Printf("VX: NOPE")
+		}
 		upserts[summaryId] = summary
 		fmt.Printf("VX: Aggregate is here %+v with change %+v\n", summary, combined)
 	}
