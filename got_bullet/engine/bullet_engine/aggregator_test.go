@@ -115,6 +115,8 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
 }
 
+//VX:TODO test that notes under a complete group don't render
+
 func TestAggregatorTopAliceAndBob(t *testing.T) {
 
 	store := MakeMockSummaryStore()
