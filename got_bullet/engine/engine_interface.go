@@ -41,7 +41,7 @@ const (
 type GotState int
 
 const (
-	CompleteChar = "©"
+	CompleteChar = "✔"
 	ActiveChar   = "•"
 	//bulletChar = "!"
 	NoteChar = "~"
@@ -103,6 +103,25 @@ type GotItemDisplay struct {
 	SummaryObj *Summary
 	Path       *GotPath
 	NumberGo   int
+}
+
+func (i *GotItemDisplay) IsNote() bool {
+	if i.SummaryObj != nil && i.SummaryObj.State != nil && *i.SummaryObj.State == Note {
+		return true
+	}
+	return false
+}
+func (i *GotItemDisplay) IsActive() bool {
+	if i.SummaryObj != nil && i.SummaryObj.State != nil && *i.SummaryObj.State == Active {
+		return true
+	}
+	return false
+}
+func (i *GotItemDisplay) IsComplete() bool {
+	if i.SummaryObj != nil && i.SummaryObj.State != nil && *i.SummaryObj.State == Complete {
+		return true
+	}
+	return false
 }
 
 // VX:TODO not tested, used for sorting the items.

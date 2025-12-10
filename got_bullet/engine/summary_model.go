@@ -49,6 +49,7 @@ func (a *Summary) ApplyChange(change AggregateCountChange) {
 	}
 	fmt.Printf("VX: summary count is changed from %s -> to %+v\n", old, count)
 	a.Counts = &count
+
 }
 
 func NewCountChange(state GotState, inc bool) AggregateCountChange {

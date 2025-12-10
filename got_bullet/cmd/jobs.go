@@ -45,7 +45,11 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			deps.Printer.Print(console.Message{Message: "-----------------------------------------\n\n"})
-			table := bullet_engine.NewTable(res.Result)
+			table, err := bullet_engine.NewTable(res.Result)
+			if err != nil {
+				deps.Printer.Error(console.Message{Message: err.Error()})
+				return
+			}
 			table.Render(deps.Printer, &console.GotTheme{})
 
 		},

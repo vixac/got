@@ -1,6 +1,7 @@
 package console
 
 import (
+	"errors"
 	"strings"
 	"unicode/utf8"
 )
@@ -99,7 +100,26 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 	}
 }
 
-func NewConsoleTable(rows []TableRow) ConsoleTable {
+func NewConsoleTable(rows []TableRow) (ConsoleTable, error) {
+	if len(rows) == 0 {
+		return ConsoleTable{}, nil
+	}
+	var colCount = -1 //unset
+	for _, r := range rows {
+		if r.CellRow == nil {
+			continue
+		}
+		if colCount == -1 {
+			colCount = r.CellRow.NumCells //all future cells must be the same size as the first.
+		} else {
+			if r.CellRow.NumCells != colCount {
+				return ConsoleTable{}, errors.New("invalid cell count at row ")
+			}
+
+		}
+
+	}
+
 	var maxWidths []int
 	for _, r := range rows {
 		if r.CellRow == nil {
@@ -126,7 +146,7 @@ func NewConsoleTable(rows []TableRow) ConsoleTable {
 		Rows:          rows,
 		ColumnWidths:  maxWidths,
 		ColumnPadding: padding,
-	}
+	}, nil
 }
 
 // this becomes a bit of an enum eventually. cells or divider

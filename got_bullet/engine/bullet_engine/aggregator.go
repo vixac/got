@@ -59,6 +59,12 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 				change := engine.NewCountChange(*parentState, false)
 				fmt.Printf("VX: because a leaf changed to group, we are decrementing")
 				a.Summary.ApplyChange(change)
+
+				//if we've added an active item then all its parents are deactivated
+				if e.State == engine.Active && a.Summary.State != nil && *a.Summary.State == engine.Active {
+					a.Summary.State = nil
+
+				}
 				upserts[a.Id] = a.Summary
 			}
 		}
@@ -111,22 +117,79 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	upserts := make(map[engine.SummaryId]engine.Summary)
 	upserts[e.Id] = changedItemSummary
 
+	hasAncestors := len(e.Ancestry) > 0
+	if !hasAncestors { //just upsert this item and move on.
+		return a.summaryStore.UpsertManyAggregates(upserts)
+	}
+
+	parentIndex := len(e.Ancestry) - 1
+	parentSummaryId := e.Ancestry[parentIndex]
+	if parentSummaryId == engine.SummaryId(TheRootNoteInt32) {
+		return a.summaryStore.UpsertManyAggregates(upserts)
+	}
+	parentSummary, ok := ancestorAggs[parentSummaryId]
+	if !ok {
+		return errors.New("missing summary for parent of state-changed items")
+	}
+
 	//step 1  we decrement the old state and increment the new for all its ancestors
+	isChangeFromActive := e.OldState == engine.Active && e.NewState != engine.Active
+
+	//theres a chance we need to convert the parent to active state.
+	isParentInNeedOfPromotingToAcive := isChangeFromActive && parentSummary.Counts.Active == 1
+
+	parentHasNoOtherActiveChildren := parentSummary.Counts != nil && parentSummary.Counts.Active > 1
+	isParentInNeedOfDemotingToGroup := isChangeFromActive && parentSummary.State != nil && parentHasNoOtherActiveChildren
+	//do we bubble this? I think we let the user make these changes.
+
 	incChange := engine.NewCountChange(e.NewState, true)
 	decChange := engine.NewCountChange(e.OldState, false)
+
 	combined := incChange.Combine(decChange)
+	ancestorInc := combined
+	parentInc := combined
+
+	var activeState engine.GotState = engine.Active
+
+	if isParentInNeedOfDemotingToGroup {
+		decrementParentExistingState := engine.NewCountChange(*parentSummary.State, false)
+		ancestorInc = ancestorInc.Combine(decrementParentExistingState)
+		//rid the parent of its state
+		parentSummary.State = nil
+		upserts[parentSummaryId] = parentSummary
+	} else if isParentInNeedOfPromotingToAcive {
+
+		incrementActiveDueToParentUpgrade := engine.NewCountChange(activeState, true)
+		ancestorInc = ancestorInc.Combine(incrementActiveDueToParentUpgrade)
+		parentSummary.State = &activeState
+		upserts[parentSummaryId] = parentSummary
+	}
+
+	//so at this point we MIGHT have an upsert for the parent already,
+	//and we have increments established for the ancestors and for the parent.
 	for _, summaryId := range e.Ancestry {
 		if summaryId == engine.SummaryId(TheRootNoteInt32) {
 			continue
 		}
-		summary, ok := ancestorAggs[summaryId]
-		if !ok {
-			return errors.New("missing summary in state-change for ancestor")
+		if summaryId == parentSummaryId {
+			existingUpsert, ok := upserts[parentSummaryId]
+			if ok {
+				existingUpsert.ApplyChange(parentInc)
+				upserts[summaryId] = existingUpsert
+			} else {
+				parentSummary.ApplyChange(parentInc)
+				upserts[summaryId] = parentSummary
+			}
+		} else {
+			ancestorSummary, ok := ancestorAggs[summaryId]
+			if !ok {
+				return errors.New("missing agg")
+			}
+			ancestorSummary.ApplyChange(ancestorInc)
+			upserts[summaryId] = ancestorSummary
 		}
-		summary.ApplyChange(combined)
-		upserts[summaryId] = summary
-		fmt.Printf("VX: Aggregate is here %+v with change %+v\n", summary, combined)
 	}
+
 	return a.summaryStore.UpsertManyAggregates(upserts)
 }
 
