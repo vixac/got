@@ -276,7 +276,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		//here we filter complete leafs from the jobs list. VX:Note we want to have completes
 		//not even appear in the search, because thats more scalable.
 		isComplete := summary.State != nil && *summary.State == engine.Complete
-		if !isComplete {
+		isNote := summary.State != nil && *summary.State == engine.Note
+		if !isComplete && !isNote {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 				Gid:        stringId,
 				Title:      v,
@@ -388,9 +389,18 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 	return e.publishStateChangeEvent(event)
 }
 
-func (e *EngineBullet) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
-	var newState engine.GotState = engine.Complete
-	return nil, e.updateState(lookup, newState)
+func (e *EngineBullet) MarkResolved(lookup []engine.GidLookup) error {
+	for _, lookup := range lookup {
+		var newState engine.GotState = engine.Complete
+
+		//If one fails, we stop and return that error.
+		err := e.updateState(lookup, newState)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
 func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {

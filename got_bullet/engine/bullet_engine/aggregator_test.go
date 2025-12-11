@@ -116,6 +116,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 }
 
 //VX:TODO test that notes under a complete group don't render
+//VX:TODO summary of the top item
 
 func TestAggregatorTopAliceAndBob(t *testing.T) {
 

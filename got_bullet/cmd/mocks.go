@@ -29,6 +29,7 @@ type MockEngine struct {
 	aliasAlias string
 
 	summaryLookup *engine.GidLookup
+	doneLookup    []engine.GidLookup
 	resolveLookup engine.GidLookup
 	errorToThrow  error
 
@@ -63,9 +64,9 @@ func (m *MockEngine) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, 
 	return nil, m.errorToThrow
 }
 
-func (m *MockEngine) MarkResolved(lookup engine.GidLookup) (*engine.NodeId, error) {
-	m.resolveLookup = lookup
-	return m.nodeIdToReturn, m.errorToThrow
+func (m *MockEngine) MarkResolved(lookup []engine.GidLookup) error {
+	m.doneLookup = lookup
+	return m.errorToThrow
 }
 func (m *MockEngine) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
 	m.resolveLookup = lookup

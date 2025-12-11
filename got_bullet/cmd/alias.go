@@ -1,24 +1,32 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 )
 
 func buildAliasCommand(deps RootDependencies) *cobra.Command {
-	var gid string
-	var alias string
 	var cmd = &cobra.Command{
 		Use:   "alias",
-		Short: "alias an item with a better name",
+		Short: "alias an item with a better name. <alias> <gid>",
 		Run: func(cmd *cobra.Command, args []string) {
-			if gid == "" {
-				deps.Printer.Error(console.Message{Message: "Missing gid"})
+			if len(args) < 2 {
+				err := errors.New("missing args. Pass in an alias and a gid")
+				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
 			}
+			alias := args[0]
+			gid := args[1]
 
 			if alias == "" {
 				deps.Printer.Error(console.Message{Message: "Missing alias"})
+				return
+			}
+
+			if gid == "" {
+				deps.Printer.Error(console.Message{Message: "Missing gid"})
 				return
 			}
 			_, err := deps.Engine.Alias(gid, alias)
@@ -30,7 +38,5 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}
-	cmd.Flags().StringVarP(&gid, "gid", "g", "", "The item to alias")
-	cmd.Flags().StringVarP(&alias, "alias", "a", "", "The alias")
 	return cmd
 }

@@ -11,11 +11,17 @@ func buildDoneCommand(deps RootDependencies) *cobra.Command {
 		Use:   "done",
 		Short: "Complete an item",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 1 {
-				deps.Printer.Error(console.Message{Message: "Expected the alias as input"})
+			if len(args) < 1 {
+				deps.Printer.Error(console.Message{Message: "Expected at least one lookup as input"})
 				return
 			}
-			_, err := deps.Engine.MarkResolved(engine.GidLookup{Input: args[0]})
+
+			var lookups []engine.GidLookup
+			for _, arg := range args {
+				lookups = append(lookups, engine.GidLookup{Input: arg})
+			}
+
+			err := deps.Engine.MarkResolved(lookups)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
