@@ -13,6 +13,7 @@ type SummaryId int32
 type GotEngine interface {
 	Summary(lookup *GidLookup) (*GotItemDisplay, error)
 
+	EditTitle(lookup GidLookup, newHeading string) error
 	//state changes
 	MarkResolved(lookup []GidLookup) error
 	MarkActive(lookup GidLookup) (*NodeId, error)

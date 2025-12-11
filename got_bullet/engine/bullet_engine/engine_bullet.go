@@ -389,6 +389,18 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 	return e.publishStateChangeEvent(event)
 }
 
+func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) error {
+
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil {
+		return err
+	}
+	if gid == nil {
+		return nil
+	}
+	return e.TitleStore.UpsertItem(gid.IntValue, newHeading)
+}
+
 func (e *EngineBullet) MarkResolved(lookup []engine.GidLookup) error {
 	for _, lookup := range lookup {
 		var newState engine.GotState = engine.Complete
@@ -453,7 +465,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}
 
 	//add item heading to depot
-	err = e.TitleStore.AddItem(newId, heading)
+	err = e.TitleStore.UpsertItem(newId, heading)
 	if err != nil {
 		return nil, err
 	}
