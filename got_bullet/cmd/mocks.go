@@ -87,6 +87,10 @@ func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 	return false, m.errorToThrow
 }
 
+func (m *MockEngine) EditTitle(lookup engine.GidLookup, newHeading string) error {
+	return m.errorToThrow
+}
+
 func (m *MockEngine) LookupAliasForGid(gid string) (*string, error) {
 	return nil, errors.New("not impl")
 }

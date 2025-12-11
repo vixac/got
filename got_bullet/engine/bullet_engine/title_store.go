@@ -7,7 +7,7 @@ import (
 )
 
 type TitleStoreInterface interface {
-	AddItem(id int32, title string) error
+	UpsertItem(id int32, title string) error
 	TitleFor(id int32) (*string, error)
 
 	TitleForMany(ids []int32) (map[int32]string, error)
@@ -23,7 +23,7 @@ func NewBulletTitleStore(client bullet_interface.DepotClientInterface) (TitleSto
 	}, nil
 }
 
-func (s *BulletTitleStore) AddItem(id int32, title string) error {
+func (s *BulletTitleStore) UpsertItem(id int32, title string) error {
 	req := bullet_interface.DepotRequest{
 		Key:   int64(id),
 		Value: title,
