@@ -14,7 +14,7 @@ type GotEngine interface {
 	Summary(lookup *GidLookup) (*GotItemDisplay, error)
 
 	//state changes
-	MarkResolved(lookup GidLookup) (*NodeId, error)
+	MarkResolved(lookup []GidLookup) error
 	MarkActive(lookup GidLookup) (*NodeId, error)
 	MarkAsNote(lookup GidLookup) (*NodeId, error)
 
