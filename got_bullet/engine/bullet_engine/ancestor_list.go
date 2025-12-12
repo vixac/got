@@ -125,7 +125,6 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 			Ids: ancestorGotIdList,
 		}
 
-		fmt.Printf("VX: complete parent key is '%s'\n", parentKey)
 		parent = bullet_stl.ListSubject{Value: parentKey}
 
 		//we attempt to delete theleafNode from this parent, which will succeed if this item is the first child.
@@ -173,7 +172,6 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 		}
 		//append the query to the ancestor Key, so id = c, fetches a:b, and we want to lookup everything prefixed with a:b:c
 		ancestorKey = ancestorPairs.Pairs[0].Subject.Value + a.SubjectSeparator + id.AasciValue
-
 	}
 
 	everythingBelowAncestor, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: ancestorKey})
@@ -213,9 +211,6 @@ func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupR
 	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 	if err != nil {
 		return nil, err
-	}
-	for i, v := range ancestors.Pairs {
-		fmt.Printf("VX: %d ancestor of %s is pair ancestor %s -> %s\n", i, id.AasciValue, v.Subject.Value, v.Object.Value)
 	}
 	if len(ancestors.Pairs) != 1 { //the ancestor list is in the form of the subject of the object, so its 1 key, containing all ancestors.
 		return nil, errors.New("this id seems to appear more than once")

@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -84,7 +83,6 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
 	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
-	fmt.Printf("VX: ALICE IS %d", fetchedAlice.Counts.Active)
 	var activeState = engine.GotState(engine.Active)
 	assert.Equal(t, *fetchedAlice.State, activeState)
 
@@ -221,7 +219,6 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
 	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
-	fmt.Printf("VX: ALICE IS %d", fetchedAlice.Counts.Active)
 	var activeState = engine.GotState(engine.Active)
 	assert.Equal(t, *fetchedAlice.State, activeState)
 

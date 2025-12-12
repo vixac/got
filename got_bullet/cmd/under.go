@@ -10,7 +10,6 @@ import (
 )
 
 func buildUnderCommand(deps RootDependencies) *cobra.Command {
-	var parentAlias string
 
 	cmd := &cobra.Command{
 		Use:   "under <alias> <heading>",
@@ -46,7 +45,5 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVarP(&parentAlias, "for", "f", "", "Alias to assign the task under")
 	return cmd
 }

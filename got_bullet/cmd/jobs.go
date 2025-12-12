@@ -17,7 +17,7 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 		Use:   "jobs",
 		Short: "fetch jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
-			//VX:TODO screw -u, lets got got jobs <id> optinoal.
+			//VX:TODO no more -u, lets got got jobs <id> optinoal.
 			if len(args) != 0 {
 				deps.Printer.Error(console.Message{Message: "jobs takes a -u and nothing else"})
 				return
@@ -44,7 +44,7 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 				return
 			}
 
-			deps.Printer.Print(console.Message{Message: "-----------------------------------------\n\n"})
+			deps.Printer.Print(console.Message{Message: "\n-----------------------------------------\n\n"})
 			table, err := bullet_engine.NewTable(res.Result)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})

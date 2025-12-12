@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	boldtb "github.com/vixac/bullet/store/boltdb"
 	local_bullet "github.com/vixac/firbolg_clients/bullet/local_bullet"
@@ -11,7 +12,11 @@ import (
 )
 
 func main() {
-	boltdb, err := boldtb.NewBoltStore("got-bolt")
+	path := os.Getenv("GOT_BOLT")
+	if path == "" {
+		log.Fatal("missing env GOT_BOLT, which should be the path to the got bolt file")
+	}
+	boltdb, err := boldtb.NewBoltStore(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,5 +35,4 @@ func main() {
 		Engine:  ene,
 	}
 	cmd.Execute(deps)
-	//println("VX: Hello got from go")
 }

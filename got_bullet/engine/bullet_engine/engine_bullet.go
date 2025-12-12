@@ -3,7 +3,6 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -122,54 +121,15 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay
 
 }
 
-func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
-	var items []engine.PathItem
-	//VX:TODO are they sorted by ancestry?
-	//I'm confused. I think there is always 1 item in here
-
-	var gids []string
-	for _, gid := range ancestors.Ids {
-		gids = append(gids, gid.AasciValue)
-	}
-
-	res, err := e.AliasStore.LookupAliasForMany(gids)
-	if err != nil {
-		return nil, nil
-	}
-	for _, id := range ancestors.Ids {
-		var alias *string
-		if res != nil { //if there are aliases to inspect.
-			matchedAlias, ok := res[id.AasciValue]
-			if ok {
-				alias = matchedAlias
-			}
-		}
-
-		items = append(items, engine.PathItem{
-			Id:    id.AasciValue,
-			Alias: alias,
-		})
-	}
-	return &engine.GotPath{
-		Ancestry: items,
-	}, nil
-}
-
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 	gid, err := e.GidLookup.InputToGid(lookup)
-	if err != nil {
+	if err != nil || gid == nil {
 		return nil, err
-	}
-	if gid == nil {
-		return nil, nil
 	}
 	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
-	if err != nil {
+	if err != nil || all == nil {
 		return nil, err
-	}
-	if all == nil {
-		return nil, nil
 	}
 
 	var intIds []int32
@@ -236,38 +196,13 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		var path *engine.GotPath = nil
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
-		} else {
-			fmt.Printf("VX: NO PATH FOR '%s'\n", v)
 		}
-		summaryText := "["
 		gotId, err := engine.NewGotId(stringId)
 		if err != nil {
 			return nil, err
 		}
 		summaryId := NewSummaryId(*gotId)
-
 		summary, ok := summaries[summaryId]
-		if ok {
-
-			if summary.State != nil {
-				summaryText += "Leaf (" + summary.State.ToStr() + ")"
-			}
-			if summary.Counts != nil {
-				summaryText += " {Total: "
-				if summary.Counts.Active != 0 {
-					summaryText += "active :" + strconv.Itoa(summary.Counts.Active)
-				}
-				if summary.Counts.Complete != 0 {
-					summaryText += "complete :" + strconv.Itoa(summary.Counts.Complete)
-				}
-				if summary.Counts.Notes != 0 {
-					summaryText += "notes :" + strconv.Itoa(summary.Counts.Notes)
-				}
-				summaryText += "}"
-			}
-		}
-		summaryText += "]"
-
 		var summaryPointer *engine.Summary = nil
 		if ok {
 			summaryPointer = &summary
@@ -283,7 +218,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 				Title:      v,
 				Path:       path,
 				Alias:      alias,
-				Summary:    summaryText,
 				SummaryObj: summaryPointer,
 			})
 		}
@@ -311,7 +245,6 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			NumberGo:   num,
 			Title:      s.Title,
 			Path:       s.Path,
-			Summary:    s.Summary,
 			SummaryObj: s.SummaryObj,
 		})
 	}
@@ -437,7 +370,6 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("VX: newId is %s\n", stringId)
 	gotId := engine.GotId{
 		AasciValue: stringId,
 		IntValue:   newId,
@@ -457,7 +389,6 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		parentGotId = fetchedParent
 	}
 
-	//VX:TODO DELETE
 	//add item to ancestry
 	ancestry, err := e.AncestorList.AddItem(gotId, parentGotId)
 	if err != nil {
@@ -472,7 +403,6 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 
 	var summaryIds []engine.SummaryId
 	if ancestry != nil {
-		fmt.Printf("VX: buck created. %+v\n", *ancestry)
 		for _, a := range ancestry.Ids {
 			summaryIds = append(summaryIds, engine.SummaryId(a.IntValue))
 		}
@@ -550,4 +480,35 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	return e.AliasStore.Alias(lookup.Gid, alias)
 }
 
-//
+func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
+	var items []engine.PathItem
+	//VX:TODO are they sorted by ancestry?
+	//I'm confused. I think there is always 1 item in here
+
+	var gids []string
+	for _, gid := range ancestors.Ids {
+		gids = append(gids, gid.AasciValue)
+	}
+
+	res, err := e.AliasStore.LookupAliasForMany(gids)
+	if err != nil {
+		return nil, nil
+	}
+	for _, id := range ancestors.Ids {
+		var alias *string
+		if res != nil { //if there are aliases to inspect.
+			matchedAlias, ok := res[id.AasciValue]
+			if ok {
+				alias = matchedAlias
+			}
+		}
+
+		items = append(items, engine.PathItem{
+			Id:    id.AasciValue,
+			Alias: alias,
+		})
+	}
+	return &engine.GotPath{
+		Ancestry: items,
+	}, nil
+}

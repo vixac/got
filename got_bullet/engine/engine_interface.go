@@ -100,7 +100,6 @@ type GotItemDisplay struct {
 	Title      string
 	Alias      string
 	Deadline   string
-	Summary    string
 	SummaryObj *Summary
 	Path       *GotPath
 	NumberGo   int
