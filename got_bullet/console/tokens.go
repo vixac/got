@@ -48,3 +48,15 @@ type TokenAlias struct{}
 func (t TokenAlias) Name() string {
 	return "alias"
 }
+
+type TokenNote struct{}
+
+func (t TokenNote) Name() string {
+	return "note"
+}
+
+type TokenGroup struct{}
+
+func (t TokenGroup) Name() string {
+	return "group"
+}

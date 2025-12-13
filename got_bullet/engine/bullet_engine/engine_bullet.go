@@ -3,6 +3,9 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -36,7 +39,74 @@ type EngineBullet struct {
 	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
 
 	//interface conformance
-	LongFormStoreInterface
+	//	LongFormStoreInterface
+}
+
+func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return err
+	}
+
+	var note = ""
+	existing, err := e.LongFormStore.LongFormFor(gid.IntValue)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		note = *existing
+	}
+	// 2. Temp file
+	tmp, err := os.CreateTemp("", "got-note-*.txt")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+
+	// 3. Write existing content
+	if _, err := tmp.WriteString(note); err != nil {
+		return err
+	}
+	tmp.Close()
+
+	// 4. Launch editor
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+
+	cmd := exec.Command(editor, tmp.Name())
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// 5. Read edited content
+	updated, err := os.ReadFile(tmp.Name())
+	if err != nil {
+		return err
+	}
+
+	// 6. Save back to DB
+	updatedString := string(updated)
+	if updatedString == note { //no changes, don't save
+		return nil
+	}
+	datedString := datePrefix() + updatedString
+	return e.LongFormStore.UpsertItem(gid.IntValue, datedString)
+}
+
+func datePrefix() string {
+	line := "\n\n----------------------------\n"
+
+	now := time.Now().UTC()
+
+	formatted := now.Format("Mon 2 Jan 2006 15:04:05 MST")
+	return line + formatted + line + "\n"
+
 }
 
 // lets rewrite this maybe.
@@ -85,7 +155,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if path != nil {
 			ancestorPaths[int32(intId)] = *path
 		}
-
 	}
 	//titleStore: allIds -> title
 	titles, err := e.TitleStore.TitleForMany(intIds)
@@ -101,6 +170,14 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	if err != nil {
 		return nil, err
 	}
+
+	//just needed to see if we present the note emoji. Unfortunately we're loading
+	//the actual notes on here.
+	longForms, err := e.LongFormForMany(intIds)
+	if err != nil {
+		return nil, err
+	}
+
 	var itemDisplays []engine.GotItemDisplay
 	for k, v := range titles {
 
@@ -130,7 +207,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 					isParentComplete = true
 				}
 			}
-
 		}
 
 		gotId, err := engine.NewGotId(stringId)
@@ -152,6 +228,10 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		isNote := summary.State != nil && *summary.State == engine.Note
 
 		isHiddenNote := isNote && isParentComplete
+		_, hasLongForm := longForms[k]
+		if hasLongForm {
+			fmt.Printf("VX: THIS IS A LONGFORM WEHEY")
+		}
 
 		if !isComplete && !isHiddenNote {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
@@ -160,6 +240,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 				Path:       path,
 				Alias:      alias,
 				SummaryObj: summaryPointer,
+				HasTNote:   hasLongForm,
 			})
 		}
 
@@ -222,6 +303,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Title:      s.Title,
 			Path:       s.Path,
 			SummaryObj: s.SummaryObj,
+			HasTNote:   s.HasTNote,
 		})
 	}
 
@@ -376,7 +458,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 
 	var headingToStore = heading
 	if engine.IsValidAlias(heading) {
-		headingToStore = ""
+		//headingToStore = "" //VX:Note I've decided against nulling the title because if you unalias, the meaning of this thing is totally gone.
 		_, err := e.AliasStore.Alias(stringId, heading)
 		if err != nil {
 			return nil, err
@@ -479,7 +561,6 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 		gids = append(gids, gid.AasciValue)
 	}
 
-	fmt.Printf("VX: Looking up %d aliases\n", len(gids))
 	res, err := e.AliasStore.LookupAliasForMany(gids)
 	if err != nil {
 		return nil, nil

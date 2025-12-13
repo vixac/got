@@ -21,6 +21,11 @@ func (t *GotTheme) ColorFor(token Token) Color {
 		return LightGrayColor{}
 	case "quaternary":
 		return DarkGrayColor{}
+	case "note":
+		return YellowColor{}
+	case "group":
+		return HighlightColor{}
 	}
+
 	return ResetColor{}
 }

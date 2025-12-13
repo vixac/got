@@ -47,6 +47,10 @@ type MockEngine struct {
 	heading           string
 }
 
+func (m *MockEngine) OpenThenTimestamp(lookup engine.GidLookup) error {
+	return errors.New("not impl")
+}
+
 func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 	return nil, errors.New("not impl")
 }
