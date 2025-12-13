@@ -7,28 +7,27 @@ import (
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
 
-type TitleStoreInterface interface {
+type LongFormStoreInterface interface {
 	UpsertItem(id int32, title string) error
-	TitleFor(id int32) (*string, error)
-
-	TitleForMany(ids []int32) (map[int32]string, error)
+	LongFormFor(id int32) (*string, error)
+	LongFormForMany(ids []int32) (map[int32]string, error)
 	RemoveItem(id int32) error
 }
-type BulletTitleStore struct {
+type BulletLongFormStore struct {
 	Namespace int32
 	Depot     bullet_interface.DepotClientInterface
 }
 
-func NewBulletTitleStore(client bullet_interface.DepotClientInterface, namespaceId int32) (TitleStoreInterface, error) {
-	return &BulletTitleStore{
-		Depot:     client,
+func NewBulletLongFormStore(client bullet_interface.DepotClientInterface, namespaceId int32) (LongFormStoreInterface, error) {
+	return &BulletLongFormStore{
 		Namespace: namespaceId,
+		Depot:     client,
 	}, nil
 }
 
-func (s *BulletTitleStore) UpsertItem(id int32, title string) error {
-	//VX:TODO warn this depot interface is global. Can't have title store using the infinite id space
-	//it behaves as though it has namespace 0 which is ok I guess.
+// VX:TODO this implementation is identical to title store. Its just a string id pair.
+// VX:TODO make this
+func (s *BulletLongFormStore) UpsertItem(id int32, title string) error {
 	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
 	req := bullet_interface.DepotRequest{
 		Key:   namespacedId,
@@ -37,7 +36,7 @@ func (s *BulletTitleStore) UpsertItem(id int32, title string) error {
 	return s.Depot.DepotInsertOne(req)
 }
 
-func (s *BulletTitleStore) TitleForMany(ids []int32) (map[int32]string, error) {
+func (s *BulletLongFormStore) LongFormForMany(ids []int32) (map[int32]string, error) {
 
 	var int64Ids []int64
 	for _, v := range ids {
@@ -62,7 +61,7 @@ func (s *BulletTitleStore) TitleForMany(ids []int32) (map[int32]string, error) {
 	return int32Map, nil
 }
 
-func (s *BulletTitleStore) TitleFor(id int32) (*string, error) {
+func (s *BulletLongFormStore) LongFormFor(id int32) (*string, error) {
 	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
 	keys := []int64{namespacedId}
 	req := bullet_interface.DepotGetManyRequest{
@@ -82,7 +81,6 @@ func (s *BulletTitleStore) TitleFor(id int32) (*string, error) {
 	return nil, nil
 }
 
-func (s *BulletTitleStore) RemoveItem(id int32) error {
+func (s *BulletLongFormStore) RemoveItem(id int32) error {
 	return errors.New("delete depot not working yet")
-
 }

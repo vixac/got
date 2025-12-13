@@ -15,6 +15,8 @@ const (
 	nodeBucket     int32 = 1002
 	ancestorBucket int32 = 1003
 	numberGoBucket int32 = 1004
+	titleBucket    int32 = 0 //backwards compatability
+	longFormBucket int32 = 1005
 )
 
 const (
@@ -29,8 +31,12 @@ type EngineBullet struct {
 	AliasStore    engine.GotAliasInterface
 	NumberGoStore NumberGoStoreInterface
 	SummaryStore  SummaryStoreInterface
+	LongFormStore LongFormStoreInterface
 
 	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
+
+	//interface conformance
+	LongFormStoreInterface
 }
 
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
@@ -45,7 +51,11 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 
-	titleStore, err := NewBulletTitleStore(client)
+	titleStore, err := NewBulletTitleStore(client, titleBucket)
+	if err != nil {
+		return nil, err
+	}
+	longFormStore, err := NewBulletLongFormStore(client, longFormBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -82,80 +92,52 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		AliasStore:     aliasStore,
 		NumberGoStore:  numberGoStore,
 		SummaryStore:   aggStore,
+		LongFormStore:  longFormStore,
 		EventListeners: listeners,
 	}, nil
 }
 
-func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
+// VX:TODO use this one, delete ancestorPathFrom
+func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
+	var items []engine.PathItem
+	for _, id := range ancestors.Ids {
+		var alias *string
+		if aliases != nil { //if there are aliases to inspect.
+			matchedAlias, ok := aliases[id.AasciValue]
+			if ok {
+				alias = matchedAlias
+			}
+		}
 
-	gid, err := e.GidLookup.InputToGid(lookup)
-	if err != nil {
-		return nil, err
+		items = append(items, engine.PathItem{
+			Id:    id.AasciValue,
+			Alias: alias,
+		})
 	}
-	if gid == nil {
-		return nil, errors.New("no gid")
+	return &engine.GotPath{
+		Ancestry: items,
 	}
-
-	title, err := e.TitleStore.TitleFor(gid.IntValue)
-	if err != nil {
-		return nil, errors.New("no title")
-	}
-	if title == nil {
-		return nil, nil
-	}
-
-	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
-	if err != nil {
-		return nil, errors.New("error fetching ancestors")
-	}
-	path, err := e.ancestorPathFrom(ancestorResult)
-	if err != nil {
-		return nil, err
-	}
-
-	return &engine.GotItemDisplay{
-		Gid:   gid.AasciValue,
-		Title: *title,
-		Path:  path,
-	}, nil
 
 }
 
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
+
+	//0->1 numberstore gid -> numberstore
+	//0-> alias store gid -> alias store
 	gid, err := e.GidLookup.InputToGid(lookup)
 	if err != nil || gid == nil {
 		return nil, err
 	}
+
+	//1.gid->ancestor (object -> subject)
+	//2.all descendants: allpairs for full key
 	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
 	if err != nil || all == nil {
 		return nil, err
 	}
 
-	var intIds []int32
 	ancestorPaths := make(map[int32]engine.GotPath)
-	for id, ancestorLookup := range all.Ids {
-		intId, err := bullet_stl.AasciBulletIdToInt(id)
-		if err != nil {
-			return nil, err
-		}
-		intIds = append(intIds, int32(intId))
-
-		//VX:TODO this is inside a foreach. and it asks for the aliases of all the ancestor gids.
-		// we should inject aliases here.
-		path, err := e.ancestorPathFrom(&ancestorLookup)
-		if err != nil {
-			return nil, err
-		}
-		if path != nil {
-			ancestorPaths[int32(intId)] = *path
-		}
-
-	}
-	titles, err := e.TitleStore.TitleForMany(intIds)
-	if err != nil {
-		return nil, err
-	}
 
 	//get string ids of all items to do the alias lookup
 	stringIds := make([]string, len(all.Ids))
@@ -166,6 +148,40 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		i++
 	}
 
+	aliasMap, err := e.AliasStore.LookupAliasForMany(stringIds)
+	fmt.Printf("VX: aliasMap is fetched and has %d items \n", len(aliasMap))
+	if err != nil {
+		return nil, err
+	}
+
+	var intIds []int32
+	for id, ancestorLookup := range all.Ids {
+
+		intId, err := bullet_stl.AasciBulletIdToInt(id)
+		if err != nil {
+			return nil, err
+		}
+		intIds = append(intIds, int32(intId))
+
+		//forEach descendant:
+
+		//BAD: (thisis already bad, we're fetching duplicates.)
+		//lookup aliasForMany(descendant.allAncestorIds)
+		path := ancestorPathFor(&ancestorLookup, aliasMap)
+
+		if path != nil {
+			ancestorPaths[int32(intId)] = *path
+		}
+
+	}
+	//titleStore: allIds -> title
+	titles, err := e.TitleStore.TitleForMany(intIds)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("VX: string ids total is %d\n", len(stringIds))
+	//aliasForMany on all nodes.
 	aliases, err := e.LookupAliasForMany(stringIds)
 	if err != nil {
 		return nil, err
@@ -214,6 +230,11 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		//not even appear in the search, because thats more scalable.
 		isComplete := summary.State != nil && *summary.State == engine.Complete
 		isNote := summary.State != nil && *summary.State == engine.Note
+		if isNote {
+			//VX:TODO <0ah> need to omit notes that have complete parents.
+			//so need to check state of parent.
+
+		}
 		if !isComplete && !isNote {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 				Gid:        stringId,
@@ -227,6 +248,41 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	}
 	sorted := SortTheseIntoDFS(itemDisplays)
 	return e.renderSummaries(sorted)
+}
+
+func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
+
+	gid, err := e.GidLookup.InputToGid(lookup)
+	if err != nil {
+		return nil, err
+	}
+	if gid == nil {
+		return nil, errors.New("no gid")
+	}
+
+	title, err := e.TitleStore.TitleFor(gid.IntValue)
+	if err != nil {
+		return nil, errors.New("no title")
+	}
+	if title == nil {
+		return nil, nil
+	}
+
+	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
+	if err != nil {
+		return nil, errors.New("error fetching ancestors")
+	}
+	path, err := e.ancestorPathFrom(ancestorResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return &engine.GotItemDisplay{
+		Gid:   gid.AasciValue,
+		Title: *title,
+		Path:  path,
+	}, nil
+
 }
 
 // adds the items to the number go store as well as
@@ -494,6 +550,7 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 	return e.AliasStore.Alias(lookup.Gid, alias)
 }
 
+// VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor
 func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
 	var items []engine.PathItem
 	//VX:TODO are they sorted by ancestry?
@@ -504,6 +561,7 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 		gids = append(gids, gid.AasciValue)
 	}
 
+	fmt.Printf("VX: Looking up %d aliases\n", len(gids))
 	res, err := e.AliasStore.LookupAliasForMany(gids)
 	if err != nil {
 		return nil, nil
