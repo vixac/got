@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
@@ -12,24 +10,25 @@ import (
 // VX:TODO test
 func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
-	var underLookup string
 	var jobsCmd = &cobra.Command{
 		Use:   "jobs",
 		Short: "fetch jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
 			//VX:TODO no more -u, lets got got jobs <id> optinoal.
-			if len(args) != 0 {
-				deps.Printer.Error(console.Message{Message: "jobs takes a -u and nothing else"})
+			if len(args) > 1 {
+				deps.Printer.Error(console.Message{Message: "jobs takes an optional <lookup> and thats it"})
 				return
 			}
-			var lookup *engine.GidLookup = nil
-			if underLookup != "" {
 
-				realLookup := engine.GidLookup{
-					Input: underLookup,
+			var lookup *engine.GidLookup = nil
+			if len(args) == 1 {
+				lookup = &engine.GidLookup{
+					Input: args[0],
 				}
-				lookup = &realLookup
-				fmt.Printf("Jobs lookup si %s\n", underLookup)
+			} else {
+				lookup = &engine.GidLookup{
+					Input: "",
+				}
 			}
 
 			states := []int{engine.Active}
@@ -54,7 +53,6 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
 		},
 	}
-	jobsCmd.Flags().StringVarP(&underLookup, "under", "u", "", "The parent item")
 	return jobsCmd
 
 }

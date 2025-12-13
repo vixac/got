@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"strconv"
-	"unicode"
 
 	"vixac.com/got/engine"
 )
@@ -21,24 +20,6 @@ func NewBulletGidLookup(aliasStore engine.GotAliasInterface, numberGoStore Numbe
 	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore}, nil
 }
 
-func CheckNumber(p []byte) bool {
-	r := string(p)
-	sep := 0
-	for _, b := range r {
-		if unicode.IsNumber(b) {
-			continue
-		}
-		if b == rune('.') {
-			if sep > 0 {
-				return false
-			}
-			sep++
-			continue
-		}
-		return false
-	}
-	return true
-}
 func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, error) {
 	if lookup == nil || len(lookup.Input) == 0 {
 		return engine.NewGotId(TheRootNode.Value)
@@ -58,7 +39,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	}
 
 	//this is a number<GO> lookup
-	if CheckNumber([]byte(lookup.Input)) {
+	if engine.CheckNumber([]byte(lookup.Input)) {
 		number, err := strconv.Atoi(lookup.Input)
 		if err != nil {
 			return nil, err

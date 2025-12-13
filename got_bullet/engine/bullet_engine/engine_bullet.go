@@ -141,6 +141,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		}
 		intIds = append(intIds, int32(intId))
 
+		//VX:TODO this is inside a foreach. and it asks for the aliases of all the ancestor gids.
+		// we should inject aliases here.
 		path, err := e.ancestorPathFrom(&ancestorLookup)
 		if err != nil {
 			return nil, err
@@ -395,8 +397,20 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		return nil, err
 	}
 
+	// if the heading is a valid alias, we just create the alias
+	// and dont add it as a heading.
+
+	var headingToStore = heading
+	if engine.IsValidAlias(heading) {
+		headingToStore = ""
+		_, err := e.AliasStore.Alias(stringId, heading)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	//add item heading to depot
-	err = e.TitleStore.UpsertItem(newId, heading)
+	err = e.TitleStore.UpsertItem(newId, headingToStore)
 	if err != nil {
 		return nil, err
 	}

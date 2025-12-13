@@ -3,6 +3,8 @@ package engine
 import (
 	"errors"
 	"math"
+	"strings"
+	"unicode"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
@@ -84,6 +86,42 @@ type GotAliasInterface interface {
 	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
 	Alias(gid string, alias string) (bool, error)
+}
+
+func IsValidAlias(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	spaces := strings.Contains(input, " ")
+	if spaces {
+		return false
+	}
+	bytes := []byte(input)
+	firstCharIsNumber := CheckNumber([]byte{bytes[0]})
+	if firstCharIsNumber {
+		return false
+	}
+	return true
+
+}
+
+func CheckNumber(p []byte) bool {
+	r := string(p)
+	sep := 0
+	for _, b := range r {
+		if unicode.IsNumber(b) {
+			continue
+		}
+		if b == rune('.') {
+			if sep > 0 {
+				return false
+			}
+			sep++
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 type DateLookup struct {
