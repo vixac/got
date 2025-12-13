@@ -97,29 +97,6 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	}, nil
 }
 
-// VX:TODO use this one, delete ancestorPathFrom
-func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
-	var items []engine.PathItem
-	for _, id := range ancestors.Ids {
-		var alias *string
-		if aliases != nil { //if there are aliases to inspect.
-			matchedAlias, ok := aliases[id.AasciValue]
-			if ok {
-				alias = matchedAlias
-			}
-		}
-
-		items = append(items, engine.PathItem{
-			Id:    id.AasciValue,
-			Alias: alias,
-		})
-	}
-	return &engine.GotPath{
-		Ancestry: items,
-	}
-
-}
-
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 
@@ -583,4 +560,27 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 	return &engine.GotPath{
 		Ancestry: items,
 	}, nil
+}
+
+// VX:TODO use this one, delete ancestorPathFrom
+func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
+	var items []engine.PathItem
+	for _, id := range ancestors.Ids {
+		var alias *string
+		if aliases != nil { //if there are aliases to inspect.
+			matchedAlias, ok := aliases[id.AasciValue]
+			if ok {
+				alias = matchedAlias
+			}
+		}
+
+		items = append(items, engine.PathItem{
+			Id:    id.AasciValue,
+			Alias: alias,
+		})
+	}
+	return &engine.GotPath{
+		Ancestry: items,
+	}
+
 }
