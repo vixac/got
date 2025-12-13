@@ -39,64 +39,6 @@ type EngineBullet struct {
 	LongFormStoreInterface
 }
 
-func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
-	ancestorList, err := NewAncestorList(client, "anc", ancestorBucket, ":", ">", "<")
-
-	if err != nil {
-		return nil, err
-	}
-	codec := &JSONCodec[engine.Summary]{}
-	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
-	if err != nil {
-		return nil, err
-	}
-
-	titleStore, err := NewBulletTitleStore(client, titleBucket)
-	if err != nil {
-		return nil, err
-	}
-	longFormStore, err := NewBulletLongFormStore(client, longFormBucket)
-	if err != nil {
-		return nil, err
-	}
-
-	numberGoStore, err := NewBulletNumberGoStore(client, numberGoBucket)
-	if err != nil {
-		return nil, err
-	}
-
-	aliasStore, err := NewBulletAliasStore(client, aliasBucket)
-	if err != nil {
-		return nil, err
-	}
-
-	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore)
-	if err != nil {
-		return nil, err
-
-	}
-
-	var listeners []EventListenerInterface
-	aggregator, err := NewAggregator(aggStore)
-	if err != nil {
-		return nil, err
-	}
-
-	listeners = append(listeners, aggregator)
-
-	return &EngineBullet{
-		Client:         client,
-		AncestorList:   ancestorList,
-		TitleStore:     titleStore,
-		GidLookup:      gidLookup,
-		AliasStore:     aliasStore,
-		NumberGoStore:  numberGoStore,
-		SummaryStore:   aggStore,
-		LongFormStore:  longFormStore,
-		EventListeners: listeners,
-	}, nil
-}
-
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 
@@ -114,8 +56,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
-	ancestorPaths := make(map[int32]engine.GotPath)
-
 	//get string ids of all items to do the alias lookup
 	stringIds := make([]string, len(all.Ids))
 
@@ -126,12 +66,12 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	}
 
 	aliasMap, err := e.AliasStore.LookupAliasForMany(stringIds)
-	fmt.Printf("VX: aliasMap is fetched and has %d items \n", len(aliasMap))
 	if err != nil {
 		return nil, err
 	}
 
 	var intIds []int32
+	ancestorPaths := make(map[int32]engine.GotPath)
 	for id, ancestorLookup := range all.Ids {
 
 		intId, err := bullet_stl.AasciBulletIdToInt(id)
@@ -140,10 +80,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		}
 		intIds = append(intIds, int32(intId))
 
-		//forEach descendant:
-
-		//BAD: (thisis already bad, we're fetching duplicates.)
-		//lookup aliasForMany(descendant.allAncestorIds)
 		path := ancestorPathFor(&ancestorLookup, aliasMap)
 
 		if path != nil {
@@ -157,13 +93,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		return nil, err
 	}
 
-	fmt.Printf("VX: string ids total is %d\n", len(stringIds))
-	//aliasForMany on all nodes.
-	aliases, err := e.LookupAliasForMany(stringIds)
-	if err != nil {
-		return nil, err
-	}
-
 	var summaryIds []engine.SummaryId
 	for _, v := range intIds {
 		summaryIds = append(summaryIds, engine.SummaryId(v))
@@ -172,19 +101,16 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 	if err != nil {
 		return nil, err
 	}
-	//VX:TODO change summaryId to gotId and then fetch it here. Reusing the word summary is no good.
-	//summaries, err := e.SummaryStore.Fetch()
-	//VX:TODO lookup many here.
 	var itemDisplays []engine.GotItemDisplay
 	for k, v := range titles {
 
-		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k))
+		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k)) //VX:TODO can we just look this up from above?
 		if err != nil {
 			return nil, err
 		}
 
 		var alias string = ""
-		found, ok := aliases[stringId]
+		found, ok := aliasMap[stringId]
 		if ok {
 			alias = *found
 		}
@@ -192,6 +118,21 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
 		}
+		pathLen := len(path.Ancestry)
+
+		var isParentComplete = false
+		if pathLen > 0 {
+			parentId := path.Ancestry[pathLen-1].Id
+			backToInt, _ := bullet_stl.AasciBulletIdToInt(parentId) //so many conversions. VX:TODO just create a 2 way map or whatever. Maybe that map is its own type.
+			parentSummary, ok := summaries[engine.SummaryId(backToInt)]
+			if ok {
+				if parentSummary.State != nil && *parentSummary.State == engine.Complete {
+					isParentComplete = true
+				}
+			}
+
+		}
+
 		gotId, err := engine.NewGotId(stringId)
 		if err != nil {
 			return nil, err
@@ -201,18 +142,18 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		var summaryPointer *engine.Summary = nil
 		if ok {
 			summaryPointer = &summary
+		} else {
+			return nil, errors.New("missing summary in fetchItems Below")
 		}
 
 		//here we filter complete leafs from the jobs list. VX:Note we want to have completes
 		//not even appear in the search, because thats more scalable.
 		isComplete := summary.State != nil && *summary.State == engine.Complete
 		isNote := summary.State != nil && *summary.State == engine.Note
-		if isNote {
-			//VX:TODO <0ah> need to omit notes that have complete parents.
-			//so need to check state of parent.
 
-		}
-		if !isComplete && !isNote {
+		isHiddenNote := isNote && isParentComplete
+
+		if !isComplete && !isHiddenNote {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 				Gid:        stringId,
 				Title:      v,
@@ -583,4 +524,62 @@ func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string
 		Ancestry: items,
 	}
 
+}
+
+func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
+	ancestorList, err := NewAncestorList(client, "anc", ancestorBucket, ":", ">", "<")
+
+	if err != nil {
+		return nil, err
+	}
+	codec := &JSONCodec[engine.Summary]{}
+	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
+	if err != nil {
+		return nil, err
+	}
+
+	titleStore, err := NewBulletTitleStore(client, titleBucket)
+	if err != nil {
+		return nil, err
+	}
+	longFormStore, err := NewBulletLongFormStore(client, longFormBucket)
+	if err != nil {
+		return nil, err
+	}
+
+	numberGoStore, err := NewBulletNumberGoStore(client, numberGoBucket)
+	if err != nil {
+		return nil, err
+	}
+
+	aliasStore, err := NewBulletAliasStore(client, aliasBucket)
+	if err != nil {
+		return nil, err
+	}
+
+	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore)
+	if err != nil {
+		return nil, err
+
+	}
+
+	var listeners []EventListenerInterface
+	aggregator, err := NewAggregator(aggStore)
+	if err != nil {
+		return nil, err
+	}
+
+	listeners = append(listeners, aggregator)
+
+	return &EngineBullet{
+		Client:         client,
+		AncestorList:   ancestorList,
+		TitleStore:     titleStore,
+		GidLookup:      gidLookup,
+		AliasStore:     aliasStore,
+		NumberGoStore:  numberGoStore,
+		SummaryStore:   aggStore,
+		LongFormStore:  longFormStore,
+		EventListeners: listeners,
+	}, nil
 }
