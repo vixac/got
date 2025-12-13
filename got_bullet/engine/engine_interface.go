@@ -24,6 +24,7 @@ type GotEngine interface {
 	Delete(lookup GidLookup) (*NodeId, error)
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
+	OpenThenTimestamp(lookup GidLookup) error
 
 	GotAliasInterface
 	GotCreateItemInterface
@@ -46,8 +47,10 @@ type GotState int
 const (
 	CompleteChar = "✔"
 	ActiveChar   = "•"
+	//ActiveChar = "🟢"
 	//bulletChar = "!"
-	NoteChar = "~"
+	NoteChar  = "~"
+	TNoteChar = "📎"
 )
 
 func (g GotState) ToStr() string {
@@ -141,6 +144,7 @@ type GotItemDisplay struct {
 	SummaryObj *Summary
 	Path       *GotPath
 	NumberGo   int
+	HasTNote   bool
 }
 
 func (i *GotItemDisplay) IsNote() bool {

@@ -37,12 +37,6 @@ func (c MagentaColor) Col() string {
 	return "\033[35m"
 }
 
-type NoteColor struct{}
-
-func (c NoteColor) Col() string {
-	return "\033[36m"
-}
-
 type BigGreenColor struct{}
 
 func (c BigGreenColor) Col() string {
@@ -66,6 +60,19 @@ type DarkGrayColor struct{}
 
 func (c DarkGrayColor) Col() string {
 	return "\033[1;30m"
+}
+
+type YellowColor struct{}
+
+func (c YellowColor) Col() string {
+	return "\033[38;5;214;3m"
+}
+
+type HighlightColor struct{}
+
+func (c HighlightColor) Col() string {
+	return "\033[38;5;73m"
+	//return "\033[35m"
 }
 
 /*

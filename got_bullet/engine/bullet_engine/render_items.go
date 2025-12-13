@@ -1,6 +1,7 @@
 package bullet_engine
 
 import (
+	"fmt"
 	"strconv"
 
 	"vixac.com/got/console"
@@ -28,7 +29,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		console.NewTableCellFromStr("Path", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("[", console.TokenTextTertiary{}), //"[" placeholder title
 		console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{}),
-		console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenTextTertiary{}),
+		console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenNote{}),
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
 		console.NewTableCellFromStr("  ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
@@ -99,7 +100,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 			cells = append(cells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
 			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{}))
-			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Notes)+smallPadding, console.TokenTextTertiary{}))
+			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Notes)+smallPadding, console.TokenNote{}))
 			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active), console.TokenPrimary{}))
 			cells = append(cells, console.NewTableCellFromStr("]"+mediumPadding, console.TokenTextTertiary{}))
 
@@ -110,14 +111,25 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			cells = append(cells, emptyCell) //active placeholder
 			cells = append(cells, emptyCell) //] plceholdere
 		}
-		cells = append(cells, stateToCell(item.SummaryObj.State))
-		var titleToken console.Token
-		if item.IsNote() {
-			titleToken = console.TokenTextTertiary{}
+		if item.HasTNote {
+			fmt.Printf("VXL THIS HAS T NOTE\n")
+			cells = append(cells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
 		} else {
+			cells = append(cells, stateToCell(item.SummaryObj.State))
+		}
+
+		var titleToken console.Token
+		var titlePrefix = ""
+		if item.IsNote() {
+			titleToken = console.TokenNote{}
+		} else if item.SummaryObj.Counts != nil {
+			titleToken = console.TokenGroup{}
+		} else {
+			titlePrefix = "  "
 			titleToken = console.TokenSecondary{}
 		}
-		cells = append(cells, console.NewTableCellFromStr(item.Title, titleToken))
+
+		cells = append(cells, console.NewTableCellFromStr(titlePrefix+item.Title, titleToken))
 		rows = append(rows, console.NewCellTableRow(cells))
 	}
 	return console.NewConsoleTable(rows)
@@ -131,7 +143,7 @@ func stateToToken(state *engine.GotState) console.Token {
 	case engine.Active:
 		return console.TokenPrimary{}
 	case engine.Note:
-		return console.TokenTextTertiary{}
+		return console.TokenNote{}
 	case engine.Complete:
 		return console.TokenComplete{}
 	}
