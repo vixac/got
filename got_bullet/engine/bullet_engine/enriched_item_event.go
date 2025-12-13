@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 
 	"vixac.com/got/engine"
 )
@@ -30,8 +29,6 @@ func EnrichSummaries(ancestry []engine.SummaryId, summaries map[engine.SummaryId
 		}
 		summary, ok := summaries[summaryId]
 		if !ok {
-			fmt.Printf("VX: Error fetching for id %d\n", summaryId)
-
 			return EnrichedAncestry{}, errors.New("missing summary when creating enriched item")
 		}
 		enriched = append(enriched, EnrichedSummary{

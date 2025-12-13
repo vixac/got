@@ -32,7 +32,6 @@ func buildEditCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			err := deps.Engine.EditTitle(engine.GidLookup{Input: lookup}, heading)
-			//VX:TODO send
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err

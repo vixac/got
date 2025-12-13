@@ -50,14 +50,12 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 			Deadline: enrichedEvent.Parent().Summary.Deadline,
 		}
 		parentId := enrichedEvent.ParentId()
-		fmt.Printf("VX: Leaf parent is changed to %+v from original %+v \n", newParentSummary, *enrichedEvent.Parent())
 		upserts[*parentId] = newParentSummary
 
 		//decrement the parents state on all ancestors
 		for _, a := range enrichedEvent.Ancestry {
 			if a.Id != *parentId {
 				change := engine.NewCountChange(*parentState, false)
-				fmt.Printf("VX: because a leaf changed to group, we are decrementing")
 				a.Summary.ApplyChange(change)
 
 				//if we've added an active item then all its parents are deactivated
@@ -69,27 +67,16 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 			}
 		}
 	}
-	for _, u := range upserts {
-		if u.Counts != nil {
-			fmt.Printf("VX: here is an upsert we need to insert before we do the addition: %+v\n", u.Counts)
-		} else {
-			fmt.Printf("VX: this upsert had no count: %+v\n", u)
-		}
-	}
 
 	//increment all parents with the new state
 	change := engine.NewCountChange(e.State, true)
 	for _, a := range enrichedEvent.Ancestry {
 		existingUpsert, ok := upserts[a.Id]
 		if ok {
-			fmt.Printf("VX: we have an upsert for this one already: %d, %+v", a.Id, existingUpsert)
 			existingUpsert.ApplyChange(change)
 			upserts[a.Id] = existingUpsert
-			fmt.Printf("VX: summary is now: %d, %+v", a.Id, existingUpsert)
 		} else {
-			fmt.Printf("VX: icnremting for the first time: %+v\n", a.Summary.Counts)
 			a.Summary.ApplyChange(change)
-			fmt.Printf("VX: incremened for the first time is now: %+v\n", a.Summary.Counts)
 			upserts[a.Id] = a.Summary
 		}
 	}
@@ -100,7 +87,6 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 
 func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 
-	fmt.Printf("VX: state change called to %d\n", e.NewState)
 	idsIncludingThis := e.Ancestry
 	idsIncludingThis = append(idsIncludingThis, e.Id) //the last item is *THIS*, it's on the end which is wierd.
 	ancestorAggs, err := a.summaryStore.Fetch(idsIncludingThis)

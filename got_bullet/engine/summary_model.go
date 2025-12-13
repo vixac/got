@@ -1,9 +1,5 @@
 package engine
 
-import (
-	"fmt"
-)
-
 // First pass of the kinds of things we'll count
 type AggCount struct {
 	Complete int `json:"c,omitempty"`
@@ -43,11 +39,6 @@ func (a *Summary) ApplyChange(change AggregateCountChange) {
 	count.Active += change.ActiveInt
 	count.Complete += change.CompleteInc
 	count.Notes += change.NoteInc
-	var old = ""
-	if a.Counts != nil {
-		old = fmt.Sprintf("%+v", *a.Counts)
-	}
-	fmt.Printf("VX: summary count is changed from %s -> to %+v\n", old, count)
 	a.Counts = &count
 
 }

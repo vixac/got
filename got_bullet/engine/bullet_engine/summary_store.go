@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -65,7 +64,6 @@ func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[engine.SummaryId]engi
 			Key:   spaced,
 			Value: json,
 		})
-		fmt.Printf("VX: upserting json %s from agg %+v'\n", json, agg)
 	}
 	return a.Client.DepotUpsertMany(reqs)
 }
