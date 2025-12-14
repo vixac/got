@@ -18,13 +18,13 @@ func MakeMockSummaryStore() MockSummaryStore {
 		aggs: aggs,
 	}
 }
-func (m *MockSummaryStore) UpsertAggregate(id engine.SummaryId, agg engine.Summary) error {
+func (m *MockSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summary) error {
 	m.upsertAgg = &agg
 	m.upsertId = &id
 	return m.errorToThrow
 }
 
-func (m *MockSummaryStore) UpsertManyAggregates(aggs map[engine.SummaryId]engine.Summary) error {
+func (m *MockSummaryStore) UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error {
 
 	for k, v := range aggs {
 		m.aggs[k] = v

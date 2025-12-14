@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	"vixac.com/got/console"
 )
 
 type SummaryId int32
@@ -137,14 +138,15 @@ type GidLookup struct {
 }
 
 type GotItemDisplay struct {
-	Gid        string
-	Title      string
-	Alias      string
-	Deadline   string
-	SummaryObj *Summary
-	Path       *GotPath
-	NumberGo   int
-	HasTNote   bool
+	Gid           string
+	Title         string
+	Alias         string
+	Deadline      string
+	DeadlineToken console.Token
+	SummaryObj    *Summary
+	Path          *GotPath
+	NumberGo      int
+	HasTNote      bool
 }
 
 func (i *GotItemDisplay) IsNote() bool {

@@ -19,8 +19,8 @@ func NewSummaryId(gotId engine.GotId) engine.SummaryId {
 }
 
 type SummaryStoreInterface interface {
-	UpsertAggregate(id engine.SummaryId, agg engine.Summary) error
-	UpsertManyAggregates(aggs map[engine.SummaryId]engine.Summary) error
+	UpsertSummary(id engine.SummaryId, agg engine.Summary) error
+	UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error
 	Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error)
 	Delete(ids []engine.SummaryId) error
 }
@@ -51,7 +51,7 @@ func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) engine.SummaryId {
 	return engine.SummaryId(namespaced.Id)
 }
 
-func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[engine.SummaryId]engine.Summary) error {
+func (a *BulletSummaryStore) UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error {
 
 	var reqs []bullet_interface.DepotRequest
 	for id, agg := range aggs {
@@ -69,7 +69,7 @@ func (a *BulletSummaryStore) UpsertManyAggregates(aggs map[engine.SummaryId]engi
 }
 
 // VX:TODO RM or call many if we want to keep it
-func (a *BulletSummaryStore) UpsertAggregate(id engine.SummaryId, agg engine.Summary) error {
+func (a *BulletSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summary) error {
 
 	json, err := a.codec.Encode(agg)
 	if err != nil {

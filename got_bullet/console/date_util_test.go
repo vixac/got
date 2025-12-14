@@ -99,3 +99,64 @@ func TestParseRelativeDate_Invalid(t *testing.T) {
 		}
 	}
 }
+
+func TestHumanizeDate(t *testing.T) {
+	ref := time.Date(2025, 12, 6, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name   string
+		target time.Time
+		want   string
+	}{
+		{
+			name:   "yesterday",
+			target: ref.AddDate(0, 0, -1),
+			want:   "yesterday",
+		},
+		{
+			name:   "today",
+			target: ref,
+			want:   "today",
+		},
+		{
+			name:   "tomorrow",
+			target: ref.AddDate(0, 0, 1),
+			want:   "tomorrow",
+		},
+		{
+			name:   "5 days ago",
+			target: ref.AddDate(0, 0, -5),
+			want:   "5 days ago",
+		},
+		{
+			name:   "in 10 days",
+			target: ref.AddDate(0, 0, 10),
+			want:   "in 10 days",
+		},
+		{
+			name:   "over 100 days past uses weeks",
+			target: ref.AddDate(0, 0, -140),
+			want:   "20 weeks ago",
+		},
+		{
+			name:   "over 100 days future uses weeks",
+			target: ref.AddDate(0, 0, 154),
+			want:   "in 22 weeks",
+		},
+		{
+			name:   "time of day ignored",
+			target: time.Date(2025, 12, 6, 23, 59, 59, 0, time.UTC),
+			want:   "today",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			//VX:Note spacetime is not tested.
+			got, _ := HumanizeDate(tt.target, ref)
+			if got != tt.want {
+				t.Fatalf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

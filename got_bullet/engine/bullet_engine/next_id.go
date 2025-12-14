@@ -17,6 +17,11 @@ const (
 	latestSubject       = "latest"
 )
 
+func (e *EngineBullet) LastId() (int32, error) {
+	//VX:TODO
+	return 0, nil
+}
+
 // VX:TODO test, maybe put somewhere else too.
 func (e *EngineBullet) NextId() (int32, error) {
 
@@ -43,6 +48,7 @@ func (e *EngineBullet) NextId() (int32, error) {
 		//now increment
 		value := currentHighest.Value
 		valueInt, err := strconv.ParseInt(value, 10, 32)
+
 		if err != nil {
 			return 0, err
 		}
