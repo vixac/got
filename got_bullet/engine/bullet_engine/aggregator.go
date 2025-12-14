@@ -82,7 +82,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	}
 
 	//apply all the created changes.
-	return a.summaryStore.UpsertManyAggregates(upserts)
+	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
 func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
@@ -104,13 +104,13 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 
 	hasAncestors := len(e.Ancestry) > 0
 	if !hasAncestors { //just upsert this item and move on.
-		return a.summaryStore.UpsertManyAggregates(upserts)
+		return a.summaryStore.UpsertManySummaries(upserts)
 	}
 
 	parentIndex := len(e.Ancestry) - 1
 	parentSummaryId := e.Ancestry[parentIndex]
 	if parentSummaryId == engine.SummaryId(TheRootNoteInt32) {
-		return a.summaryStore.UpsertManyAggregates(upserts)
+		return a.summaryStore.UpsertManySummaries(upserts)
 	}
 	parentSummary, ok := ancestorAggs[parentSummaryId]
 	if !ok {
@@ -175,7 +175,7 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 		}
 	}
 
-	return a.summaryStore.UpsertManyAggregates(upserts)
+	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
 func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {

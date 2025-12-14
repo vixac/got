@@ -60,3 +60,9 @@ type TokenGroup struct{}
 func (t TokenGroup) Name() string {
 	return "group"
 }
+
+type TokenAlert struct{}
+
+func (t TokenAlert) Name() string {
+	return "alert"
+}

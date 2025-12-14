@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"fmt"
 	"strconv"
 
 	"vixac.com/got/console"
@@ -33,6 +32,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
 		console.NewTableCellFromStr("  ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
+		console.NewTableCellFromStr("Deadline", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
 
@@ -112,7 +112,6 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			cells = append(cells, emptyCell) //] plceholdere
 		}
 		if item.HasTNote {
-			fmt.Printf("VXL THIS HAS T NOTE\n")
 			cells = append(cells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
 		} else {
 			cells = append(cells, stateToCell(item.SummaryObj.State))
@@ -129,6 +128,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			titleToken = console.TokenSecondary{}
 		}
 
+		cells = append(cells, console.NewTableCellFromStr(item.Deadline, item.DeadlineToken))
 		cells = append(cells, console.NewTableCellFromStr(titlePrefix+item.Title, titleToken))
 		rows = append(rows, console.NewCellTableRow(cells))
 	}

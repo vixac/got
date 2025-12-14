@@ -2,6 +2,8 @@ package console
 
 import (
 	"errors"
+	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +17,32 @@ var weekdayMap = map[string]time.Weekday{
 	"thu": time.Thursday,
 	"fri": time.Friday,
 	"sat": time.Saturday,
+}
+
+const (
+	PastMany   = -2
+	Yesterday  = -1
+	Today      = 0
+	Tomorrow   = 1
+	FutureMany = 2
+)
+
+type SpaceTime struct {
+	TimeType int
+}
+type RFC3339Time time.Time
+
+func (t RFC3339Time) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + time.Time(t).UTC().Format(time.RFC3339) + `"`), nil
+}
+
+func (t *RFC3339Time) UnmarshalJSON(b []byte) error {
+	parsed, err := time.Parse(`"`+time.RFC3339+`"`, string(b))
+	if err != nil {
+		return err
+	}
+	*t = RFC3339Time(parsed)
+	return nil
 }
 
 func ParseRelativeDate(input string, now time.Time) (time.Time, error) {
@@ -57,6 +85,41 @@ func ParseRelativeDate(input string, now time.Time) (time.Time, error) {
 	}
 
 	return time.Time{}, errors.New("unrecognized date expression")
+}
+
+// HumanizeDate converts target into a relative human-readable string
+// compared to the reference time "now".
+func HumanizeDate(target, now time.Time) (string, SpaceTime) {
+	// Normalize both times to midnight to avoid hour drift
+	targetDay := normalizeDate(target)
+	nowDay := normalizeDate(now)
+
+	diffDays := int(targetDay.Sub(nowDay).Hours() / 24)
+
+	switch diffDays {
+	case -1:
+		return "yesterday", SpaceTime{TimeType: Yesterday}
+	case 0:
+		return "today", SpaceTime{TimeType: Today}
+	case 1:
+		return "tomorrow", SpaceTime{Tomorrow}
+	}
+
+	absDays := int(math.Abs(float64(diffDays)))
+
+	// Switch to weeks if far away
+	if absDays > 100 {
+		weeks := absDays / 7
+		if diffDays < 0 {
+			return fmt.Sprintf("%d weeks ago", weeks), SpaceTime{TimeType: PastMany}
+		}
+		return fmt.Sprintf("in %d weeks", weeks), SpaceTime{TimeType: FutureMany}
+	}
+
+	if diffDays < 0 {
+		return fmt.Sprintf("%d days ago", absDays), SpaceTime{TimeType: PastMany}
+	}
+	return fmt.Sprintf("in %d days", absDays), SpaceTime{TimeType: FutureMany}
 }
 
 func normalizeDate(t time.Time) time.Time {

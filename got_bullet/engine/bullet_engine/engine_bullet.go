@@ -1,15 +1,15 @@
 package bullet_engine
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
 	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 
+	"vixac.com/got/console"
 	"vixac.com/got/engine"
 )
 
@@ -40,73 +40,6 @@ type EngineBullet struct {
 
 	//interface conformance
 	//	LongFormStoreInterface
-}
-
-func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
-	gid, err := e.GidLookup.InputToGid(&lookup)
-	if err != nil || gid == nil {
-		return err
-	}
-
-	var note = ""
-	existing, err := e.LongFormStore.LongFormFor(gid.IntValue)
-	if err != nil {
-		return err
-	}
-	if existing != nil {
-		note = *existing
-	}
-	// 2. Temp file
-	tmp, err := os.CreateTemp("", "got-note-*.txt")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-
-	// 3. Write existing content
-	if _, err := tmp.WriteString(note); err != nil {
-		return err
-	}
-	tmp.Close()
-
-	// 4. Launch editor
-	editor := os.Getenv("EDITOR")
-	if editor == "" {
-		editor = "vim"
-	}
-
-	cmd := exec.Command(editor, tmp.Name())
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	// 5. Read edited content
-	updated, err := os.ReadFile(tmp.Name())
-	if err != nil {
-		return err
-	}
-
-	// 6. Save back to DB
-	updatedString := string(updated)
-	if updatedString == note { //no changes, don't save
-		return nil
-	}
-	datedString := datePrefix() + updatedString
-	return e.LongFormStore.UpsertItem(gid.IntValue, datedString)
-}
-
-func datePrefix() string {
-	line := "\n\n----------------------------\n"
-
-	now := time.Now().UTC()
-
-	formatted := now.Format("Mon 2 Jan 2006 15:04:05 MST")
-	return line + formatted + line + "\n"
-
 }
 
 // lets rewrite this maybe.
@@ -222,31 +155,58 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			return nil, errors.New("missing summary in fetchItems Below")
 		}
 
-		//here we filter complete leafs from the jobs list. VX:Note we want to have completes
+		//here we filter complete leafs from the jobs list, and their notes.
+		//VX:Note we want to have completes
 		//not even appear in the search, because thats more scalable.
 		isComplete := summary.State != nil && *summary.State == engine.Complete
 		isNote := summary.State != nil && *summary.State == engine.Note
 
 		isHiddenNote := isNote && isParentComplete
 		_, hasLongForm := longForms[k]
-		if hasLongForm {
-			fmt.Printf("VX: THIS IS A LONGFORM WEHEY")
-		}
 
+		var displayDeadline = ""
+		var deadlineToken console.Token = console.TokenSecondary{}
+		if summary.Deadline != nil && summary.State != nil && *summary.State == engine.Active {
+
+			var date console.RFC3339Time
+			dateBytes := []byte(summary.Deadline.Date)
+			err := json.Unmarshal(dateBytes, &date)
+			if err != nil {
+				return nil, err
+			}
+
+			deadStr, spaceTime := console.HumanizeDate(time.Time(date), time.Now())
+			displayDeadline = deadStr
+			deadlineToken = ToToken(spaceTime)
+		}
 		if !isComplete && !isHiddenNote {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
-				Gid:        stringId,
-				Title:      v,
-				Path:       path,
-				Alias:      alias,
-				SummaryObj: summaryPointer,
-				HasTNote:   hasLongForm,
+				Gid:           stringId,
+				Title:         v,
+				Path:          path,
+				Alias:         alias,
+				SummaryObj:    summaryPointer,
+				HasTNote:      hasLongForm,
+				Deadline:      displayDeadline,
+				DeadlineToken: deadlineToken,
 			})
 		}
 
 	}
 	sorted := SortTheseIntoDFS(itemDisplays)
 	return e.renderSummaries(sorted)
+}
+
+func ToToken(s console.SpaceTime) console.Token {
+	switch s.TimeType {
+	case console.PastMany:
+		return console.TokenAlert{}
+	case console.FutureMany:
+		return console.TokenBrand{}
+	default:
+		return console.TokenGroup{}
+
+	}
 }
 
 func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
@@ -297,13 +257,15 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Gid:    engine.Gid{Id: s.Gid},
 		})
 		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
-			Gid:        "0" + s.Gid, //VX:TODO here is the "0 prefix on the gid."
-			Alias:      s.Alias,
-			NumberGo:   num,
-			Title:      s.Title,
-			Path:       s.Path,
-			SummaryObj: s.SummaryObj,
-			HasTNote:   s.HasTNote,
+			Gid:           "0" + s.Gid, //VX:TODO here is the "0 prefix on the gid."
+			Alias:         s.Alias,
+			NumberGo:      num,
+			Title:         s.Title,
+			Path:          s.Path,
+			SummaryObj:    s.SummaryObj,
+			HasTNote:      s.HasTNote,
+			Deadline:      s.Deadline,
+			DeadlineToken: s.DeadlineToken,
 		})
 	}
 
@@ -433,6 +395,22 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		IntValue:   newId,
 	}
 
+	var deadline *engine.Deadline = nil
+
+	if date != nil {
+		deadlineTime, err := console.ParseRelativeDate(date.UserInput, time.Now())
+		if err != nil {
+			return nil, err
+		}
+		formatted := deadlineTime.Format("Mon 2 Jan 2006")
+		fmt.Printf("VX: Deadline date it %s", formatted)
+		dateJsonByes, err := deadlineTime.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		deadline = &engine.Deadline{Date: string(dateJsonByes)}
+	}
+
 	var parentGotId *engine.GotId = nil
 	if parent != nil {
 		fmt.Printf("Looking up parent %s\n", parent.Input)
@@ -486,6 +464,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		Id:       engine.SummaryId(newId),
 		State:    newState,
 		Ancestry: summaryIds,
+		Deadline: deadline,
 	})
 
 	return &engine.NodeId{
