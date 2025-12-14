@@ -42,6 +42,32 @@ type EngineBullet struct {
 	//	LongFormStoreInterface
 }
 
+func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return err
+	}
+
+	summaryId := engine.SummaryId(gid.IntValue)
+
+	ids := []engine.SummaryId{summaryId}
+	items, err := e.SummaryStore.Fetch(ids)
+	if err != nil {
+		return err
+	}
+	summary, ok := items[summaryId]
+	if !ok {
+		return errors.New("missing summary")
+	}
+
+	deadline, err := engine.NewDeadlineFromDateLookup(dateLookup.UserInput, time.Now())
+	if err != nil {
+		return err
+	}
+	summary.Deadline = &deadline
+	return e.SummaryStore.UpsertSummary(summaryId, summary)
+}
+
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
 
@@ -166,7 +192,9 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 
 		var displayDeadline = ""
 		var deadlineToken console.Token = console.TokenSecondary{}
-		if summary.Deadline != nil && summary.State != nil && *summary.State == engine.Active {
+
+		//if theres a deadline and either its a group or its an active job
+		if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
 
 			var date console.RFC3339Time
 			dateBytes := []byte(summary.Deadline.Date)
@@ -204,7 +232,7 @@ func ToToken(s console.SpaceTime) console.Token {
 	case console.FutureMany:
 		return console.TokenBrand{}
 	default:
-		return console.TokenGroup{}
+		return console.TokenWarning{}
 
 	}
 }

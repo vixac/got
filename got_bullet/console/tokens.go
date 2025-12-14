@@ -66,3 +66,9 @@ type TokenAlert struct{}
 func (t TokenAlert) Name() string {
 	return "alert"
 }
+
+type TokenWarning struct{}
+
+func (t TokenWarning) Name() string {
+	return "warning"
+}

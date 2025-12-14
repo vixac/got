@@ -32,7 +32,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
 		console.NewTableCellFromStr("  ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
-		console.NewTableCellFromStr("Deadline", console.TokenTextTertiary{}),
+		console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
 
@@ -143,7 +143,7 @@ func stateToToken(state *engine.GotState) console.Token {
 	case engine.Active:
 		return console.TokenPrimary{}
 	case engine.Note:
-		return console.TokenNote{}
+		return console.TokenGid{}
 	case engine.Complete:
 		return console.TokenComplete{}
 	}
