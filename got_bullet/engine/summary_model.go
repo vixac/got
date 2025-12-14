@@ -1,5 +1,12 @@
 package engine
 
+import (
+	"fmt"
+	"time"
+
+	"vixac.com/got/console"
+)
+
 // First pass of the kinds of things we'll count
 type AggCount struct {
 	Complete int `json:"c,omitempty"`
@@ -17,6 +24,20 @@ type Summary struct {
 
 type Deadline struct {
 	Date string `json:"d,omitempty"`
+}
+
+func NewDeadlineFromDateLookup(inputString string, now time.Time) (Deadline, error) {
+	deadlineTime, err := console.ParseRelativeDate(inputString, now)
+	if err != nil {
+		return Deadline{}, err
+	}
+	formatted := deadlineTime.Format("Mon 2 Jan 2006")
+	fmt.Printf("VX: Deadline date it %s", formatted)
+	dateJsonByes, err := deadlineTime.MarshalJSON()
+	if err != nil {
+		return Deadline{}, err
+	}
+	return Deadline{Date: string(dateJsonByes)}, nil
 }
 
 type DatedTask struct {

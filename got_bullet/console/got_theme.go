@@ -27,6 +27,8 @@ func (t *GotTheme) ColorFor(token Token) Color {
 		return HighlightColor{}
 	case "alert":
 		return RedColor{}
+	case "warning":
+		return AmberColor{}
 	}
 
 	return ResetColor{}

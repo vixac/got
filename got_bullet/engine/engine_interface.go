@@ -26,6 +26,7 @@ type GotEngine interface {
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 	OpenThenTimestamp(lookup GidLookup) error
+	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
 
 	GotAliasInterface
 	GotCreateItemInterface
