@@ -13,13 +13,26 @@ const (
 	firstId       int32 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
 	bucketId            = 100
 	listName            = "next-id-list"
-	separator           = ""
+	separator           = "" //VX:TODO this should be something else. I should migrate.
 	latestSubject       = "latest"
 )
 
+// VX:TODO
+// VX:TODO this is all bad things.
 func (e *EngineBullet) LastId() (int32, error) {
-	//VX:TODO
-	return 0, nil
+	list, err := bullet_stl.NewBulletOneWayList(e.Client, bucketId, listName, separator)
+	if err != nil {
+		return 0, err
+	}
+	latest := bullet_stl.ListSubject{Value: latestSubject}
+	currentHighest, err := list.GetObject(latest)
+	if err != nil {
+		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())
+		return 0, err
+	}
+	valueInt, err := strconv.ParseInt(currentHighest.Value, 10, 32)
+	return int32(valueInt), err
+
 }
 
 // VX:TODO test, maybe put somewhere else too.

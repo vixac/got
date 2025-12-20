@@ -51,7 +51,7 @@ func (m *MockEngine) OpenThenTimestamp(lookup engine.GidLookup) error {
 	return errors.New("not impl")
 }
 
-func (e MockEngine) ScheduleItem(lookup *engine.GidLookup, dateLookup *engine.DateLookup) error {
+func (e MockEngine) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
 	return errors.New("not impl")
 }
 func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {

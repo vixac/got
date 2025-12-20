@@ -77,5 +77,6 @@ func (c AmberColor) Col() string {
 type HighlightColor struct{}
 
 func (c HighlightColor) Col() string {
-	return "\033[38;5;73m"
+	// return "\033[38;5;73m"
+	return "\033[38;5;102;1m"
 }

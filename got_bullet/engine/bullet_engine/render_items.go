@@ -31,8 +31,8 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenNote{}),
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
-		console.NewTableCellFromStr("  ", console.TokenPrimary{}),     //emptyCell, //leaf column has no title
 		console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}),
+		console.NewTableCellFromStr("  ", console.TokenPrimary{}), //emptyCell, //leaf column has no title
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
 
@@ -41,6 +41,8 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 	rows = append(rows, titleRow)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 
+	var lastParentId *string = nil
+	var lastId *string = nil
 	for _, item := range items {
 		var cells []console.TableCell
 
@@ -65,6 +67,19 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 				treePattern += console.FitString("", wordLength, " ")
 				continue
 			}
+
+			if i == parentIndex {
+				thisParent := "0" + item.Path.Ancestry[parentIndex].Id
+				isSibling := lastParentId != nil && *lastParentId == thisParent
+				isFirstChild := lastId != nil && *lastId == thisParent
+
+				if !isFirstChild && !isSibling {
+					rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+				}
+
+				lastParentId = &thisParent
+			}
+
 			if wordLength == 0 {
 				continue
 			}
@@ -84,6 +99,8 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 
 			}
 		}
+
+		lastId = &item.Gid
 		pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
 
 		pathSuffixShortcut, isAlias := item.Shortcut()
@@ -111,6 +128,8 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			cells = append(cells, emptyCell) //active placeholder
 			cells = append(cells, emptyCell) //] plceholdere
 		}
+
+		cells = append(cells, console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken))
 		if item.HasTNote {
 			cells = append(cells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
 		} else {
@@ -128,7 +147,6 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 			titleToken = console.TokenSecondary{}
 		}
 
-		cells = append(cells, console.NewTableCellFromStr(item.Deadline, item.DeadlineToken))
 		cells = append(cells, console.NewTableCellFromStr(titlePrefix+item.Title, titleToken))
 		rows = append(rows, console.NewCellTableRow(cells))
 	}
