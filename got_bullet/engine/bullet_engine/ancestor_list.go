@@ -22,9 +22,6 @@ type DescendantLookupResult struct {
 // 0 is a bit like a null terminator character. Beacuse ancestor list is forward only
 // duplicate objects aren't a problem. We'll give this value to all nodes that are infact a leaf node.
 var (
-	TheLeafChild = bullet_stl.ListObject{
-		Value: "00",
-	}
 	TheRootNoteInt32 int32 = 0
 	//if no parent is provided, then the root ancestor is provided.
 	TheRootNode = bullet_stl.ListSubject{
@@ -126,19 +123,11 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 		}
 
 		parent = bullet_stl.ListSubject{Value: parentKey}
-
-		//we attempt to delete theleafNode from this parent, which will succeed if this item is the first child.
-		deletePairs := []bullet_stl.ManyToManyPair{{Subject: parent, Object: TheLeafChild}}
-		err = a.Mesh.RemovePairs(deletePairs) //VX:TODO make sure deleting doesnt fail if theres nothing to delete.
-		if err != nil {
-			return nil, err
-		}
 	}
 	object := bullet_stl.ListObject{Value: id.AasciValue}
 
 	pairs := []bullet_stl.ManyToManyPair{
-		{Subject: parent, Object: object},                //parent -> newItem
-		{Subject: object.Invert(), Object: TheLeafChild}, //newItem -> theLeafNode
+		{Subject: parent, Object: object}, //parent -> newItem
 	}
 
 	return ancestry, a.Mesh.AppendPairs(pairs)
