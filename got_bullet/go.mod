@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/spf13/cobra v1.10.1
-	github.com/vixac/bullet v0.1.1
+	github.com/vixac/bullet v0.1.2
 	github.com/vixac/firbolg_clients v0.1.0
 	gotest.tools v2.2.0+incompatible
 )
@@ -12,6 +12,7 @@ require (
 require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect
