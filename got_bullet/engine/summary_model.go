@@ -17,31 +17,51 @@ type AggCount struct {
 // VX:TODO its either state OR its counts.
 // deadline is separate. Maybe it doesn't belong here but we'll see.
 type Summary struct {
-	State    *GotState `json:"s,omitempty"`
-	Counts   *AggCount `json:"c"`
-	Deadline *Deadline `json:"d"`
+	State       *GotState `json:"s,omitempty"`
+	Counts      *AggCount `json:"c"`
+	Deadline    *DateTime `json:"d"`
+	CreatedDate *DateTime `json:"cr,omitempty"`
+	UpdatedDate *DateTime `json:"u,omitempty"`
 }
 
-type Deadline struct {
+func NewSummary(state GotState, deadline *DateTime, created *DateTime) Summary {
+	if created != nil {
+		fmt.Printf("VX: NEW SUMMMARY CREATED WITH CREATED: %s \n", created.Date)
+	}
+
+	return Summary{
+		State:       &state,
+		Counts:      nil,
+		Deadline:    deadline,
+		CreatedDate: created,
+		UpdatedDate: created,
+	}
+}
+
+type DateTime struct {
 	Date string `json:"d,omitempty"`
 }
 
-func NewDeadlineFromDateLookup(inputString string, now time.Time) (Deadline, error) {
+func NewDateTime(time time.Time) (DateTime, error) {
+
+	//formatted := deadlineTime.Format("Mon 2 Jan 2006")
+	dateJsonByes, err := time.MarshalJSON()
+	if err != nil {
+		return DateTime{}, err
+	}
+	return DateTime{Date: string(dateJsonByes)}, nil
+}
+
+func NewDeadlineFromDateLookup(inputString string, now time.Time) (DateTime, error) {
 	deadlineTime, err := console.ParseRelativeDate(inputString, now)
 	if err != nil {
-		return Deadline{}, err
+		return DateTime{}, err
 	}
-	formatted := deadlineTime.Format("Mon 2 Jan 2006")
-	fmt.Printf("VX: Deadline date it %s", formatted)
-	dateJsonByes, err := deadlineTime.MarshalJSON()
-	if err != nil {
-		return Deadline{}, err
-	}
-	return Deadline{Date: string(dateJsonByes)}, nil
+	return NewDateTime((deadlineTime))
 }
 
 type DatedTask struct {
-	Deadline Deadline  `json:"d"`
+	Deadline DateTime  `json:"d"`
 	Id       SummaryId `json:"i,omitempty"`
 }
 
@@ -94,11 +114,9 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 }
 
 // no count, no deadline for some reason
-func NewLeafSummary(state GotState, deadline *Deadline) Summary {
-	return Summary{
-		State:    &state,
-		Deadline: deadline,
-	}
+func NewLeafSummary(state GotState, deadline *DateTime, now time.Time) Summary {
+	dateTime, _ := NewDateTime(now)
+	return NewSummary(state, deadline, &dateTime)
 }
 
 func (c AggCount) ChangeState(state GotState, inc int) AggCount {
@@ -123,6 +141,17 @@ func (a Summary) IsLeaf() bool {
 	return a.State != nil
 }
 
+func (a *Summary) UpdatedCount(newCount AggCount) Summary {
+	return Summary{
+		State:       a.State,
+		Counts:      &newCount,
+		Deadline:    a.Deadline,
+		CreatedDate: a.CreatedDate,
+		UpdatedDate: a.UpdatedDate,
+	}
+}
+
+/*
 func (c AggCount) changeActive(inc int) AggCount {
 	return AggCount{
 		c.Complete,
@@ -144,10 +173,4 @@ func (c AggCount) changeComplete(inc int) AggCount {
 		c.Notes,
 	}
 }
-func (a *Summary) UpdatedCount(newCount AggCount) Summary {
-	return Summary{
-		State:    a.State,
-		Counts:   &newCount,
-		Deadline: a.Deadline,
-	}
-}
+*/

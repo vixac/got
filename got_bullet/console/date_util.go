@@ -55,14 +55,14 @@ func ParseRelativeDate(input string, now time.Time) (time.Time, error) {
 		if err != nil {
 			return time.Time{}, errors.New("invalid Nd format")
 		}
-		return normalizeDate(now.AddDate(0, 0, n)), nil
+		return NormalizeDate(now.AddDate(0, 0, n)), nil
 	}
 
 	// Case 2: End of week
 	if in == "eow" {
 		weekday := int(now.Weekday())
 		daysToSunday := (7 - weekday) % 7
-		return normalizeDate(now.AddDate(0, 0, daysToSunday)), nil
+		return NormalizeDate(now.AddDate(0, 0, daysToSunday)), nil
 	}
 
 	// Case 3: End of month
@@ -71,7 +71,7 @@ func ParseRelativeDate(input string, now time.Time) (time.Time, error) {
 		loc := now.Location()
 		firstNextMonth := time.Date(y, m+1, 1, 0, 0, 0, 0, loc)
 		endOfMonth := firstNextMonth.AddDate(0, 0, -1)
-		return normalizeDate(endOfMonth), nil
+		return NormalizeDate(endOfMonth), nil
 	}
 
 	// Case 4: Next weekday
@@ -81,18 +81,24 @@ func ParseRelativeDate(input string, now time.Time) (time.Time, error) {
 		if delta == 0 {
 			delta = 7 // always next weekday, not today
 		}
-		return normalizeDate(now.AddDate(0, 0, delta)), nil
+		return NormalizeDate(now.AddDate(0, 0, delta)), nil
 	}
 
 	return time.Time{}, errors.New("unrecognized date expression")
+}
+
+func DayFormat(time time.Time) string {
+
+	formatted := time.Format("2006-01-30")
+	return formatted
 }
 
 // HumanizeDate converts target into a relative human-readable string
 // compared to the reference time "now".
 func HumanizeDate(target, now time.Time) (string, SpaceTime) {
 	// Normalize both times to midnight to avoid hour drift
-	targetDay := normalizeDate(target)
-	nowDay := normalizeDate(now)
+	targetDay := NormalizeDate(target)
+	nowDay := NormalizeDate(now)
 
 	diffDays := int(targetDay.Sub(nowDay).Hours() / 24)
 
@@ -122,7 +128,7 @@ func HumanizeDate(target, now time.Time) (string, SpaceTime) {
 	return fmt.Sprintf("in %d days", absDays), SpaceTime{TimeType: FutureMany}
 }
 
-func normalizeDate(t time.Time) time.Time {
+func NormalizeDate(t time.Time) time.Time {
 	y, m, d := t.Date()
 	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
 }

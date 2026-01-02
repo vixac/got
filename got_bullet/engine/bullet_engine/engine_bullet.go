@@ -193,6 +193,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		var displayDeadline = ""
 		var deadlineToken console.Token = console.TokenSecondary{}
 
+		//VX:TODO get this date wrangling out. Its business logic
 		//if theres a deadline and either its a group or its an active job
 		if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
 
@@ -207,6 +208,16 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			displayDeadline = deadStr
 			deadlineToken = ToToken(spaceTime)
 		}
+
+		createdStr, err := JsonDateToReadable(summary.CreatedDate)
+		if err != nil {
+			return nil, err
+		}
+		updatedStr, err := JsonDateToReadable(summary.UpdatedDate)
+		if err != nil {
+			return nil, err
+		}
+
 		if !isComplete && !isHiddenNote {
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 				Gid:           stringId,
@@ -217,12 +228,32 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 				HasTNote:      hasLongForm,
 				Deadline:      displayDeadline,
 				DeadlineToken: deadlineToken,
+				Created:       createdStr,
+				Updated:       updatedStr,
 			})
 		}
 
 	}
 	sorted := SortTheseIntoDFS(itemDisplays)
 	return e.renderSummaries(sorted)
+}
+
+// VX:TODO MOVE
+func JsonDateToReadable(dateInput *engine.DateTime) (string, error) {
+	if dateInput == nil {
+		return "", nil
+	}
+	var date console.RFC3339Time
+	dateBytes := []byte(*&dateInput.Date)
+	err := json.Unmarshal(dateBytes, &date)
+	if err != nil {
+		fmt.Printf("VXL ERROR parsing is %s", err)
+		return "", err
+	}
+
+	dateStr := console.DayFormat(time.Time(date))
+	return dateStr, nil
+
 }
 
 func ToToken(s console.SpaceTime) console.Token {
@@ -284,6 +315,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Number: num,
 			Gid:    engine.Gid{Id: s.Gid},
 		})
+		//VX:TODO THIS KEEPS CATCHING ME OUT FIX. It shouldne be the constructir again.
 		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
 			Gid:           "0" + s.Gid, //VX:TODO here is the "0 prefix on the gid."
 			Alias:         s.Alias,
@@ -294,6 +326,8 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			HasTNote:      s.HasTNote,
 			Deadline:      s.Deadline,
 			DeadlineToken: s.DeadlineToken,
+			Created:       s.Created,
+			Updated:       s.Updated,
 		})
 	}
 
@@ -423,7 +457,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		IntValue:   newId,
 	}
 
-	var deadline *engine.Deadline = nil
+	var deadline *engine.DateTime = nil
 
 	if date != nil {
 		deadlineTime, err := console.ParseRelativeDate(date.UserInput, time.Now())
@@ -436,7 +470,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		if err != nil {
 			return nil, err
 		}
-		deadline = &engine.Deadline{Date: string(dateJsonByes)}
+		deadline = &engine.DateTime{Date: string(dateJsonByes)}
 	}
 
 	var parentGotId *engine.GotId = nil
