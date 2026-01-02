@@ -69,8 +69,12 @@ func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.D
 }
 
 // lets rewrite this maybe.
-func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType int, states []int) (*engine.GotFetchResult, error) {
+func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState) (*engine.GotFetchResult, error) {
 
+	statesToFetch := make(map[engine.GotState]bool)
+	for _, v := range states {
+		statesToFetch[v] = true
+	}
 	//0->1 numberstore gid -> numberstore
 	//0-> alias store gid -> alias store
 	gid, err := e.GidLookup.InputToGid(lookup)
@@ -80,6 +84,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 
 	//1.gid->ancestor (object -> subject)
 	//2.all descendants: allpairs for full key
+
+	//VX:TODO we should be able to apply the state filtering here so that complete items aren't fetched unless necessary. Because many complete , few active.
 	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
 	if err != nil || all == nil {
 		return nil, err
@@ -184,10 +190,22 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		//here we filter complete leafs from the jobs list, and their notes.
 		//VX:Note we want to have completes
 		//not even appear in the search, because thats more scalable.
-		isComplete := summary.State != nil && *summary.State == engine.Complete
-		isNote := summary.State != nil && *summary.State == engine.Note
+		var shouldShow = false
 
-		isHiddenNote := isNote && isParentComplete
+		shouldFetchComplete := statesToFetch[engine.GotState(engine.Complete)]
+		if summary.State == nil {
+			shouldShow = true
+		} else {
+			if statesToFetch[*summary.State] {
+				shouldShow = true
+			}
+			//this is an edge case where if you're not rendering complete nodes, you also don't want to render notes under complete nodes.
+			if *summary.State == engine.Note && isParentComplete && !shouldFetchComplete {
+				shouldShow = false
+			}
+		}
+
+		//		isHiddenNote := isNote && isParentComplete
 		_, hasLongForm := longForms[k]
 
 		var displayDeadline = ""
@@ -218,7 +236,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 			return nil, err
 		}
 
-		if !isComplete && !isHiddenNote {
+		if shouldShow {
+
 			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
 				Gid:           stringId,
 				Title:         v,
@@ -234,8 +253,13 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, descendantType 
 		}
 
 	}
-	sorted := SortTheseIntoDFS(itemDisplays)
-	return e.renderSummaries(sorted)
+	if sortByPath {
+		sorted := SortTheseIntoDFS(itemDisplays)
+		return e.renderSummaries(sorted)
+	} else {
+		sorted := SortByUpdated(itemDisplays)
+		return e.renderSummaries(sorted)
+	}
 }
 
 // VX:TODO MOVE
@@ -244,7 +268,7 @@ func JsonDateToReadable(dateInput *engine.DateTime) (string, error) {
 		return "", nil
 	}
 	var date console.RFC3339Time
-	dateBytes := []byte(*&dateInput.Date)
+	dateBytes := []byte(dateInput.Date)
 	err := json.Unmarshal(dateBytes, &date)
 	if err != nil {
 		fmt.Printf("VXL ERROR parsing is %s", err)

@@ -11,6 +11,13 @@ const (
 	separatorChar = "─"
 )
 
+type TableRenderOptions struct {
+	FlatPaths         bool
+	ShowCreatedColumn bool
+	ShowUpdatedColumn bool
+	SortByPath        bool
+}
+
 func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 
 	path := item.Path
@@ -46,7 +53,8 @@ func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 
 	return console.NewTableCell(pathSnippets)
 }
-func NewTable(items []engine.GotItemDisplay, fullPathMode bool) (console.ConsoleTable, error) {
+
+func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (console.ConsoleTable, error) {
 
 	if len(items) == 0 {
 		return console.ConsoleTable{}, nil
@@ -58,20 +66,25 @@ func NewTable(items []engine.GotItemDisplay, fullPathMode bool) (console.Console
 	smallPadding := " "
 	emptyCell := console.NewTableCellFromStr("", console.TokenPrimary{})
 
-	titleCells := []console.TableCell{
-		console.NewTableCellFromStr("#", console.TokenTextTertiary{}),
-		console.NewTableCellFromStr("Created ", console.TokenTextTertiary{}),
-		console.NewTableCellFromStr("Path", console.TokenTextTertiary{}),
-		console.NewTableCellFromStr("[", console.TokenTextTertiary{}), //"[" placeholder title
-		console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{}),
-		console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenNote{}),
-		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
-		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
-		console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}),
-
-		console.NewTableCellFromStr("  ", console.TokenPrimary{}), //emptyCell, //leaf column has no title
-		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
+	titleCells := []console.TableCell{}
+	titleCells = append(titleCells, console.NewTableCellFromStr("#", console.TokenTextTertiary{}))
+	if options.ShowCreatedColumn {
+		titleCells = append(titleCells, console.NewTableCellFromStr("Created ", console.TokenTextTertiary{}))
 	}
+	if options.ShowUpdatedColumn {
+		titleCells = append(titleCells, console.NewTableCellFromStr("Updated ", console.TokenTextTertiary{}))
+	}
+
+	titleCells = append(titleCells, console.NewTableCellFromStr("Path", console.TokenTextTertiary{}))
+	titleCells = append(titleCells, console.NewTableCellFromStr("[", console.TokenTextTertiary{})) //"[" placeholder title
+	titleCells = append(titleCells, console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{}))
+	titleCells = append(titleCells, console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenNote{}))
+	titleCells = append(titleCells, console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}))
+	titleCells = append(titleCells, console.NewTableCellFromStr("]", console.TokenTextTertiary{})) //"]" placeholder title
+	titleCells = append(titleCells, console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}))
+
+	titleCells = append(titleCells, console.NewTableCellFromStr("  ", console.TokenPrimary{})) //emptyCell, //leaf column has no title
+	titleCells = append(titleCells, console.NewTableCellFromStr("Title", console.TokenTextTertiary{}))
 
 	titleRow := console.NewCellTableRow(titleCells)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
@@ -88,9 +101,14 @@ func NewTable(items []engine.GotItemDisplay, fullPathMode bool) (console.Console
 			console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
 		}
 		cells = append(cells, console.NewTableCell(numSnippets))
-		cells = append(cells, console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{}))
+		if options.ShowCreatedColumn {
+			cells = append(cells, console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{}))
+		}
+		if options.ShowUpdatedColumn {
+			cells = append(cells, console.NewTableCellFromStr(" "+item.Updated+" ", console.TokenNote{}))
+		}
 
-		if fullPathMode {
+		if options.FlatPaths {
 			pathCell := renderPathFlat(&item)
 			cells = append(cells, pathCell)
 

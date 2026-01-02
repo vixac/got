@@ -8,11 +8,11 @@ import (
 )
 
 // VX:TODO test
-func buildJobsCommand(deps RootDependencies) *cobra.Command {
+func buildCompleteCommand(deps RootDependencies) *cobra.Command {
 
 	var jobsCmd = &cobra.Command{
-		Use:   "jobs",
-		Short: "fetch jobs under gid",
+		Use:   "complete",
+		Short: "fetch complete jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
 			//VX:TODO no more -u, lets got got jobs <id> optinoal.
 			if len(args) > 1 {
@@ -31,12 +31,12 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 				}
 			}
 
-			states := []engine.GotState{engine.Active, engine.Note}
+			states := []engine.GotState{engine.Complete}
 			options := bullet_engine.TableRenderOptions{
-				FlatPaths:         false,
+				FlatPaths:         true,
 				ShowCreatedColumn: true,
 				ShowUpdatedColumn: true,
-				SortByPath:        true,
+				SortByPath:        false, //for now this means sort by updated, because we dont have more options yet.
 			}
 			renderTable(lookup, states, options, deps)
 		},

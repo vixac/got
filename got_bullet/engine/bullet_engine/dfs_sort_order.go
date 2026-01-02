@@ -32,3 +32,12 @@ func SortTheseIntoDFS(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 	return backToItems
 
 }
+
+func SortByUpdated(items []engine.GotItemDisplay) []engine.GotItemDisplay {
+	var sortableItems []engine.GotItemDisplay = items
+
+	sort.Slice(sortableItems, func(i, j int) bool {
+		return sortableItems[i].Updated < sortableItems[j].Updated
+	})
+	return sortableItems
+}
