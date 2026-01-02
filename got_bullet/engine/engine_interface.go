@@ -143,6 +143,8 @@ type GotItemDisplay struct {
 	Title         string
 	Alias         string
 	Deadline      string
+	Created       string
+	Updated       string
 	DeadlineToken console.Token
 	SummaryObj    *Summary
 	Path          *GotPath

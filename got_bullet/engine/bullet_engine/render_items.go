@@ -25,6 +25,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 
 	titleCells := []console.TableCell{
 		console.NewTableCellFromStr("#", console.TokenTextTertiary{}),
+		console.NewTableCellFromStr("Created ", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("Path", console.TokenTextTertiary{}),
 		console.NewTableCellFromStr("[", console.TokenTextTertiary{}), //"[" placeholder title
 		console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{}),
@@ -32,6 +33,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}),
 		console.NewTableCellFromStr("]", console.TokenTextTertiary{}), //"]" placeholder title
 		console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}),
+
 		console.NewTableCellFromStr("  ", console.TokenPrimary{}), //emptyCell, //leaf column has no title
 		console.NewTableCellFromStr("Title", console.TokenTextTertiary{}),
 	}
@@ -47,9 +49,10 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		var cells []console.TableCell
 
 		numSnippets := []console.Snippet{
-			console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenTextTertiary{}),
+			console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
 		}
 		cells = append(cells, console.NewTableCell(numSnippets))
+		cells = append(cells, console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{}))
 
 		//path
 		var pathSnippets []console.Snippet
@@ -130,6 +133,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		}
 
 		cells = append(cells, console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken))
+
 		if item.HasTNote {
 			cells = append(cells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
 		} else {

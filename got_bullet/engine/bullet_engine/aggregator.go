@@ -3,6 +3,7 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"vixac.com/got/engine"
 )
@@ -37,7 +38,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 
 	//step 1. We create the new summary object for the new item
 	upserts := make(map[engine.SummaryId]engine.Summary)
-	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline)
+	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline, time.Now())
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
 	if enrichedEvent.ParentIsLeaf() {
 		//convert parent to group with a count 1 for e.state
@@ -99,6 +100,12 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 		return errors.New("missing summary for state-changed item.s")
 	}
 	changedItemSummary.State = &e.NewState
+
+	nowTime, err := engine.NewDateTime(time.Now())
+	if err != nil {
+		return err
+	}
+	changedItemSummary.UpdatedDate = &nowTime
 	upserts := make(map[engine.SummaryId]engine.Summary)
 	upserts[e.Id] = changedItemSummary
 

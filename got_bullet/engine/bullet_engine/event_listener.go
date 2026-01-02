@@ -18,7 +18,7 @@ type AddItemEvent struct {
 	Id       engine.SummaryId
 	State    engine.GotState
 	Ancestry []engine.SummaryId
-	Deadline *engine.Deadline
+	Deadline *engine.DateTime
 }
 type StateChangeEvent struct {
 	Id       engine.SummaryId
