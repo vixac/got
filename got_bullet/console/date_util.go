@@ -89,7 +89,7 @@ func ParseRelativeDate(input string, now time.Time) (time.Time, error) {
 
 func DayFormat(time time.Time) string {
 
-	formatted := time.Format("2006-01-30")
+	formatted := time.Format("2006-01-02")
 	return formatted
 }
 
