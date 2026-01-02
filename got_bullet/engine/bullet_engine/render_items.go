@@ -11,7 +11,42 @@ const (
 	separatorChar = "─"
 )
 
-func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
+func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
+
+	path := item.Path
+	var pathSnippets []console.Snippet
+	for i, node := range path.Ancestry {
+
+		if i > 1 { //first node is 0 (i think, and we don't want to start with a slash on the second, so the first 2 items have no slash)
+			pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenTextTertiary{}))
+		}
+		if node.Alias != nil {
+			pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenAlias{}))
+		} else {
+			if node.Id != "0" {
+				pathSnippets = append(pathSnippets, console.NewSnippet("0"+node.Id, console.TokenGid{}))
+			}
+		}
+
+	}
+	//add the gid or alias of this item into it's own path.
+	if len(pathSnippets) > 0 { //we don't want the ":" at top level items because it screws alignment, but otherwise we use ":" instead of "/" to show that this is the id of this node.
+		pathSnippets = append(pathSnippets, console.NewSnippet("/ ", console.TokenTextTertiary{}))
+	}
+
+	pathSuffixShortcut, isAlias := item.Shortcut()
+	var pathSuffixToken console.Token
+	if isAlias {
+		pathSuffixToken = console.TokenAlias{}
+	} else {
+		pathSuffixToken = console.TokenGid{}
+	}
+	endOfPathPadding := "  " //put some padding at the end of path to make summaries appear as one
+	pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+endOfPathPadding, pathSuffixToken))
+
+	return console.NewTableCell(pathSnippets)
+}
+func NewTable(items []engine.GotItemDisplay, fullPathMode bool) (console.ConsoleTable, error) {
 
 	if len(items) == 0 {
 		return console.ConsoleTable{}, nil
@@ -43,6 +78,7 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 	rows = append(rows, titleRow)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 
+	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line
 	var lastParentId *string = nil
 	var lastId *string = nil
 	for _, item := range items {
@@ -54,68 +90,74 @@ func NewTable(items []engine.GotItemDisplay) (console.ConsoleTable, error) {
 		cells = append(cells, console.NewTableCell(numSnippets))
 		cells = append(cells, console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{}))
 
-		//path
-		var pathSnippets []console.Snippet
-		parentIndex := len(item.Path.Ancestry) - 1
+		if fullPathMode {
+			pathCell := renderPathFlat(&item)
+			cells = append(cells, pathCell)
 
-		var treePattern = ""
-		for i, node := range item.Path.Ancestry {
-			var wordLength = 0
-			if node.Alias != nil {
-				wordLength = len(*node.Alias)
-			} else if node.Id != "0" {
-				wordLength = len(node.Id)
-			}
-			if i != parentIndex {
-				treePattern += console.FitString("", wordLength, " ")
-				continue
-			}
+		} else {
+			var pathSnippets []console.Snippet
+			parentIndex := len(item.Path.Ancestry) - 1
 
-			if i == parentIndex {
-				thisParent := "0" + item.Path.Ancestry[parentIndex].Id
-				isSibling := lastParentId != nil && *lastParentId == thisParent
-				isFirstChild := lastId != nil && *lastId == thisParent
-
-				if !isFirstChild && !isSibling {
-					rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+			var treePattern = ""
+			for i, node := range item.Path.Ancestry {
+				var wordLength = 0
+				if node.Alias != nil {
+					wordLength = len(*node.Alias)
+				} else if node.Id != "0" {
+					wordLength = len(node.Id)
+				}
+				if i != parentIndex {
+					treePattern += console.FitString("", wordLength, " ")
+					continue
 				}
 
-				lastParentId = &thisParent
+				if i == parentIndex {
+					thisParent := "0" + item.Path.Ancestry[parentIndex].Id
+					isSibling := lastParentId != nil && *lastParentId == thisParent
+					isFirstChild := lastId != nil && *lastId == thisParent
+
+					if !isFirstChild && !isSibling {
+						rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+					}
+
+					lastParentId = &thisParent
+				}
+
+				if wordLength == 0 {
+					continue
+				}
+				switch wordLength {
+				case 1:
+					treePattern += "└"
+				case 2:
+					treePattern += "└ "
+				case 3:
+					treePattern += "└ "
+				default:
+					halfWordLength := wordLength / 2
+					treePattern += console.FitString("", halfWordLength-1, " ")
+					treePattern += "└"
+					treePattern += console.FitString("", halfWordLength-1, separatorChar)
+					treePattern += " "
+
+				}
 			}
 
-			if wordLength == 0 {
-				continue
-			}
-			switch wordLength {
-			case 1:
-				treePattern += "└"
-			case 2:
-				treePattern += "└ "
-			case 3:
-				treePattern += "└ "
-			default:
-				halfWordLength := wordLength / 2
-				treePattern += console.FitString("", halfWordLength-1, " ")
-				treePattern += "└"
-				treePattern += console.FitString("", halfWordLength-1, separatorChar)
-				treePattern += " "
+			lastId = &item.Gid
+			pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
 
+			pathSuffixShortcut, isAlias := item.Shortcut()
+			var pathSuffixToken console.Token
+			if isAlias {
+				pathSuffixToken = console.TokenAlias{}
+			} else {
+				pathSuffixToken = console.TokenGid{}
 			}
+			pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+mediumPadding, pathSuffixToken))
+
+			cells = append(cells, console.NewTableCell(pathSnippets))
 		}
-
-		lastId = &item.Gid
-		pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
-
-		pathSuffixShortcut, isAlias := item.Shortcut()
-		var pathSuffixToken console.Token
-		if isAlias {
-			pathSuffixToken = console.TokenAlias{}
-		} else {
-			pathSuffixToken = console.TokenGid{}
-		}
-		pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+mediumPadding, pathSuffixToken))
-
-		cells = append(cells, console.NewTableCell(pathSnippets))
+		//path
 
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 			cells = append(cells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
