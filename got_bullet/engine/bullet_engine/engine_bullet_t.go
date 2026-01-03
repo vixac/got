@@ -62,7 +62,15 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 		return nil
 	}
 	datedString := datePrefix() + updatedString
-	return e.LongFormStore.UpsertItem(gid.IntValue, datedString)
+
+	err = e.LongFormStore.UpsertItem(gid.IntValue, datedString)
+	if err != nil {
+		return err
+	}
+
+	//we send the edit event so the update time gets changed
+	e.publishEditEvent(EditItemEvent{Id: engine.SummaryId(gid.IntValue)})
+	return err
 }
 
 func datePrefix() string {

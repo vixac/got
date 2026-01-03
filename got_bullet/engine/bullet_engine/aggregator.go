@@ -194,3 +194,26 @@ func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
 	fmt.Printf("VX:TODO unhandled event ")
 	return nil
 }
+
+func (a *Aggregator) ItemEdited(e EditItemEvent) error {
+	nowTime, err := engine.NewDateTime(time.Now())
+	if err != nil {
+		return err
+	}
+
+	ids := []engine.SummaryId{e.Id}
+	list, err := a.summaryStore.Fetch(ids)
+	if err != nil {
+		return err
+	}
+	if len(list) != 1 {
+		return errors.New("no item to update")
+	}
+	item := list[e.Id]
+	//
+	item.UpdatedDate = &nowTime
+
+	upserts := make(map[engine.SummaryId]engine.Summary)
+	upserts[e.Id] = item
+	return a.summaryStore.UpsertManySummaries(upserts)
+}

@@ -138,6 +138,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 
 	//just needed to see if we present the note emoji. Unfortunately we're loading
 	//the actual notes on here.
+	//VX:TODO we just need to know if theres a note, not load the content.
 	longForms, err := e.LongFormForMany(intIds)
 	if err != nil {
 		return nil, err
@@ -248,7 +249,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 				Deadline:      displayDeadline,
 				DeadlineToken: deadlineToken,
 				Created:       createdStr,
-				Updated:       updatedStr,
+				Updated:       updatedStr, //VX:TODO put the real dates in there for sorting purposes, so we can sort by full timestamp
 			})
 		}
 
@@ -572,6 +573,17 @@ func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 	return nil
 }
 
+func (e *EngineBullet) publishEditEvent(event EditItemEvent) error {
+	for _, l := range e.EventListeners {
+		err := l.ItemEdited(event)
+		if err != nil {
+			fmt.Printf("VX: Listner error was %s\n", err.Error())
+			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
+		}
+	}
+	return nil
+}
+
 func (e *EngineBullet) publishStateChangeEvent(event StateChangeEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemStateChanged(event)
@@ -672,6 +684,7 @@ func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string
 
 }
 
+// VX:TODO that "anc" prefix is totally unneeded because you have a bucket.
 func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
 	ancestorList, err := NewAncestorList(client, "anc", ancestorBucket, ":", ">", "<")
 
