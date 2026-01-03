@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"time"
 
 	"vixac.com/got/console"
@@ -25,10 +24,6 @@ type Summary struct {
 }
 
 func NewSummary(state GotState, deadline *DateTime, created *DateTime) Summary {
-	if created != nil {
-		fmt.Printf("VX: NEW SUMMMARY CREATED WITH CREATED: %s \n", created.Date)
-	}
-
 	return Summary{
 		State:       &state,
 		Counts:      nil,

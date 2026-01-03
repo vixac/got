@@ -36,10 +36,15 @@ type ItemMovedEvent struct {
 	NewParent *engine.SummaryId
 }
 
+type EditItemEvent struct {
+	Id engine.SummaryId
+}
+
 // VX:TODO flesh this out with all the events that might be interesting
 type EventListenerInterface interface {
 	ItemAdded(e AddItemEvent) error
 	ItemStateChanged(e StateChangeEvent) error
 	ItemDeleted(e ItemDeletedEvent) error
 	ItemMoved(e ItemMovedEvent) error
+	ItemEdited(e EditItemEvent) error
 }
