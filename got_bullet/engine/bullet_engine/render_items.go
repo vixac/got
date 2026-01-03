@@ -210,9 +210,53 @@ func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (consol
 			titlePrefix = "  "
 			titleToken = console.TokenSecondary{}
 		}
+		maxTitleLen := 100
 
-		cells = append(cells, console.NewTableCellFromStr(titlePrefix+item.Title, titleToken))
-		rows = append(rows, console.NewCellTableRow(cells))
+		//check if we need to truncate
+		var truncationIndex = -1
+		for j := maxTitleLen; j < len(item.Title); j++ {
+			if item.Title[j] == ' ' {
+				truncationIndex = j
+				break
+			}
+		}
+		//we need to truncate, so we append ... on first line, and then prefix ... on second, and right pad the second line.
+		if truncationIndex > 0 {
+			var firstLine = ""
+			var secondLine = "" //only wrapping to 2 lines, not recursively. Because yagni
+			for i := 0; i < len(item.Title); i++ {
+				if i < truncationIndex {
+					firstLine += string(item.Title[i])
+				} else {
+					secondLine += string(item.Title[i])
+				}
+			}
+			dotDotDot := " ..."
+			paddingRequired := len(firstLine) - len(secondLine)
+			paddedSecondString := secondLine
+			if paddingRequired > 0 {
+				paddedSecondString = ""
+				for i := 0; i < paddingRequired; i++ {
+					paddedSecondString += " "
+				}
+				paddedSecondString += dotDotDot + secondLine
+			}
+			cells = append(cells, console.NewTableCellFromStr(titlePrefix+firstLine+dotDotDot, titleToken))
+			totalEmptyCells := len(titleCells) - 1
+			var overflowRowCells []console.TableCell
+			for i := 0; i < totalEmptyCells; i++ {
+				overflowRowCells = append(overflowRowCells, emptyCell)
+			}
+			overflowRowCells = append(overflowRowCells, console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken))
+
+			rows = append(rows, console.NewCellTableRow(cells))
+			rows = append(rows, console.NewCellTableRow(overflowRowCells))
+
+		} else { //no truncation
+			cells = append(cells, console.NewTableCellFromStr(titlePrefix+item.Title, titleToken))
+			rows = append(rows, console.NewCellTableRow(cells))
+		}
+
 	}
 	return console.NewConsoleTable(rows)
 }
