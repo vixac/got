@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
@@ -11,12 +12,14 @@ import (
 type ListLookupResult struct {
 	Ids []engine.GotId
 }
+type ListsForGidResult struct {
+	Lists []ListId
+}
 
 type ListId struct {
 	Id int32
 }
 type ManyListLookupResult struct {
-	//each decendant gid mapped to their ListLookupResult
 	Ids map[ListId]ListLookupResult
 }
 
@@ -24,25 +27,18 @@ type ManyListLookupResult struct {
 type ListInterface interface {
 	AddItem(id engine.GotId, list ListId) error
 	RemoveItem(id engine.GotId, list ListId) error
-	FetchListMembers(id ListId) (*ManyListLookupResult, error)
-	FetchListsContaining(id engine.GotId) (*ListLookupResult, error)
-
-	//VX:TODO move semantics oh dear. MoveItem(id engine.GotId, under *engine.GotId) error
+	FetchListMembers(list ListId) (*ManyListLookupResult, error)
+	FetchListsContaining(id engine.GotId) (*ListsForGidResult, error)
 }
 
-// subject separator is used to divide the subject into a list of ancestors, eg a:b:c, and then the objcet separator
-// is used to separate the subject and object inside the mesh, leading to myList>a:b:c>object
 type BulletListStore struct {
 	SubjectSeparator string
-	//	ObjectSeparator  string
-	Client bullet_interface.TrackClientInterface
-	//	ListName         string
-	//	BucketId         int
-	Mesh bullet_stl.Mesh
+	Client           bullet_interface.TrackClientInterface
+	Mesh             bullet_stl.Mesh
 }
 
-func NewListStore(client bullet_interface.TrackClientInterface, listName string, bucketId int32, subjectSeparor string, forwardSeparator string, backwardSeparator string) (ListInterface, error) {
-	mesh, err := bullet_stl.NewBulletMesh(client, bucketId, listName, forwardSeparator, backwardSeparator)
+func NewListStore(client bullet_interface.TrackClientInterface, listStoreName string, bucketId int32, subjectSeparor string, forwardSeparator string, backwardSeparator string) (ListInterface, error) {
+	mesh, err := bullet_stl.NewBulletMesh(client, bucketId, listStoreName, forwardSeparator, backwardSeparator)
 	if err != nil {
 		return nil, err
 	}
@@ -55,11 +51,14 @@ func NewListStore(client bullet_interface.TrackClientInterface, listName string,
 }
 
 func toSubject(list ListId) bullet_stl.ListSubject {
-	aasci := string(list.Id)
-	return bullet_stl.ListSubject{Value: aasci}
+	return bullet_stl.ListSubject{
+		Value: strconv.Itoa(int(list.Id)),
+	}
 }
 
-//aah crap it needs to be a two way mesh.
+func toObject(id engine.GotId) bullet_stl.ListObject {
+	return bullet_stl.ListObject{Value: id.AasciValue}
+}
 
 func (s *BulletListStore) AddItem(id engine.GotId, list ListId) error {
 
@@ -68,10 +67,9 @@ func (s *BulletListStore) AddItem(id engine.GotId, list ListId) error {
 
 	parent := toSubject(list)
 
-	object := bullet_stl.ListObject{Value: id.AasciValue}
-
+	object := toObject(id)
 	pairs := []bullet_stl.ManyToManyPair{
-		{Subject: parent, Object: object}, //parent -> newItem
+		{Subject: parent, Object: object}, //list -> newItem
 	}
 
 	return s.Mesh.AppendPairs(pairs)
@@ -81,11 +79,49 @@ func (a *BulletListStore) RemoveItem(id engine.GotId, list ListId) error {
 	return errors.New("not impl")
 }
 
-func (s *BulletListStore) FetchListMembers(id ListId) (*ManyListLookupResult, error) {
+func (s *BulletListStore) FetchListMembers(list ListId) (*ManyListLookupResult, error) {
 	//get the subject key for this id, and then use it as a prefix.
-	return nil, errors.New("not impl")
+	subject := toSubject(list)
+	allPairs, err := s.Mesh.AllPairsForSubject(subject)
+	if err != nil || allPairs == nil {
+		return nil, err
+	}
+
+	var ids []engine.GotId
+
+	for _, pair := range allPairs.Pairs {
+		id, err := engine.NewGotId(pair.Object.Value)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, *id)
+	}
+
+	lookupResult := ListLookupResult{Ids: ids}
+	result := make(map[ListId]ListLookupResult)
+	result[list] = lookupResult
+	return &ManyListLookupResult{
+		Ids: result,
+	}, nil
 }
 
-func (s *BulletListStore) FetchListsContaining(id engine.GotId) (*ListLookupResult, error) {
-	return nil, errors.New("not impl")
+func (s *BulletListStore) FetchListsContaining(id engine.GotId) (*ListsForGidResult, error) {
+	object := toObject(id)
+	allPairs, err := s.Mesh.AllPairsForObject(object)
+	if err != nil || allPairs == nil {
+		return nil, err
+	}
+
+	var lists []ListId
+	for _, pair := range allPairs.Pairs {
+		list, err := strconv.Atoi(pair.Subject.Value)
+		if err != nil {
+			return nil, err
+		}
+		lists = append(lists, ListId{Id: int32(list)}) //VX:TODO silent int32 cast
+	}
+
+	return &ListsForGidResult{
+		Lists: lists,
+	}, nil
 }
