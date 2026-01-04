@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -75,8 +74,14 @@ func (s *BulletListStore) AddItem(id engine.GotId, list ListId) error {
 	return s.Mesh.AppendPairs(pairs)
 }
 
-func (a *BulletListStore) RemoveItem(id engine.GotId, list ListId) error {
-	return errors.New("not impl")
+func (s *BulletListStore) RemoveItem(id engine.GotId, list ListId) error {
+	manyPairs := []bullet_stl.ManyToManyPair{
+		{
+			Subject: toSubject(list),
+			Object:  toObject(id),
+		},
+	}
+	return s.Mesh.RemovePairs(manyPairs)
 }
 
 func (s *BulletListStore) FetchListMembers(list ListId) (*ManyListLookupResult, error) {

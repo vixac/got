@@ -128,3 +128,111 @@ func TestListStore_EmptyList(t *testing.T) {
 	assert.Nil(t, res)
 
 }
+
+func TestListStore_RemoveItem_FromList(t *testing.T) {
+	store := buildTestListStore(t, "liststore_remove_basic")
+
+	list := ListId{Id: 1}
+	alice, _ := engine.NewGotId("alice")
+
+	assert.NoError(t, store.AddItem(*alice, list))
+
+	// sanity check
+	res, err := store.FetchListMembers(list)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res.Ids[list].Ids))
+
+	// remove
+	err = store.RemoveItem(*alice, list)
+	assert.NoError(t, err)
+
+	// list should now be empty
+	res, err = store.FetchListMembers(list)
+	assert.NoError(t, err)
+	assert.Nil(t, res)
+}
+
+func TestListStore_RemoveItem_DoesNotAffectOtherItems(t *testing.T) {
+	store := buildTestListStore(t, "liststore_remove_isolated")
+
+	list := ListId{Id: 2}
+	alice, _ := engine.NewGotId("alice")
+	bob, _ := engine.NewGotId("bob")
+
+	assert.NoError(t, store.AddItem(*alice, list))
+	assert.NoError(t, store.AddItem(*bob, list))
+
+	// remove alice
+	assert.NoError(t, store.RemoveItem(*alice, list))
+
+	res, err := store.FetchListMembers(list)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(res.Ids[list].Ids))
+	assert.Equal(t, "bob", res.Ids[list].Ids[0].AasciValue)
+}
+
+func TestListStore_RemoveItem_DoesNotRemoveFromOtherLists(t *testing.T) {
+	store := buildTestListStore(t, "liststore_remove_multi_list")
+
+	alice, _ := engine.NewGotId("alice")
+
+	listA := ListId{Id: 10}
+	listB := ListId{Id: 20}
+
+	assert.NoError(t, store.AddItem(*alice, listA))
+	assert.NoError(t, store.AddItem(*alice, listB))
+
+	// remove only from listA
+	assert.NoError(t, store.RemoveItem(*alice, listA))
+
+	// listA should be empty
+	resA, err := store.FetchListMembers(listA)
+	assert.NoError(t, err)
+	assert.Nil(t, resA)
+
+	// listB should still contain alice
+	resB, err := store.FetchListMembers(listB)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(resB.Ids[listB].Ids))
+	assert.Equal(t, "alice", resB.Ids[listB].Ids[0].AasciValue)
+}
+
+func TestListStore_RemoveItem_UpdatesReverseLookup(t *testing.T) {
+	store := buildTestListStore(t, "liststore_remove_reverse")
+
+	alice, _ := engine.NewGotId("alice")
+
+	listA := ListId{Id: 1}
+	listB := ListId{Id: 2}
+
+	assert.NoError(t, store.AddItem(*alice, listA))
+	assert.NoError(t, store.AddItem(*alice, listB))
+
+	// remove from listA
+	assert.NoError(t, store.RemoveItem(*alice, listA))
+
+	lists, err := store.FetchListsContaining(*alice)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(lists.Lists))
+	assert.Equal(t, int32(2), lists.Lists[0].Id)
+}
+
+func TestListStore_RemoveItem_NonExistentPair(t *testing.T) {
+	store := buildTestListStore(t, "liststore_remove_missing")
+
+	alice, _ := engine.NewGotId("alice")
+	list := ListId{Id: 99}
+
+	// removing something that was never added
+	err := store.RemoveItem(*alice, list)
+
+	// mesh currently treats this as a no-op
+	assert.NoError(t, err)
+
+	// still empty
+	res, err := store.FetchListMembers(list)
+	assert.NoError(t, err)
+	assert.Nil(t, res)
+}
