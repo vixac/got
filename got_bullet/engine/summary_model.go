@@ -21,15 +21,17 @@ type Summary struct {
 	Deadline    *DateTime `json:"d"`
 	CreatedDate *DateTime `json:"cr,omitempty"`
 	UpdatedDate *DateTime `json:"u,omitempty"`
+	Tags        []string  `json:"t,omitempty"`
 }
 
-func NewSummary(state GotState, deadline *DateTime, created *DateTime) Summary {
+func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []string) Summary {
 	return Summary{
 		State:       &state,
 		Counts:      nil,
 		Deadline:    deadline,
 		CreatedDate: created,
 		UpdatedDate: created,
+		Tags:        tags,
 	}
 }
 
@@ -109,9 +111,9 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 }
 
 // no count, no deadline for some reason
-func NewLeafSummary(state GotState, deadline *DateTime, now time.Time) Summary {
+func NewLeafSummary(state GotState, deadline *DateTime, now time.Time, tags []string) Summary {
 	dateTime, _ := NewDateTime(now)
-	return NewSummary(state, deadline, &dateTime)
+	return NewSummary(state, deadline, &dateTime, tags)
 }
 
 func (c AggCount) ChangeState(state GotState, inc int) AggCount {
@@ -143,29 +145,6 @@ func (a *Summary) UpdatedCount(newCount AggCount) Summary {
 		Deadline:    a.Deadline,
 		CreatedDate: a.CreatedDate,
 		UpdatedDate: a.UpdatedDate,
+		Tags:        a.Tags,
 	}
 }
-
-/*
-func (c AggCount) changeActive(inc int) AggCount {
-	return AggCount{
-		c.Complete,
-		c.Active + inc,
-		c.Notes,
-	}
-}
-func (c AggCount) changeNotes(inc int) AggCount {
-	return AggCount{
-		c.Complete,
-		c.Active,
-		c.Notes + inc,
-	}
-}
-func (c AggCount) changeComplete(inc int) AggCount {
-	return AggCount{
-		c.Complete + inc,
-		c.Active,
-		c.Notes,
-	}
-}
-*/

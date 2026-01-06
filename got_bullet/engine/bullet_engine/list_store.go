@@ -28,6 +28,8 @@ type ListInterface interface {
 	RemoveItem(id engine.GotId, list ListId) error
 	FetchListMembers(list ListId) (*ManyListLookupResult, error)
 	FetchListsContaining(id engine.GotId) (*ListsForGidResult, error)
+
+	//VX:TODO I think i need to add fetchAllLists. Is that a SEPARATE list? i think it has to be.
 }
 
 type BulletListStore struct {
