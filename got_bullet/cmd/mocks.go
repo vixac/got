@@ -50,6 +50,9 @@ type MockEngine struct {
 func (m *MockEngine) OpenThenTimestamp(lookup engine.GidLookup) error {
 	return errors.New("not impl")
 }
+func (m *MockEngine) TagItem(lookup engine.GidLookup, tag engine.TagLookup) error {
+	return errors.New("not impl")
+}
 
 func (e MockEngine) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
 	return errors.New("not impl")

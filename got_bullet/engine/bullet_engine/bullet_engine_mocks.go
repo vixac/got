@@ -1,6 +1,12 @@
 package bullet_engine
 
-import "vixac.com/got/engine"
+import (
+	"github.com/vixac/bullet/store/ram"
+	"github.com/vixac/bullet/store/store_interface"
+	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
+	"github.com/vixac/firbolg_clients/bullet/local_bullet"
+	"vixac.com/got/engine"
+)
 
 type MockSummaryStore struct {
 	errorToThrow error
@@ -44,4 +50,17 @@ func (m *MockSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId]e
 }
 func (m *MockSummaryStore) Delete(ids []engine.SummaryId) error {
 	return m.errorToThrow
+}
+
+func BuildTestClient() bullet_interface.BulletClientInterface {
+	store := ram.NewRamStore()
+	space := store_interface.TenancySpace{
+		AppId:     12,
+		TenancyId: 100,
+	}
+	localClient := &local_bullet.LocalBullet{
+		Store: store,
+		Space: space,
+	}
+	return localClient
 }

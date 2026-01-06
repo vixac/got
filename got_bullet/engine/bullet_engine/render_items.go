@@ -83,7 +83,8 @@ func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (consol
 	titleCells = append(titleCells, console.NewTableCellFromStr("]", console.TokenTextTertiary{})) //"]" placeholder title
 	titleCells = append(titleCells, console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}))
 
-	titleCells = append(titleCells, console.NewTableCellFromStr("  ", console.TokenPrimary{})) //emptyCell, //leaf column has no title
+	titleCells = append(titleCells, console.NewTableCellFromStr("  ", console.TokenPrimary{}))   //emptyCell, //leaf column has no title
+	titleCells = append(titleCells, console.NewTableCellFromStr("Tags", console.TokenPrimary{})) //emptyCell, //leaf column has no title
 	titleCells = append(titleCells, console.NewTableCellFromStr("Title", console.TokenTextTertiary{}))
 
 	titleRow := console.NewCellTableRow(titleCells)
@@ -200,6 +201,29 @@ func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (consol
 			cells = append(cells, stateToCell(item.SummaryObj.State))
 		}
 
+		//tags
+		if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
+			cells = append(cells, emptyCell)
+		} else {
+
+			tagStr := ""
+			for i, t := range item.SummaryObj.Tags {
+				if i == 0 {
+					tagStr = "("
+				} else {
+					tagStr += ","
+				}
+				tagStr += t.Literal.Display
+			}
+			if tagStr != "" {
+				tagStr += ")"
+			}
+
+			cells = append(cells, console.NewTableCellFromStr(tagStr, console.TokenAlert{}))
+
+		}
+
+		//title
 		var titleToken console.Token
 		var titlePrefix = ""
 		if item.IsNote() {

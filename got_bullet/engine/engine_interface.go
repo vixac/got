@@ -27,6 +27,7 @@ type GotEngine interface {
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 	OpenThenTimestamp(lookup GidLookup) error
 	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
+	TagItem(lookup GidLookup, tag TagLookup) error
 
 	GotAliasInterface
 	GotCreateItemInterface
@@ -131,6 +132,11 @@ func CheckNumber(p []byte) bool {
 
 type DateLookup struct {
 	UserInput string
+}
+
+// For now we'll treat this as a tag literal.
+type TagLookup struct {
+	Input string
 }
 
 // User entered best guess at a gid. Might be the Gid, might be an alias. Might be the title
