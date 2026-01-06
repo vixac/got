@@ -21,10 +21,28 @@ type Summary struct {
 	Deadline    *DateTime `json:"d"`
 	CreatedDate *DateTime `json:"cr,omitempty"`
 	UpdatedDate *DateTime `json:"u,omitempty"`
-	Tags        []string  `json:"t,omitempty"`
+	Tags        []Tag     `json:"t,omitempty"`
 }
 
-func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []string) Summary {
+type TagLiteral struct {
+	Display string `json:"d,omitempty"`
+	Token   string `json:"t,omitempty"`
+}
+
+// a tag can be represented either as a literal tag or as an identifier to a tag description
+type Tag struct {
+	Identifier *string     `json:"identifier,omitempty"`
+	Literal    *TagLiteral `json:"tagLiteral,omitempty"`
+}
+
+func (lhs Tag) EqualTo(rhs Tag) bool {
+	if lhs.Identifier != nil && rhs.Identifier != nil {
+		return lhs.Identifier == rhs.Identifier
+	}
+	return lhs.Literal.Display == rhs.Literal.Display
+}
+
+func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Tag) Summary {
 	return Summary{
 		State:       &state,
 		Counts:      nil,
@@ -111,7 +129,7 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 }
 
 // no count, no deadline for some reason
-func NewLeafSummary(state GotState, deadline *DateTime, now time.Time, tags []string) Summary {
+func NewLeafSummary(state GotState, deadline *DateTime, now time.Time, tags []Tag) Summary {
 	dateTime, _ := NewDateTime(now)
 	return NewSummary(state, deadline, &dateTime, tags)
 }

@@ -38,7 +38,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 
 	//step 1. We create the new summary object for the new item
 	upserts := make(map[engine.SummaryId]engine.Summary)
-	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline, time.Now(), []string{})
+	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline, time.Now(), []engine.Tag{})
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
 	if enrichedEvent.ParentIsLeaf() {
 		//convert parent to group with a count 1 for e.state
