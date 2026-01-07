@@ -100,11 +100,8 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	rows = append(rows, titleRow)
 	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
 
-	//VX:TODO parent
-
 	//VX:TODO squash all this
 	if fetched.Parent != nil {
-		//	rows = append(rows, console.NewDividerRow("|", console.TokenTextTertiary{}))
 
 		parentCells := []console.TableCell{}
 		parentCells = append(parentCells, emptyCell) //#
