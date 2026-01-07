@@ -19,7 +19,7 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 
 	deps.Printer.Print(console.Message{Message: "\n-----------------------------------------\n\n"})
 
-	table, err := bullet_engine.NewTable(res.Result, options)
+	table, err := bullet_engine.NewTable(res, options)
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return

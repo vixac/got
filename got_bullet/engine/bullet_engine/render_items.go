@@ -1,6 +1,7 @@
 package bullet_engine
 
 import (
+	"fmt"
 	"strconv"
 
 	"vixac.com/got/console"
@@ -54,9 +55,9 @@ func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 	return console.NewTableCell(pathSnippets)
 }
 
-func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (console.ConsoleTable, error) {
+func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (console.ConsoleTable, error) {
 
-	if len(items) == 0 {
+	if len(fetched.Result) == 0 {
 		return console.ConsoleTable{}, nil
 	}
 
@@ -92,10 +93,16 @@ func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (consol
 	rows = append(rows, titleRow)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 
+	//VX:TODO parent
+	if fetched.Parent != nil {
+		fmt.Printf("VX: WE SHOULD RENDER THIS PARENT")
+		rows = append(rows, console.NewDividerRow("|", console.TokenTextTertiary{}))
+	}
+
 	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line
 	var lastParentId *string = nil
 	var lastId *string = nil
-	for _, item := range items {
+	for _, item := range fetched.Result {
 		var cells []console.TableCell
 
 		numSnippets := []console.Snippet{

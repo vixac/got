@@ -77,6 +77,7 @@ const (
 )
 
 type GotFetchResult struct {
+	Parent *GotItemDisplay
 	Result []GotItemDisplay
 }
 
