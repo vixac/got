@@ -160,25 +160,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		return nil, err
 	}
 
-	/*
-		//build parent
-		if !parentIsRoot {
-			parentDisplay = &engine.GotItemDisplay{}
-			_, parentHasLongForm := longForms[parentGid.IntValue]
-			parentDisplay.HasTNote = parentHasLongForm
-			//parentDisplay.Alias
-
-			parentSummaryId := engine.SummaryId(parentGid.IntValue)
-			parentSummary, parentHasSummary := summaries[parentSummaryId]
-			if parentHasSummary {
-				if parentSummary.Counts != nil {
-
-				}
-
-				parentDisplay.Created = parentSummary.CreatedDate.Date
-			}
-		}*/
-
 	var parentItemDisplay *engine.GotItemDisplay = nil
 
 	//build ancestors
@@ -307,8 +288,7 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 func deadline(summary engine.Summary, now time.Time) (string, console.Token, error) {
 	var displayDeadline = ""
 	var deadlineToken console.Token = console.TokenSecondary{}
-	//VX:TODO get this date wrangling out. Its business logic
-	//if theres a deadline and either its a group or its an active job
+	//VX:TODO get this date wrangling out. Its business logic	//if theres a deadline and either its a group or its an active job
 	if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
 
 		deadlineDate, err := summary.Deadline.ToDate()
@@ -341,7 +321,7 @@ func createdDateDisplayString(summary engine.Summary, now time.Time) (string, er
 	}
 	var createdStr = ""
 	if createdDate != nil {
-		createdStr, _ = console.HumanizeDate(time.Time(*createdDate), now) //JsonDateToReadable(summary.CreatedDate)
+		createdStr, _ = console.HumanizeDate(time.Time(*createdDate), now)
 	}
 	return createdStr, nil
 }
