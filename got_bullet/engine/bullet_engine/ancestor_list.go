@@ -150,7 +150,6 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 		//append the query to the ancestor Key, so id = c, fetches a:b, and we want to lookup everything prefixed with a:b:c
 		ancestorKey = ancestorPairs.Pairs[0].Subject.Value + a.SubjectSeparator + id.AasciValue
 	}
-	fmt.Printf("VX: ancestor key is %s for id %s\n", ancestorKey, id.AasciValue)
 
 	everythingBelowAncestor, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: ancestorKey})
 	if err != nil {
@@ -161,7 +160,6 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 	}
 	ids := make(map[string]AncestorLookupResult)
 	for _, pair := range everythingBelowAncestor.Pairs {
-		fmt.Printf("VXL found pair %s\n", pair.Object.Value)
 		ancestorsIndividualIds := strings.Split(pair.Subject.Value, a.SubjectSeparator)
 		var gids []engine.GotId
 		for _, ancestorId := range ancestorsIndividualIds {

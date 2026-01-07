@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"fmt"
 	"strconv"
 
 	"vixac.com/got/console"
@@ -20,8 +19,16 @@ type TableRenderOptions struct {
 }
 
 func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
+	emptyCell := console.NewTableCellFromStr("", console.TokenPrimary{})
+	if item == nil {
+		return emptyCell
+	}
+	if item.Path == nil {
+		return emptyCell
+	}
 
 	path := item.Path
+
 	var pathSnippets []console.Snippet
 	for i, node := range path.Ancestry {
 
@@ -91,12 +98,52 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	titleRow := console.NewCellTableRow(titleCells)
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow)
-	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
+	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
 
 	//VX:TODO parent
+
+	//VX:TODO squash all this
 	if fetched.Parent != nil {
-		fmt.Printf("VX: WE SHOULD RENDER THIS PARENT")
-		rows = append(rows, console.NewDividerRow("|", console.TokenTextTertiary{}))
+		//	rows = append(rows, console.NewDividerRow("|", console.TokenTextTertiary{}))
+
+		parentCells := []console.TableCell{}
+		parentCells = append(parentCells, emptyCell) //#
+		if options.ShowCreatedColumn {
+			parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{}))
+		}
+		if options.ShowUpdatedColumn {
+			parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Updated+" ", console.TokenGroup{}))
+		}
+		pathCell := renderPathFlat(fetched.Parent)
+		parentCells = append(parentCells, pathCell)
+
+		if fetched.Parent.SummaryObj != nil && fetched.Parent.SummaryObj.Counts != nil {
+			parentCells = append(parentCells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
+			parentCells = append(parentCells, console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{}))
+			parentCells = append(parentCells, console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Notes)+smallPadding, console.TokenNote{}))
+			parentCells = append(parentCells, console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Active), console.TokenPrimary{}))
+			parentCells = append(parentCells, console.NewTableCellFromStr("]"+mediumPadding, console.TokenTextTertiary{}))
+
+		} else {
+			parentCells = append(parentCells, emptyCell) //[ placeholder
+			parentCells = append(parentCells, emptyCell) //complete placeholder
+			parentCells = append(parentCells, emptyCell) //note placeholder
+			parentCells = append(parentCells, emptyCell) //active placeholder
+			parentCells = append(parentCells, emptyCell) //] plceholdere
+		}
+		parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Deadline+" ", fetched.Parent.DeadlineToken))
+
+		if fetched.Parent.HasTNote {
+			parentCells = append(parentCells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
+		} else {
+			parentCells = append(parentCells, stateToCell(fetched.Parent.SummaryObj.State))
+		}
+		parentCells = append(parentCells, emptyCell) //VX:TODO tag for parent
+		//VX:TODO title token and truncations.
+		parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Title, console.TokenSecondary{}))
+		rows = append(rows, console.NewCellTableRow(parentCells))
+		rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
+
 	}
 
 	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line

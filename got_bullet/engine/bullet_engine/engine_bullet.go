@@ -218,7 +218,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 
 		//this is the parent, so we populate parentItemDisplay and then continnue.
 		if k == parentGid.IntValue { //we will render parents separtely
-			fmt.Printf("VX: THIS IS THE PARENT>")
 			displayItem, err := itemDisplay(summary, now, *gotId, v, alias, path, hasLongForm)
 			if err != nil {
 				return nil, err
@@ -398,9 +397,6 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay
 // adds the items to the number go store as well as
 func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent *engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
-	if parent != nil {
-		fmt.Printf("VX: WE ARE WITH A PRENT TO SHOW.")
-	}
 	var expandedSummaries []engine.GotItemDisplay
 	var pairs []NumberGoPair
 	//here we enrich the itemdisplays by adding the number go, now that we know the sort order.
