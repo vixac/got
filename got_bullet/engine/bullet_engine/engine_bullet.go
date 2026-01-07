@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -168,7 +167,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 
 			parentDisplay.Created = parentSummary.CreatedDate.Date
 		}
-
 	}
 
 	//build ancestors
@@ -249,23 +247,26 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		//if theres a deadline and either its a group or its an active job
 		if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
 
-			var date console.RFC3339Time
-			dateBytes := []byte(summary.Deadline.Date)
-			err := json.Unmarshal(dateBytes, &date)
+			deadlineDate, err := summary.Deadline.ToDate()
 			if err != nil {
 				return nil, err
 			}
 
-			deadStr, spaceTime := console.HumanizeDate(time.Time(date), now)
+			deadStr, spaceTime := console.HumanizeDate(time.Time(*deadlineDate), now)
 			displayDeadline = deadStr
 			deadlineToken = ToToken(spaceTime)
 		}
 
-		createdStr, err := JsonDateToReadable(summary.CreatedDate)
+		createdDate, err := summary.CreatedDate.ToDate()
 		if err != nil {
 			return nil, err
 		}
-		updatedStr, err := JsonDateToReadable(summary.UpdatedDate)
+		var createdStr = ""
+		if createdDate != nil {
+			createdStr, _ = console.HumanizeDate(time.Time(*createdDate), now) //JsonDateToReadable(summary.CreatedDate)
+		}
+
+		updatedStr, err := summary.UpdatedDate.JsonDateToReadable()
 		if err != nil {
 			return nil, err
 		}
@@ -294,24 +295,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		sorted := SortByUpdated(itemDisplays)
 		return e.renderSummaries(sorted)
 	}
-}
-
-// VX:TODO MOVE
-func JsonDateToReadable(dateInput *engine.DateTime) (string, error) {
-	if dateInput == nil {
-		return "", nil
-	}
-	var date console.RFC3339Time
-	dateBytes := []byte(dateInput.Date)
-	err := json.Unmarshal(dateBytes, &date)
-	if err != nil {
-		fmt.Printf("VXL ERROR parsing is %s", err)
-		return "", err
-	}
-
-	dateStr := console.DayFormat(time.Time(date))
-	return dateStr, nil
-
 }
 
 func ToToken(s console.SpaceTime) console.Token {
