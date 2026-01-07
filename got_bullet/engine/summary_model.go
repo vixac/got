@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"vixac.com/got/console"
@@ -55,6 +57,34 @@ func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Ta
 
 type DateTime struct {
 	Date string `json:"d,omitempty"`
+}
+
+func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
+	if d == nil {
+		return nil, nil
+	}
+	var date console.RFC3339Time
+	dateBytes := []byte(d.Date)
+	err := json.Unmarshal(dateBytes, &date)
+	if err != nil {
+		return nil, err
+	}
+	return &date, nil
+}
+func (d *DateTime) JsonDateToReadable() (string, error) {
+	if d == nil {
+		return "", nil
+	}
+	var date console.RFC3339Time
+	dateBytes := []byte(d.Date)
+	err := json.Unmarshal(dateBytes, &date)
+	if err != nil {
+		fmt.Printf("VXL ERROR parsing is %s", err)
+		return "", err
+	}
+
+	dateStr := console.DayFormat(time.Time(date))
+	return dateStr, nil
 }
 
 func NewDateTime(time time.Time) (DateTime, error) {

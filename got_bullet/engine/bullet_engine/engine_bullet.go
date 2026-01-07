@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -71,33 +70,44 @@ func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.D
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState) (*engine.GotFetchResult, error) {
 
+	now := time.Now()
 	statesToFetch := make(map[engine.GotState]bool)
 	for _, v := range states {
 		statesToFetch[v] = true
 	}
 	//0->1 numberstore gid -> numberstore
 	//0-> alias store gid -> alias store
-	gid, err := e.GidLookup.InputToGid(lookup)
-	if err != nil || gid == nil {
+	parentGid, err := e.GidLookup.InputToGid(lookup)
+	if err != nil || parentGid == nil {
 		return nil, err
 	}
+
+	parentIsRoot := parentGid.IntValue == TheRootNoteInt32
 
 	//1.gid->ancestor (object -> subject)
 	//2.all descendants: allpairs for full key
 
 	//VX:TODO we should be able to apply the state filtering here so that complete items aren't fetched unless necessary. Because many complete , few active.
-	all, err := e.AncestorList.FetchImmediatelyUnder(*gid)
+	all, err := e.AncestorList.FetchImmediatelyUnder(*parentGid)
 	if err != nil || all == nil {
 		return nil, err
 	}
 
+	var plusParent = 0
+	if !parentIsRoot {
+		plusParent = 1
+	}
 	//get string ids of all items to do the alias lookup
-	stringIds := make([]string, len(all.Ids))
+	stringIds := make([]string, len(all.Ids)+plusParent)
 
 	i := 0
 	for k := range all.Ids {
 		stringIds[i] = k
 		i++
+	}
+	//fetch theparent too if its not the root node.
+	if !parentIsRoot {
+		stringIds[len(all.Ids)] = parentGid.AasciValue
 	}
 
 	aliasMap, err := e.AliasStore.LookupAliasForMany(stringIds)
@@ -105,6 +115,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		return nil, err
 	}
 
+	//VX:TODO so there's no ancestor path available for the parent. its a bug basically. Because aren't fetching the PARENT when we call FetchImmediatelyUnder. In theory we could return the parent perhaps? Not sure.
 	var intIds []int32
 	ancestorPaths := make(map[int32]engine.GotPath)
 	for id, ancestorLookup := range all.Ids {
@@ -121,6 +132,11 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 			ancestorPaths[int32(intId)] = *path
 		}
 	}
+	//this is a bit of a workaround beacuse the intIds come from the for loop above, which is on the result of FetchimmediatelyUnder, which has no parent.
+	if !parentIsRoot {
+		intIds = append(intIds, parentGid.IntValue)
+	}
+
 	//titleStore: allIds -> title
 	titles, err := e.TitleStore.TitleForMany(intIds)
 	if err != nil {
@@ -144,6 +160,9 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		return nil, err
 	}
 
+	var parentItemDisplay *engine.GotItemDisplay = nil
+
+	//build ancestors
 	var itemDisplays []engine.GotItemDisplay
 	for k, v := range titles {
 
@@ -161,8 +180,37 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		if foundPath, ok := ancestorPaths[k]; ok {
 			path = &foundPath
 		}
-		pathLen := len(path.Ancestry)
 
+		gotId, err := engine.NewGotId(stringId)
+		if err != nil {
+			return nil, err
+		}
+		summaryId := NewSummaryId(*gotId)
+		summary, ok := summaries[summaryId]
+		if !ok {
+			return nil, errors.New("missing summary in fetchItems Below")
+		}
+
+		//here we filter complete leafs from the jobs list, and their notes.
+		//VX:Note we want to have completes
+		//not even appear in the search, because thats more scalable.
+
+		_, hasLongForm := longForms[k]
+
+		//this is the parent, so we populate parentItemDisplay and then continnue.
+		if k == parentGid.IntValue { //we will render parents separtely
+			displayItem, err := itemDisplay(summary, now, *gotId, v, alias, path, hasLongForm)
+			if err != nil {
+				return nil, err
+			}
+			parentItemDisplay = displayItem
+			continue
+		}
+
+		//now we decide we're showing the descendant.
+
+		//this is shouldShow logic.
+		pathLen := len(path.Ancestry)
 		var isParentComplete = false
 		if pathLen > 0 {
 			parentId := path.Ancestry[pathLen-1].Id
@@ -175,24 +223,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 			}
 		}
 
-		gotId, err := engine.NewGotId(stringId)
-		if err != nil {
-			return nil, err
-		}
-		summaryId := NewSummaryId(*gotId)
-		summary, ok := summaries[summaryId]
-		var summaryPointer *engine.Summary = nil
-		if ok {
-			summaryPointer = &summary
-		} else {
-			return nil, errors.New("missing summary in fetchItems Below")
-		}
-
-		//here we filter complete leafs from the jobs list, and their notes.
-		//VX:Note we want to have completes
-		//not even appear in the search, because thats more scalable.
 		var shouldShow = false
-
 		shouldFetchComplete := statesToFetch[engine.GotState(engine.Complete)]
 		if summary.State == nil {
 			shouldShow = true
@@ -206,79 +237,93 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 			}
 		}
 
-		//		isHiddenNote := isNote && isParentComplete
-		_, hasLongForm := longForms[k]
-
-		var displayDeadline = ""
-		var deadlineToken console.Token = console.TokenSecondary{}
-
-		//VX:TODO get this date wrangling out. Its business logic
-		//if theres a deadline and either its a group or its an active job
-		if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
-
-			var date console.RFC3339Time
-			dateBytes := []byte(summary.Deadline.Date)
-			err := json.Unmarshal(dateBytes, &date)
+		//finally, if this is a descendant that we should show, we add it.
+		if shouldShow {
+			displayItem, err := itemDisplay(summary, now, *gotId, v, alias, path, hasLongForm)
 			if err != nil {
 				return nil, err
 			}
-
-			deadStr, spaceTime := console.HumanizeDate(time.Time(date), time.Now())
-			displayDeadline = deadStr
-			deadlineToken = ToToken(spaceTime)
+			itemDisplays = append(itemDisplays, *displayItem)
 		}
-
-		createdStr, err := JsonDateToReadable(summary.CreatedDate)
-		if err != nil {
-			return nil, err
-		}
-		updatedStr, err := JsonDateToReadable(summary.UpdatedDate)
-		if err != nil {
-			return nil, err
-		}
-
-		if shouldShow {
-
-			itemDisplays = append(itemDisplays, engine.GotItemDisplay{
-				Gid:           stringId,
-				Title:         v,
-				Path:          path,
-				Alias:         alias,
-				SummaryObj:    summaryPointer,
-				HasTNote:      hasLongForm,
-				Deadline:      displayDeadline,
-				DeadlineToken: deadlineToken,
-				Created:       createdStr,
-				Updated:       updatedStr, //VX:TODO put the real dates in there for sorting purposes, so we can sort by full timestamp
-			})
-		}
-
 	}
+	var sorted []engine.GotItemDisplay
 	if sortByPath {
-		sorted := SortTheseIntoDFS(itemDisplays)
-		return e.renderSummaries(sorted)
+		sorted = SortTheseIntoDFS(itemDisplays)
+
 	} else {
-		sorted := SortByUpdated(itemDisplays)
-		return e.renderSummaries(sorted)
+		sorted = SortByUpdated(itemDisplays)
 	}
+	return e.renderSummaries(sorted, parentItemDisplay)
 }
 
-// VX:TODO MOVE
-func JsonDateToReadable(dateInput *engine.DateTime) (string, error) {
-	if dateInput == nil {
-		return "", nil
-	}
-	var date console.RFC3339Time
-	dateBytes := []byte(dateInput.Date)
-	err := json.Unmarshal(dateBytes, &date)
+func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title string, alias string, path *engine.GotPath, hasToNote bool) (*engine.GotItemDisplay, error) {
+
+	displayDeadline, deadlineToken, err := deadline(summary, now)
 	if err != nil {
-		fmt.Printf("VXL ERROR parsing is %s", err)
+		return nil, err
+	}
+
+	createdStr, err := createdDateDisplayString(summary, now)
+	if err != nil {
+		return nil, err
+	}
+	updatedStr, err := updatedDateDisplayString(summary)
+	if err != nil {
+		return nil, err
+	}
+	return &engine.GotItemDisplay{
+		Gid:           "0" + gid.AasciValue,
+		Title:         title,
+		Path:          path,
+		Alias:         alias,
+		SummaryObj:    &summary,
+		HasTNote:      hasToNote,
+		Deadline:      displayDeadline,
+		DeadlineToken: deadlineToken,
+		Created:       createdStr,
+		Updated:       updatedStr,
+	}, nil
+}
+
+func deadline(summary engine.Summary, now time.Time) (string, console.Token, error) {
+	var displayDeadline = ""
+	var deadlineToken console.Token = console.TokenSecondary{}
+	//VX:TODO get this date wrangling out. Its business logic	//if theres a deadline and either its a group or its an active job
+	if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
+
+		deadlineDate, err := summary.Deadline.ToDate()
+		if err != nil {
+			return "", deadlineToken, err
+		}
+
+		deadStr, spaceTime := console.HumanizeDate(time.Time(*deadlineDate), now)
+		displayDeadline = deadStr
+		deadlineToken = ToToken(spaceTime)
+		return displayDeadline, deadlineToken, nil
+	}
+	return "", deadlineToken, nil
+}
+
+func updatedDateDisplayString(summary engine.Summary) (string, error) {
+	updatedStr, err := summary.UpdatedDate.JsonDateToReadable()
+	if err != nil {
 		return "", err
 	}
+	return updatedStr, nil
 
-	dateStr := console.DayFormat(time.Time(date))
-	return dateStr, nil
+}
 
+// VX:TODO move these functions out into a mapping from data to GotItemDisplay. One big func probably
+func createdDateDisplayString(summary engine.Summary, now time.Time) (string, error) {
+	createdDate, err := summary.CreatedDate.ToDate()
+	if err != nil {
+		return "", err
+	}
+	var createdStr = ""
+	if createdDate != nil {
+		createdStr, _ = console.HumanizeDate(time.Time(*createdDate), now)
+	}
+	return createdStr, nil
 }
 
 func ToToken(s console.SpaceTime) console.Token {
@@ -293,6 +338,7 @@ func ToToken(s console.SpaceTime) console.Token {
 	}
 }
 
+// VX:TODO what is this? its wrong and bad.
 func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
 
 	gid, err := e.GidLookup.InputToGid(lookup)
@@ -321,7 +367,7 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay
 	}
 
 	return &engine.GotItemDisplay{
-		Gid:   gid.AasciValue,
+		Gid:   gid.AasciValue, //VX:TODO "0" prefix no?
 		Title: *title,
 		Path:  path,
 	}, nil
@@ -329,10 +375,11 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay
 }
 
 // adds the items to the number go store as well as
-func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engine.GotFetchResult, error) {
+func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent *engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
 	var expandedSummaries []engine.GotItemDisplay
 	var pairs []NumberGoPair
+	//here we enrich the itemdisplays by adding the number go, now that we know the sort order.
 	for i, s := range summaries {
 
 		num := i + 1
@@ -340,29 +387,20 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay) (*engi
 			Number: num,
 			Gid:    engine.Gid{Id: s.Gid},
 		})
-		//VX:TODO THIS KEEPS CATCHING ME OUT FIX. It shouldne be the constructir again.
-		expandedSummaries = append(expandedSummaries, engine.GotItemDisplay{
-			Gid:           "0" + s.Gid, //VX:TODO here is the "0 prefix on the gid."
-			Alias:         s.Alias,
-			NumberGo:      num,
-			Title:         s.Title,
-			Path:          s.Path,
-			SummaryObj:    s.SummaryObj,
-			HasTNote:      s.HasTNote,
-			Deadline:      s.Deadline,
-			DeadlineToken: s.DeadlineToken,
-			Created:       s.Created,
-			Updated:       s.Updated,
-		})
+
+		copy := s
+		copy.NumberGo = num
+		expandedSummaries = append(expandedSummaries, copy)
 	}
 
+	//the number go order is saved so it can be used in subsequent calls
 	err := e.NumberGoStore.AssignNumberPairs(pairs)
 	if err != nil {
 		return nil, err
 	}
 
 	//the summaries injected dont have number go assigned.
-	res := engine.GotFetchResult{Result: expandedSummaries}
+	res := engine.GotFetchResult{Result: expandedSummaries, Parent: parent}
 	return &res, nil
 }
 

@@ -33,7 +33,6 @@ var (
 type AncestorListInterface interface {
 	AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error)
 	RemoveItem(id engine.GotId) error
-	FetchAllItems(under engine.GotId) (*DescendantLookupResult, error)
 	FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error)
 	FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error)
 
@@ -136,17 +135,6 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 func (a *BulletAncestorList) RemoveItem(id engine.GotId) error {
 	return errors.New("not impl")
 }
-func (a *BulletAncestorList) FetchAllItems(under engine.GotId) (*DescendantLookupResult, error) {
-	descendants, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: under.AasciValue})
-	if err != nil {
-		return nil, err
-	}
-	for _, pair := range descendants.Pairs {
-		fmt.Printf("VX: all pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
-	}
-	return nil, errors.New("not impl")
-}
-
 func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
 	//get the subject key for this id, and then use it as a prefix.
 
