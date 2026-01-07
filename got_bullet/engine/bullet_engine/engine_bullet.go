@@ -71,6 +71,7 @@ func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.D
 // lets rewrite this maybe.
 func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState) (*engine.GotFetchResult, error) {
 
+	now := time.Now()
 	statesToFetch := make(map[engine.GotState]bool)
 	for _, v := range states {
 		statesToFetch[v] = true
@@ -81,6 +82,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	if err != nil || gid == nil {
 		return nil, err
 	}
+
+	parentIsRoot := gid.IntValue == TheRootNoteInt32
 
 	//1.gid->ancestor (object -> subject)
 	//2.all descendants: allpairs for full key
@@ -121,6 +124,10 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 			ancestorPaths[int32(intId)] = *path
 		}
 	}
+	//fetch  theparent too
+	if !parentIsRoot {
+		intIds = append(intIds, gid.IntValue)
+	}
 	//titleStore: allIds -> title
 	titles, err := e.TitleStore.TitleForMany(intIds)
 	if err != nil {
@@ -144,8 +151,34 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		return nil, err
 	}
 
+	var parentDisplay *engine.GotItemDisplay = nil
+	//build parent
+	if !parentIsRoot {
+		parentDisplay = &engine.GotItemDisplay{}
+		_, parentHasLongForm := longForms[gid.IntValue]
+		parentDisplay.HasTNote = parentHasLongForm
+		//parentDisplay.Alias
+
+		parentSummaryId := engine.SummaryId(gid.IntValue)
+		parentSummary, parentHasSummary := summaries[parentSummaryId]
+		if parentHasSummary {
+			if parentSummary.Counts != nil {
+
+			}
+
+			parentDisplay.Created = parentSummary.CreatedDate.Date
+		}
+
+	}
+
+	//build ancestors
 	var itemDisplays []engine.GotItemDisplay
 	for k, v := range titles {
+		if k == gid.IntValue { //we will render parents separtely
+			fmt.Printf("VX: IGNOREING PARENT")
+			continue
+
+		}
 
 		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k)) //VX:TODO can we just look this up from above?
 		if err != nil {
@@ -223,7 +256,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 				return nil, err
 			}
 
-			deadStr, spaceTime := console.HumanizeDate(time.Time(date), time.Now())
+			deadStr, spaceTime := console.HumanizeDate(time.Time(date), now)
 			displayDeadline = deadStr
 			deadlineToken = ToToken(spaceTime)
 		}

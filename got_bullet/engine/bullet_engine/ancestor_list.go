@@ -33,7 +33,6 @@ var (
 type AncestorListInterface interface {
 	AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error)
 	RemoveItem(id engine.GotId) error
-	FetchAllItems(under engine.GotId) (*DescendantLookupResult, error)
 	FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error)
 	FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error)
 
@@ -136,17 +135,6 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 func (a *BulletAncestorList) RemoveItem(id engine.GotId) error {
 	return errors.New("not impl")
 }
-func (a *BulletAncestorList) FetchAllItems(under engine.GotId) (*DescendantLookupResult, error) {
-	descendants, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: under.AasciValue})
-	if err != nil {
-		return nil, err
-	}
-	for _, pair := range descendants.Pairs {
-		fmt.Printf("VX: all pair is %s -> %s\n", pair.Subject.Value, pair.Object.Value)
-	}
-	return nil, errors.New("not impl")
-}
-
 func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
 	//get the subject key for this id, and then use it as a prefix.
 
@@ -162,6 +150,7 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 		//append the query to the ancestor Key, so id = c, fetches a:b, and we want to lookup everything prefixed with a:b:c
 		ancestorKey = ancestorPairs.Pairs[0].Subject.Value + a.SubjectSeparator + id.AasciValue
 	}
+	fmt.Printf("VX: ancestor key is %s for id %s\n", ancestorKey, id.AasciValue)
 
 	everythingBelowAncestor, err := a.Mesh.AllPairsForPrefixSubject(bullet_stl.ListSubject{Value: ancestorKey})
 	if err != nil {
@@ -172,6 +161,7 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 	}
 	ids := make(map[string]AncestorLookupResult)
 	for _, pair := range everythingBelowAncestor.Pairs {
+		fmt.Printf("VXL found pair %s\n", pair.Object.Value)
 		ancestorsIndividualIds := strings.Split(pair.Subject.Value, a.SubjectSeparator)
 		var gids []engine.GotId
 		for _, ancestorId := range ancestorsIndividualIds {

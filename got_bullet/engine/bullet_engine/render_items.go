@@ -83,8 +83,8 @@ func NewTable(items []engine.GotItemDisplay, options TableRenderOptions) (consol
 	titleCells = append(titleCells, console.NewTableCellFromStr("]", console.TokenTextTertiary{})) //"]" placeholder title
 	titleCells = append(titleCells, console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}))
 
-	titleCells = append(titleCells, console.NewTableCellFromStr("  ", console.TokenPrimary{}))   //emptyCell, //leaf column has no title
-	titleCells = append(titleCells, console.NewTableCellFromStr("Tags", console.TokenPrimary{})) //emptyCell, //leaf column has no title
+	titleCells = append(titleCells, console.NewTableCellFromStr("  ", console.TokenPrimary{}))    //emptyCell, //leaf column has no title
+	titleCells = append(titleCells, console.NewTableCellFromStr("Tags ", console.TokenPrimary{})) //emptyCell, //leaf column has no title
 	titleCells = append(titleCells, console.NewTableCellFromStr("Title", console.TokenTextTertiary{}))
 
 	titleRow := console.NewCellTableRow(titleCells)
