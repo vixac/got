@@ -480,6 +480,7 @@ func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) err
 	if gid == nil {
 		return nil
 	}
+	_ = e.publishEditEvent(EditItemEvent{Id: engine.SummaryId(gid.IntValue)})
 	return e.TitleStore.UpsertItem(gid.IntValue, newHeading)
 }
 
