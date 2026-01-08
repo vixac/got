@@ -443,13 +443,17 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 
 	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
 	if err != nil {
+
 		return errors.New("error fetching ancestors")
 	}
 	var summaryIds []engine.SummaryId
-	for _, id := range ancestorResult.Ids {
-		summaryIds = append(summaryIds, engine.SummaryId(id.IntValue))
+	if ancestorResult != nil {
+		for _, id := range ancestorResult.Ids {
+			summaryIds = append(summaryIds, engine.SummaryId(id.IntValue))
 
+		}
 	}
+
 	thisNode, err := e.Summary(&lookup)
 	if err != nil {
 		return err
@@ -667,11 +671,15 @@ func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor
 func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
+	if ancestors == nil {
+		return nil, nil
+	}
 	var items []engine.PathItem
 	//VX:TODO are they sorted by ancestry?
 	//I'm confused. I think there is always 1 item in here
 
 	var gids []string
+
 	for _, gid := range ancestors.Ids {
 		gids = append(gids, gid.AasciValue)
 	}

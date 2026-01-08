@@ -37,7 +37,18 @@ func SortByUpdated(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 	var sortableItems []engine.GotItemDisplay = items
 
 	sort.Slice(sortableItems, func(i, j int) bool {
-		return sortableItems[i].Updated < sortableItems[j].Updated
+		lhs := sortableItems[i].SummaryObj.UpdatedDate
+		rhs := sortableItems[j].SummaryObj.UpdatedDate
+		if lhs == nil && rhs == nil {
+			return true
+		}
+		if lhs == nil {
+			return true
+		}
+		if rhs == nil {
+			return false
+		}
+		return sortableItems[i].SummaryObj.UpdatedDate.EpochMillis() < sortableItems[j].SummaryObj.UpdatedDate.EpochMillis()
 	})
 	return sortableItems
 }
