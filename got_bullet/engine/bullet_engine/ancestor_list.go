@@ -186,9 +186,10 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error) {
 
 	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
-	if err != nil {
+	if err != nil || ancestors == nil {
 		return nil, err
 	}
+
 	if len(ancestors.Pairs) != 1 { //the ancestor list is in the form of the subject of the object, so its 1 key, containing all ancestors.
 		return nil, errors.New("this id seems to appear more than once")
 	}

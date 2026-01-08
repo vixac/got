@@ -56,9 +56,25 @@ func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Ta
 }
 
 type DateTime struct {
-	Date string `json:"d,omitempty"`
+	Date   string `json:"d,omitempty"`
+	Millis int64  `json:"e,omitempty"`
 }
 
+func (d *DateTime) EpochMillis() int64 {
+	if d == nil {
+		return 0
+	}
+	if d.Millis != 0 {
+		return d.Millis
+	}
+	date, err := d.ToDate()
+	if err != nil || date == nil {
+		return 0
+	}
+	startOfDay := time.Time(*date)
+	return startOfDay.UnixMilli()
+
+}
 func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 	if d == nil {
 		return nil, nil
@@ -89,12 +105,11 @@ func (d *DateTime) JsonDateToReadable() (string, error) {
 
 func NewDateTime(time time.Time) (DateTime, error) {
 
-	//formatted := deadlineTime.Format("Mon 2 Jan 2006")
 	dateJsonByes, err := time.MarshalJSON()
 	if err != nil {
 		return DateTime{}, err
 	}
-	return DateTime{Date: string(dateJsonByes)}, nil
+	return DateTime{Date: string(dateJsonByes), Millis: time.UnixMilli()}, nil
 }
 
 func NewDeadlineFromDateLookup(inputString string, now time.Time) (DateTime, error) {
