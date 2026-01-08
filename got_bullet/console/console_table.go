@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/rivo/uniseg"
 )
 
 type ConsoleTable struct {
@@ -17,20 +19,21 @@ const (
 	paddingSize = 0
 )
 
-func nchars(s string, n int) string {
-	if len(s) == 0 {
+func nchars(s string, targetWidth int) string {
+	if s == "" || targetWidth <= 0 {
 		return ""
 	}
 
-	// Convert the first rune of the string
 	r, _ := utf8.DecodeRuneInString(s)
+	unit := string(r)
+	unitWidth := uniseg.StringWidth(unit)
 
-	// Efficiently build a repeated rune string
 	var b strings.Builder
-	b.Grow(n * utf8.RuneLen(r))
+	current := 0
 
-	for i := 0; i < n; i++ {
-		b.WriteRune(r)
+	for current < targetWidth {
+		b.WriteString(unit)
+		current += unitWidth
 	}
 
 	return b.String()
@@ -67,7 +70,7 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 			}
 			var total = 0
 			for _, m := range messages {
-				total += utf8.RuneCountInString(m.Message)
+				total += uniseg.StringWidth(m.Message)
 			}
 			contentRows[rowNumber] = NewMessageGroup(messages)
 		}
@@ -117,9 +120,7 @@ func NewConsoleTable(rows []TableRow) (ConsoleTable, error) {
 				fmt.Printf("Error, row is %d, instead of %dcells. \n", r.CellRow.NumCells, colCount)
 				return ConsoleTable{}, errors.New("invalid cell count at row ")
 			}
-
 		}
-
 	}
 
 	var maxWidths []int
@@ -201,22 +202,13 @@ func NewSnippet(text string, token Token) Snippet {
 	return Snippet{
 		Text:  text,
 		Token: token,
-		Len:   utf8.RuneCountInString(text),
+		Len:   uniseg.StringWidth(text),
 	}
 }
 
 type TableCell struct {
 	Content []Snippet
 	Length  int
-}
-
-func (c *TableCell) PlainStr() string {
-	var str = "{"
-	for _, s := range c.Content {
-		str += s.Text + ","
-	}
-	str += "}"
-	return str
 }
 
 func NewTableCellFromStr(str string, token Token) TableCell {

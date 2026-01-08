@@ -73,7 +73,6 @@ func (d *DateTime) EpochMillis() int64 {
 	}
 	startOfDay := time.Time(*date)
 	return startOfDay.UnixMilli()
-
 }
 func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 	if d == nil {
