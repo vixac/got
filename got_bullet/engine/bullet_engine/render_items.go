@@ -132,8 +132,6 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	titleRow.Deadline = console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{})
 	titleRow.Tags = console.NewTableCellFromStr("Tags ", console.TokenPrimary{})
 	titleRow.Title = console.NewTableCellFromStr("Title ", console.TokenTextTertiary{})
-	titleRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar, console.TokenTextTertiary{})
-	titleRow.State = console.NewTableCellFromStr("~ ~", console.TokenTextTertiary{})
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow.TableRow())
 	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
