@@ -2,6 +2,7 @@ package console
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -113,6 +114,7 @@ func NewConsoleTable(rows []TableRow) (ConsoleTable, error) {
 			colCount = r.CellRow.NumCells //all future cells must be the same size as the first.
 		} else {
 			if r.CellRow.NumCells != colCount {
+				fmt.Printf("Error, row is %d, instead of %dcells. \n", r.CellRow.NumCells, colCount)
 				return ConsoleTable{}, errors.New("invalid cell count at row ")
 			}
 
