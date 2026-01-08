@@ -62,6 +62,47 @@ func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 	return console.NewTableCell(pathSnippets)
 }
 
+// all the cells that make up a got row
+type GotRow struct {
+	ItemNumber    console.TableCell
+	Created       console.TableCell
+	Updated       console.TableCell
+	Path          console.TableCell
+	GroupStart    console.TableCell
+	CompleteCount console.TableCell
+	ActiveCount   console.TableCell
+	GroupEnd      console.TableCell
+	Deadline      console.TableCell
+	LongForm      console.TableCell
+	State         console.TableCell
+	Tags          console.TableCell
+	Title         console.TableCell
+}
+
+func NewGotRow() GotRow {
+	emptyCell := console.NewTableCellFromStr("", console.TokenPrimary{})
+	return GotRow{
+		ItemNumber:    emptyCell,
+		Created:       emptyCell,
+		Updated:       emptyCell,
+		Path:          emptyCell,
+		GroupStart:    emptyCell,
+		CompleteCount: emptyCell,
+		ActiveCount:   emptyCell,
+		GroupEnd:      emptyCell,
+		Deadline:      emptyCell,
+		LongForm:      emptyCell,
+		State:         emptyCell,
+		Tags:          emptyCell,
+		Title:         emptyCell,
+	}
+}
+func (g GotRow) TableRow() console.TableRow {
+	cells := []console.TableCell{
+		g.ItemNumber, g.Created, g.Updated, g.Path, g.GroupStart, g.CompleteCount, g.ActiveCount, g.GroupEnd, g.Deadline, g.LongForm, g.State, g.Tags, g.Title,
+	}
+	return console.NewCellTableRow(cells)
+}
 func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (console.ConsoleTable, error) {
 
 	if len(fetched.Result) == 0 {
@@ -82,63 +123,45 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	if options.ShowUpdatedColumn {
 		titleCells = append(titleCells, console.NewTableCellFromStr("Updated ", console.TokenTextTertiary{}))
 	}
-
-	titleCells = append(titleCells, console.NewTableCellFromStr("Path", console.TokenTextTertiary{}))
-	titleCells = append(titleCells, console.NewTableCellFromStr("[", console.TokenTextTertiary{})) //"[" placeholder title
-	titleCells = append(titleCells, console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{}))
-	titleCells = append(titleCells, console.NewTableCellFromStr(engine.NoteChar+smallPadding, console.TokenNote{}))
-	titleCells = append(titleCells, console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{}))
-	titleCells = append(titleCells, console.NewTableCellFromStr("]", console.TokenTextTertiary{})) //"]" placeholder title
-	titleCells = append(titleCells, console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{}))
-
-	titleCells = append(titleCells, console.NewTableCellFromStr("  ", console.TokenPrimary{}))    //emptyCell, //leaf column has no title
-	titleCells = append(titleCells, console.NewTableCellFromStr("Tags ", console.TokenPrimary{})) //emptyCell, //leaf column has no title
-	titleCells = append(titleCells, console.NewTableCellFromStr("Title", console.TokenTextTertiary{}))
-
-	titleRow := console.NewCellTableRow(titleCells)
+	titleRow := NewGotRow()
+	titleRow.Path = console.NewTableCellFromStr("Path", console.TokenTextTertiary{})
+	titleRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
+	titleRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
+	titleRow.CompleteCount = console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{})
+	titleRow.ActiveCount = console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{})
+	titleRow.Deadline = console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{})
+	titleRow.Tags = console.NewTableCellFromStr("Tags ", console.TokenPrimary{})
+	titleRow.Title = console.NewTableCellFromStr("Title ", console.TokenTextTertiary{})
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
-	rows = append(rows, titleRow)
+	rows = append(rows, titleRow.TableRow())
 	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
 
-	//VX:TODO squash all this
 	if fetched.Parent != nil {
-
-		parentCells := []console.TableCell{}
-		parentCells = append(parentCells, emptyCell) //#
+		parentRow := NewGotRow()
 		if options.ShowCreatedColumn {
-			parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{}))
+			parentRow.Created = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
 		}
 		if options.ShowUpdatedColumn {
-			parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Updated+" ", console.TokenGroup{}))
+			parentRow.Updated = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
 		}
 		pathCell := renderPathFlat(fetched.Parent)
-		parentCells = append(parentCells, pathCell)
+		parentRow.Path = pathCell
 
 		if fetched.Parent.SummaryObj != nil && fetched.Parent.SummaryObj.Counts != nil {
-			parentCells = append(parentCells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
-			parentCells = append(parentCells, console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{}))
-			parentCells = append(parentCells, console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Notes)+smallPadding, console.TokenNote{}))
-			parentCells = append(parentCells, console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Active), console.TokenPrimary{}))
-			parentCells = append(parentCells, console.NewTableCellFromStr("]"+mediumPadding, console.TokenTextTertiary{}))
-
-		} else {
-			parentCells = append(parentCells, emptyCell) //[ placeholder
-			parentCells = append(parentCells, emptyCell) //complete placeholder
-			parentCells = append(parentCells, emptyCell) //note placeholder
-			parentCells = append(parentCells, emptyCell) //active placeholder
-			parentCells = append(parentCells, emptyCell) //] plceholdere
+			parentRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
+			parentRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
+			parentRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Active), console.TokenPrimary{})
+			parentRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
 		}
-		parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Deadline+" ", fetched.Parent.DeadlineToken))
+		parentRow.Deadline = console.NewTableCellFromStr(fetched.Parent.Deadline+" ", fetched.Parent.DeadlineToken)
 
 		if fetched.Parent.HasTNote {
-			parentCells = append(parentCells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
-		} else {
-			parentCells = append(parentCells, stateToCell(fetched.Parent.SummaryObj.State))
+			parentRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
 		}
-		parentCells = append(parentCells, emptyCell) //VX:TODO tag for parent
+		parentRow.State = stateToCell(fetched.Parent.SummaryObj.State)
 		//VX:TODO title token and truncations.
-		parentCells = append(parentCells, console.NewTableCellFromStr(fetched.Parent.Title, console.TokenSecondary{}))
-		rows = append(rows, console.NewCellTableRow(parentCells))
+		parentRow.Title = console.NewTableCellFromStr(fetched.Parent.Title, console.TokenSecondary{})
+		rows = append(rows, parentRow.TableRow())
 		rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 
 	}
@@ -146,23 +169,23 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line
 	var lastParentId *string = nil
 	var lastId *string = nil
-	for _, item := range fetched.Result {
-		var cells []console.TableCell
 
+	for _, item := range fetched.Result {
+		itemRow := NewGotRow()
 		numSnippets := []console.Snippet{
 			console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
 		}
-		cells = append(cells, console.NewTableCell(numSnippets))
+		itemRow.ItemNumber = console.NewTableCell(numSnippets)
 		if options.ShowCreatedColumn {
-			cells = append(cells, console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{}))
+			itemRow.Created = console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{})
 		}
 		if options.ShowUpdatedColumn {
-			cells = append(cells, console.NewTableCellFromStr(" "+item.Updated+" ", console.TokenNote{}))
+			itemRow.Updated = console.NewTableCellFromStr(" "+item.Updated+" ", console.TokenNote{})
 		}
 
 		if options.FlatPaths {
 			pathCell := renderPathFlat(&item)
-			cells = append(cells, pathCell)
+			itemRow.Path = pathCell
 
 		} else {
 			var pathSnippets []console.Snippet
@@ -224,37 +247,26 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 				pathSuffixToken = console.TokenGid{}
 			}
 			pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+mediumPadding, pathSuffixToken))
-
-			cells = append(cells, console.NewTableCell(pathSnippets))
+			itemRow.Path = console.NewTableCell(pathSnippets)
 		}
 		//path
 
 		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
-			cells = append(cells, console.NewTableCellFromStr("[", console.TokenTextTertiary{}))
-			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{}))
-			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Notes)+smallPadding, console.TokenNote{}))
-			cells = append(cells, console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active), console.TokenPrimary{}))
-			cells = append(cells, console.NewTableCellFromStr("]"+mediumPadding, console.TokenTextTertiary{}))
-
-		} else {
-			cells = append(cells, emptyCell) //[ placeholder
-			cells = append(cells, emptyCell) //complete placeholder
-			cells = append(cells, emptyCell) //note placeholder
-			cells = append(cells, emptyCell) //active placeholder
-			cells = append(cells, emptyCell) //] plceholdere
+			itemRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
+			itemRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
+			itemRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active), console.TokenPrimary{})
+			itemRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
 		}
-
-		cells = append(cells, console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken))
-
+		itemRow.Deadline = console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken)
 		if item.HasTNote {
-			cells = append(cells, console.NewTableCellFromStr(engine.TNoteChar, console.TokenGroup{}))
+			itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
 		} else {
-			cells = append(cells, stateToCell(item.SummaryObj.State))
+			itemRow.State = stateToCell(item.SummaryObj.State)
 		}
 
 		//tags
 		if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
-			cells = append(cells, emptyCell)
+			//VX:TODO invert the if
 		} else {
 
 			tagStr := ""
@@ -269,9 +281,7 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 			if tagStr != "" {
 				tagStr += ")"
 			}
-
-			cells = append(cells, console.NewTableCellFromStr(tagStr, console.TokenAlert{}))
-
+			itemRow.Tags = console.NewTableCellFromStr(tagStr, console.TokenAlert{})
 		}
 
 		//title
@@ -316,7 +326,7 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 				}
 				paddedSecondString += dotDotDot + secondLine
 			}
-			cells = append(cells, console.NewTableCellFromStr(titlePrefix+firstLine+dotDotDot, titleToken))
+			itemRow.Title = console.NewTableCellFromStr(titlePrefix+firstLine+dotDotDot, titleToken)
 			totalEmptyCells := len(titleCells) - 1
 			var overflowRowCells []console.TableCell
 			for i := 0; i < totalEmptyCells; i++ {
@@ -324,14 +334,16 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 			}
 			overflowRowCells = append(overflowRowCells, console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken))
 
-			rows = append(rows, console.NewCellTableRow(cells))
-			rows = append(rows, console.NewCellTableRow(overflowRowCells))
+			overFlowRow := NewGotRow()
+			overFlowRow.Title = console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken)
+
+			rows = append(rows, itemRow.TableRow())
+			rows = append(rows, overFlowRow.TableRow())
 
 		} else { //no truncation
-			cells = append(cells, console.NewTableCellFromStr(titlePrefix+item.Title, titleToken))
-			rows = append(rows, console.NewCellTableRow(cells))
+			itemRow.Title = console.NewTableCellFromStr(titlePrefix+item.Title, titleToken)
+			rows = append(rows, itemRow.TableRow())
 		}
-
 	}
 	return console.NewConsoleTable(rows)
 }
