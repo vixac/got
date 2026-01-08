@@ -80,7 +80,7 @@ type GotRow struct {
 }
 
 func NewGotRow() GotRow {
-	emptyCell := console.NewTableCellFromStr("", console.TokenPrimary{})
+	emptyCell := console.NewTableCellFromStr(" ", console.TokenPrimary{})
 	return GotRow{
 		ItemNumber:    emptyCell,
 		Created:       emptyCell,
@@ -126,12 +126,14 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	titleRow := NewGotRow()
 	titleRow.Path = console.NewTableCellFromStr("Path", console.TokenTextTertiary{})
 	titleRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
-	titleRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
+	titleRow.GroupEnd = console.NewTableCellFromStr("] ", console.TokenTextTertiary{})
 	titleRow.CompleteCount = console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{})
 	titleRow.ActiveCount = console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{})
 	titleRow.Deadline = console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{})
 	titleRow.Tags = console.NewTableCellFromStr("Tags ", console.TokenPrimary{})
 	titleRow.Title = console.NewTableCellFromStr("Title ", console.TokenTextTertiary{})
+	titleRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar, console.TokenTextTertiary{})
+	titleRow.State = console.NewTableCellFromStr("~ ~", console.TokenTextTertiary{})
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow.TableRow())
 	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
@@ -260,10 +262,8 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 		itemRow.Deadline = console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken)
 		if item.HasTNote {
 			itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
-		} else {
-			itemRow.State = stateToCell(item.SummaryObj.State)
 		}
-
+		itemRow.State = stateToCell(item.SummaryObj.State)
 		//tags
 		if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
 			//VX:TODO invert the if
