@@ -1,8 +1,6 @@
 package bullet_engine
 
 import (
-	"errors"
-
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
@@ -113,7 +111,16 @@ func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId
 	return result, nil
 
 }
-
 func (a *BulletSummaryStore) Delete(ids []engine.SummaryId) error {
-	return errors.New("not impl")
+	for _, id := range ids {
+		namespacedId := a.aggIdToNamespacedId(id)
+		req := bullet_interface.DepotDeleteRequest{
+			Key: namespacedId,
+		}
+		err := a.Client.DepotDeleteOne(req)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

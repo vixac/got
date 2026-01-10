@@ -28,7 +28,9 @@ type StateChangeEvent struct {
 }
 
 type ItemDeletedEvent struct {
-	Id engine.SummaryId
+	Id       engine.SummaryId
+	State    engine.GotState
+	Ancestry []engine.SummaryId
 }
 type ItemMovedEvent struct {
 	Id        engine.SummaryId
