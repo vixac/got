@@ -5,26 +5,50 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
 )
 
 const (
-	firstId       int32 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
-	bucketId            = 100
-	listName            = "next-id-list"
-	separator           = "" //VX:TODO this should be something else. I should migrate.
-	latestSubject       = "latest"
+	firstId int32 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
+	//bucketId            = 100
+//	listName            = "next-id-list"
+//	separator           = "" //VX:TODO this should be something else. I should migrate.
+//	latestSubject       = "latest"
 )
+
+type IdGeneratorInterface interface {
+	LastId() (int32, error) //fetches the last createdId
+	NextId() (int32, error) //creates a new id, stores it as the lastId, and returns it
+}
+type IdGenerator struct {
+	Client        bullet_interface.BulletClientInterface
+	BucketId      int32
+	ListName      string
+	Separator     string
+	LatestSubject string
+}
+
+// Change of setup, here we're allowing the class to define its own bucketId etc. Perhaps not ideal.
+func NewIdBulletGenerator(client bullet_interface.BulletClientInterface, bucketId int32, listName string, separator string, latestSubject string) IdGeneratorInterface {
+	return &IdGenerator{
+		Client:        client,
+		BucketId:      bucketId,
+		ListName:      listName,
+		Separator:     separator,
+		LatestSubject: latestSubject,
+	}
+}
 
 // VX:TODO
 // VX:TODO this is all bad things.
-func (e *EngineBullet) LastId() (int32, error) {
-	list, err := bullet_stl.NewBulletOneWayList(e.Client, bucketId, listName, separator)
+func (i *IdGenerator) LastId() (int32, error) {
+	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
 	if err != nil {
 		return 0, err
 	}
-	latest := bullet_stl.ListSubject{Value: latestSubject}
+	latest := bullet_stl.ListSubject{Value: i.LatestSubject}
 	currentHighest, err := list.GetObject(latest)
 	if err != nil {
 		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())
@@ -36,13 +60,13 @@ func (e *EngineBullet) LastId() (int32, error) {
 }
 
 // VX:TODO test, maybe put somewhere else too.
-func (e *EngineBullet) NextId() (int32, error) {
+func (i *IdGenerator) NextId() (int32, error) {
 
-	list, err := bullet_stl.NewBulletOneWayList(e.Client, bucketId, listName, separator)
+	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
 	if err != nil {
 		return 0, err
 	}
-	latest := bullet_stl.ListSubject{Value: latestSubject}
+	latest := bullet_stl.ListSubject{Value: i.LatestSubject}
 	currentHighest, err := list.GetObject(latest)
 	if err != nil {
 		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())

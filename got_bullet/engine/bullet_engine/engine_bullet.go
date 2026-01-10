@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	idGenBucket    int32 = 100
 	aliasBucket    int32 = 1001
 	nodeBucket     int32 = 1002
 	ancestorBucket int32 = 1003
@@ -34,6 +35,7 @@ type EngineBullet struct {
 	NumberGoStore NumberGoStoreInterface
 	SummaryStore  SummaryStoreInterface
 	LongFormStore LongFormStoreInterface
+	IgGenerator   IdGeneratorInterface
 
 	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
 
@@ -511,7 +513,7 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 }
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
-	newId, err := e.NextId()
+	newId, err := e.IgGenerator.NextId()
 
 	if err != nil {
 		return nil, err
@@ -769,6 +771,8 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 
 	}
 
+	idGenerator := NewIdBulletGenerator(client, idGenBucket, "next-id-list", "", "latest")
+
 	var listeners []EventListenerInterface
 	aggregator, err := NewAggregator(aggStore)
 	if err != nil {
@@ -786,6 +790,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		NumberGoStore:  numberGoStore,
 		SummaryStore:   aggStore,
 		LongFormStore:  longFormStore,
+		IgGenerator:    idGenerator,
 		EventListeners: listeners,
 	}, nil
 }

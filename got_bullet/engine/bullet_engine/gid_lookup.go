@@ -26,6 +26,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	}
 	/**
 	The lookup can be one of the following:
+	- exactly "0", this means its short hand for last. So we fetch the last created id.
 	- A gid, we know this because it's prefixed with 0 <-- this is a harmless prefix to The Aasci -> Int ids algorithm
 	- A number<GO> lookup from the last list printed. We know this because its prefixed with 1->9 (its a number < 0)
 	- An alias. if it starts with an alphanumeric, its an alias
