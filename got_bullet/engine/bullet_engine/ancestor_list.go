@@ -98,6 +98,7 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 			return nil, err
 		}
 		if ancestorSubject == nil {
+			fmt.Printf("VX: Missing ancesstor for %s\n", under.AasciValue)
 			return nil, errors.New("every node bedies the root node should have ancestors")
 		}
 		if len(ancestorSubject.Pairs) != 1 {
@@ -146,6 +147,7 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 			return nil, err
 		}
 		if ancestorPairs == nil || len(ancestorPairs.Pairs) != 1 {
+			fmt.Printf("VX: Error, this id has no acnestors: %s\n", id.AasciValue)
 			return nil, errors.New("zero ancestors. Itemas are su")
 		}
 		//append the query to the ancestor Key, so id = c, fetches a:b, and we want to lookup everything prefixed with a:b:c

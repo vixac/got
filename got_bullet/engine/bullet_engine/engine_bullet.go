@@ -61,6 +61,36 @@ func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
 		return errors.New("cannot delete item: it has children")
 	}
 
+	summaryId := engine.SummaryId(gid.IntValue)
+
+	// Fetch state and ancestry BEFORE deletion for the delete event
+	summary, err := e.SummaryStore.Fetch([]engine.SummaryId{summaryId})
+	if err != nil {
+		return err
+	}
+	itemSummary, ok := summary[summaryId]
+	if !ok {
+		return errors.New("item not found in summary store")
+	}
+
+	// Get the state (default to Note if nil)
+	var itemState engine.GotState = engine.Note
+	if itemSummary.State != nil {
+		itemState = *itemSummary.State
+	}
+
+	// Fetch ancestry
+	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
+	if err != nil {
+		return err
+	}
+	var ancestryIds []engine.SummaryId
+	if ancestorResult != nil {
+		for _, ancestor := range ancestorResult.Ids {
+			ancestryIds = append(ancestryIds, engine.SummaryId(ancestor.IntValue))
+		}
+	}
+
 	// Delete alias if it exists
 	alias, err := e.LookupAliasForGid(gid.AasciValue)
 	if err != nil {
@@ -80,7 +110,6 @@ func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
 	}
 
 	// Delete summary
-	summaryId := engine.SummaryId(gid.IntValue)
 	err = e.SummaryStore.Delete([]engine.SummaryId{summaryId})
 	if err != nil {
 		return err
@@ -98,7 +127,12 @@ func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
 		return err
 	}
 
-	return nil
+	// Publish delete event with state and ancestry
+	return e.publishItemDeletedEvent(ItemDeletedEvent{
+		Id:       summaryId,
+		State:    itemState,
+		Ancestry: ancestryIds,
+	})
 }
 
 func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
@@ -687,6 +721,17 @@ func (e *EngineBullet) publishEditEvent(event EditItemEvent) error {
 func (e *EngineBullet) publishStateChangeEvent(event StateChangeEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemStateChanged(event)
+		if err != nil {
+			fmt.Printf("VX:state change  Listner error was %s\n", err.Error())
+			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
+		}
+	}
+	return nil
+}
+
+func (e *EngineBullet) publishItemDeletedEvent(event ItemDeletedEvent) error {
+	for _, l := range e.EventListeners {
+		err := l.ItemDeleted(event)
 		if err != nil {
 			fmt.Printf("VX:state change  Listner error was %s\n", err.Error())
 			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
