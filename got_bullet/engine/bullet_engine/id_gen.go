@@ -12,10 +12,6 @@ import (
 
 const (
 	firstId int64 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
-	//bucketId            = 100
-//	listName            = "next-id-list"
-//	separator           = "" //VX:TODO this should be something else. I should migrate.
-//	latestSubject       = "latest"
 )
 
 type IdGeneratorInterface interface {
@@ -41,8 +37,7 @@ func NewIdBulletGenerator(client bullet_interface.BulletClientInterface, bucketI
 	}
 }
 
-// VX:TODO
-// VX:TODO this is all bad things.
+// VX:TODO test
 func (i *IdGenerator) LastId() (int64, error) {
 	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
 	if err != nil {
@@ -59,7 +54,7 @@ func (i *IdGenerator) LastId() (int64, error) {
 
 }
 
-// VX:TODO test, maybe put somewhere else too.
+// VX:TODO test
 func (i *IdGenerator) NextId() (int64, error) {
 
 	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
@@ -69,7 +64,7 @@ func (i *IdGenerator) NextId() (int64, error) {
 	latest := bullet_stl.ListSubject{Value: i.LatestSubject}
 	currentHighest, err := list.GetObject(latest)
 	if err != nil {
-		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())
+		fmt.Printf("VX next Id failed at get object. %s\n", err.Error())
 		return 0, err
 	}
 

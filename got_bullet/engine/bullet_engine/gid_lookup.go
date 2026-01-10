@@ -44,7 +44,6 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 		if lastId == 0 {
 			return nil, errors.New("Invalid last id.")
 		}
-		// vx convert to string
 		str, err := bullet_stl.BulletIdIntToaasci(lastId)
 		if err != nil {
 			return nil, err
