@@ -1,8 +1,6 @@
 package bullet_engine
 
 import (
-	"errors"
-
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
@@ -83,6 +81,9 @@ func (s *BulletTitleStore) TitleFor(id int32) (*string, error) {
 }
 
 func (s *BulletTitleStore) RemoveItem(id int32) error {
-	return errors.New("delete depot not working yet")
-
+	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
+	req := bullet_interface.DepotDeleteRequest{
+		Key: namespacedId,
+	}
+	return s.Depot.DepotDeleteOne(req)
 }

@@ -559,7 +559,7 @@ func (e *EngineBullet) MarkResolved(lookup []engine.GidLookup) error {
 }
 
 func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
-	return nil, errors.New("not impl")
+	return nil, errors.New("not impl engine move")
 }
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {

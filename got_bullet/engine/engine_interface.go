@@ -49,7 +49,7 @@ type GotState int
 
 const (
 	CompleteChar = "✔"
-	ActiveChar   = "•"
+	ActiveChar   = "⏺"
 	//ActiveChar = "🟢"
 	//bulletChar = "!"
 	NoteChar  = "~"
