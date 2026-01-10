@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	idGenBucket    int32 = 100
 	aliasBucket    int32 = 1001
 	nodeBucket     int32 = 1002
 	ancestorBucket int32 = 1003
@@ -23,6 +24,7 @@ const (
 
 const (
 	aggregateNamespace int32 = 2000
+	lastIdSymbol             = "0"
 )
 
 type EngineBullet struct {
@@ -34,6 +36,7 @@ type EngineBullet struct {
 	NumberGoStore NumberGoStoreInterface
 	SummaryStore  SummaryStoreInterface
 	LongFormStore LongFormStoreInterface
+	IgGenerator   IdGeneratorInterface
 
 	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
 
@@ -511,7 +514,26 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 }
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
-	newId, err := e.NextId()
+
+	//lookup parent first because if you're looking up lastId it will change
+	var parentGotId *engine.GotId = nil
+	if parent != nil { //last Id symbol
+		fetchedParent, err := e.GidLookup.InputToGid(parent)
+
+		if err != nil {
+			return nil, err
+		}
+		if fetchedParent == nil {
+			return nil, errors.New("could not find parent")
+		}
+		parentGotId = fetchedParent
+	}
+
+	newId, err := e.IgGenerator.NextId()
+	newId32 := int32(newId)
+	if int64(newId32) != newId {
+		return nil, errors.New("Error. We appear to have ran out of int32 id space.")
+	}
 
 	if err != nil {
 		return nil, err
@@ -522,7 +544,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}
 	gotId := engine.GotId{
 		AasciValue: stringId,
-		IntValue:   newId,
+		IntValue:   newId32,
 	}
 
 	var deadline *engine.DateTime = nil
@@ -539,20 +561,6 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 			return nil, err
 		}
 		deadline = &engine.DateTime{Date: string(dateJsonByes)}
-	}
-
-	var parentGotId *engine.GotId = nil
-	if parent != nil {
-		fmt.Printf("Looking up parent %s\n", parent.Input)
-		fetchedParent, err := e.GidLookup.InputToGid(parent)
-
-		if err != nil {
-			return nil, err
-		}
-		if fetchedParent == nil {
-			return nil, errors.New("could not find parent")
-		}
-		parentGotId = fetchedParent
 	}
 
 	//add item to ancestry
@@ -574,7 +582,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}
 
 	//add item heading to depot
-	err = e.TitleStore.UpsertItem(newId, headingToStore)
+	err = e.TitleStore.UpsertItem(newId32, headingToStore)
 	if err != nil {
 		return nil, err
 	}
@@ -762,8 +770,9 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	if err != nil {
 		return nil, err
 	}
+	idGenerator := NewIdBulletGenerator(client, idGenBucket, "next-id-list", "", "latest")
 
-	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore)
+	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore, idGenerator)
 	if err != nil {
 		return nil, err
 
@@ -786,6 +795,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		NumberGoStore:  numberGoStore,
 		SummaryStore:   aggStore,
 		LongFormStore:  longFormStore,
+		IgGenerator:    idGenerator,
 		EventListeners: listeners,
 	}, nil
 }

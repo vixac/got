@@ -136,36 +136,6 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	rows = append(rows, titleRow.TableRow())
 	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
 
-	if fetched.Parent != nil {
-		parentRow := NewGotRow()
-		if options.ShowCreatedColumn {
-			parentRow.Created = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
-		}
-		if options.ShowUpdatedColumn {
-			parentRow.Updated = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
-		}
-		pathCell := renderPathFlat(fetched.Parent)
-		parentRow.Path = pathCell
-
-		if fetched.Parent.SummaryObj != nil && fetched.Parent.SummaryObj.Counts != nil {
-			parentRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
-			parentRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
-			parentRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Active), console.TokenPrimary{})
-			parentRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
-		}
-		parentRow.Deadline = console.NewTableCellFromStr(fetched.Parent.Deadline+" ", fetched.Parent.DeadlineToken)
-
-		if fetched.Parent.HasTNote {
-			parentRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
-		}
-		parentRow.State = stateToCell(fetched.Parent.SummaryObj.State)
-		//VX:TODO title token and truncations.
-		parentRow.Title = console.NewTableCellFromStr(fetched.Parent.Title, console.TokenSecondary{})
-		rows = append(rows, parentRow.TableRow())
-		rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
-
-	}
-
 	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line
 	var lastParentId *string = nil
 	var lastId *string = nil
@@ -342,6 +312,37 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 			itemRow.Title = console.NewTableCellFromStr(titlePrefix+item.Title, titleToken)
 			rows = append(rows, itemRow.TableRow())
 		}
+	}
+
+	if fetched.Parent != nil {
+		parentRow := NewGotRow()
+		if options.ShowCreatedColumn {
+			parentRow.Created = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
+		}
+		if options.ShowUpdatedColumn {
+			parentRow.Updated = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
+		}
+		pathCell := renderPathFlat(fetched.Parent)
+		parentRow.Path = pathCell
+
+		if fetched.Parent.SummaryObj != nil && fetched.Parent.SummaryObj.Counts != nil {
+			parentRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
+			parentRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
+			parentRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Active), console.TokenPrimary{})
+			parentRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
+		}
+		parentRow.Deadline = console.NewTableCellFromStr(fetched.Parent.Deadline+" ", fetched.Parent.DeadlineToken)
+
+		if fetched.Parent.HasTNote {
+			parentRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
+		}
+		parentRow.State = stateToCell(fetched.Parent.SummaryObj.State)
+		//VX:TODO title token and truncations.
+		parentRow.Title = console.NewTableCellFromStr(fetched.Parent.Title, console.TokenSecondary{})
+		rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
+		rows = append(rows, parentRow.TableRow())
+		//rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
+
 	}
 	return console.NewConsoleTable(rows)
 }
