@@ -92,7 +92,7 @@ type GotAliasInterface interface {
 	LookupAliasForGid(gid string) (*string, error)
 	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
-	Alias(lookup *GidLookup, alias string) (bool, error)
+	Alias(lookup GidLookup, alias string) (bool, error)
 }
 
 func IsValidAlias(input string) bool {
@@ -146,7 +146,7 @@ type GidLookup struct {
 }
 
 type GotItemDisplay struct {
-	Id            GotId
+	GotId         GotId
 	DisplayGid    string
 	Title         string
 	Alias         string

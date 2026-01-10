@@ -39,19 +39,24 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	//step 1. We create the new summary object for the new item
 	upserts := make(map[engine.SummaryId]engine.Summary)
 	upserts[e.Id] = engine.NewLeafSummary(e.State, e.Deadline, time.Now(), []engine.Tag{})
+
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
 	if enrichedEvent.ParentIsLeaf() {
-		//convert parent to group with a count 1 for e.state
-		parentState := enrichedEvent.ParentState()
+
+		parentIndex := len(e.Ancestry) - 1
+		parentSummaryId := e.Ancestry[parentIndex]
+		parentSummary, ok := ancestorAggs[parentSummaryId]
+		if !ok {
+			return errors.New("missing summary for parent of state-changed items")
+		}
+
+		parentState := enrichedEvent.ParentState() //we need this to decrement its state from its ancestors.
 		if parentState == nil {
-			return errors.New("missing dev state")
+			return errors.New("missing dev state. The parent should have had a state at the moment ")
 		}
-		newParentSummary := engine.Summary{
-			State:    nil,
-			Deadline: enrichedEvent.Parent().Summary.Deadline,
-		}
+		parentSummary.State = nil //this is how we state that this is now a group.
 		parentId := enrichedEvent.ParentId()
-		upserts[*parentId] = newParentSummary
+		upserts[*parentId] = parentSummary
 
 		//decrement the parents state on all ancestors
 		for _, a := range enrichedEvent.Ancestry {
@@ -68,7 +73,6 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 			}
 		}
 	}
-
 	//increment all parents with the new state
 	change := engine.NewCountChange(e.State, true)
 	for _, a := range enrichedEvent.Ancestry {

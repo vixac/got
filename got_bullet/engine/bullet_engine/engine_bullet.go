@@ -367,7 +367,7 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 		return nil, err
 	}
 	return &engine.GotItemDisplay{
-		Id:            gid,
+		GotId:         gid,
 		DisplayGid:    "0" + gid.AasciValue,
 		Title:         title,
 		Path:          path,
@@ -434,7 +434,7 @@ func ToToken(s console.SpaceTime) console.Token {
 	}
 }
 
-// VX:TODO what is this? its wrong and bad.
+// VX:TODO This needs to go. Its old and wierd
 func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
 
 	gid, err := e.GidLookup.InputToGid(lookup)
@@ -482,9 +482,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 
 		pairs = append(pairs, NumberGoPair{
 			Number: num,
-			Gid: engine.Gid{
-				Id: s.Id.AasciValue,
-			},
+			Gid:    engine.Gid{Id: s.GotId.AasciValue},
 		})
 
 		copy := s
@@ -663,7 +661,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	var headingToStore = heading
 	if engine.IsValidAlias(heading) {
 		//headingToStore = "" //VX:Note I've decided against nulling the title because if you unalias, the meaning of this thing is totally gone.
-		_, err := e.AliasStore.Alias(stringId, heading)
+		_, err := e.AliasStore.Alias(gotId, heading)
 		if err != nil {
 			return nil, err
 		}
@@ -762,17 +760,15 @@ func (e *EngineBullet) LookupAliasForMany(gid []string) (map[string]*string, err
 	return e.AliasStore.LookupAliasForMany(gid)
 }
 
-func (e *EngineBullet) Alias(lookup *engine.GidLookup, alias string) (bool, error) {
-	//confirm the gid exists.
-	if lookup == nil {
-		return false, errors.New("can't alias a gid that doesn't exist")
-	}
-	targetGid, err := e.GidLookup.InputToGid(lookup)
-	if err != nil || targetGid == nil {
+func (e *EngineBullet) Alias(lookup engine.GidLookup, alias string) (bool, error) {
+
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
 		return false, err
 	}
 
-	return e.AliasStore.Alias(targetGid.AasciValue, alias)
+	//confirm the gid exists.
+	return e.AliasStore.Alias(*gid, alias)
 }
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor

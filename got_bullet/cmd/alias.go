@@ -31,8 +31,7 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 				return
 			}
 			lookup := engine.GidLookup{Input: gid}
-
-			_, err := deps.Engine.Alias(&lookup, alias)
+			_, err := deps.Engine.Alias(lookup, alias)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
