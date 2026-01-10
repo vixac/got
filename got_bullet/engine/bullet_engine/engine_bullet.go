@@ -32,7 +32,7 @@ type EngineBullet struct {
 	AncestorList  AncestorListInterface
 	TitleStore    TitleStoreInterface
 	GidLookup     GidLookupInterface
-	AliasStore    engine.GotAliasInterface
+	AliasStore    AliasStoreInterface
 	NumberGoStore NumberGoStoreInterface
 	SummaryStore  SummaryStoreInterface
 	LongFormStore LongFormStoreInterface
@@ -275,7 +275,8 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 		return nil, err
 	}
 	return &engine.GotItemDisplay{
-		Gid:           "0" + gid.AasciValue,
+		GotId:         gid,
+		DisplayGid:    "0" + gid.AasciValue,
 		Title:         title,
 		Path:          path,
 		Alias:         alias,
@@ -341,7 +342,7 @@ func ToToken(s console.SpaceTime) console.Token {
 	}
 }
 
-// VX:TODO what is this? its wrong and bad.
+// VX:TODO This needs to go. Its old and wierd
 func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
 
 	gid, err := e.GidLookup.InputToGid(lookup)
@@ -370,9 +371,9 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay
 	}
 
 	return &engine.GotItemDisplay{
-		Gid:   gid.AasciValue, //VX:TODO "0" prefix no?
-		Title: *title,
-		Path:  path,
+		DisplayGid: "0" + gid.AasciValue,
+		Title:      *title,
+		Path:       path,
 	}, nil
 
 }
@@ -388,7 +389,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 		num := i + 1
 		pairs = append(pairs, NumberGoPair{
 			Number: num,
-			Gid:    engine.Gid{Id: s.Gid},
+			Gid:    engine.Gid{Id: s.GotId.AasciValue},
 		})
 
 		copy := s
@@ -575,7 +576,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	var headingToStore = heading
 	if engine.IsValidAlias(heading) {
 		//headingToStore = "" //VX:Note I've decided against nulling the title because if you unalias, the meaning of this thing is totally gone.
-		_, err := e.AliasStore.Alias(stringId, heading)
+		_, err := e.AliasStore.Alias(gotId, heading)
 		if err != nil {
 			return nil, err
 		}
@@ -663,19 +664,15 @@ func (e *EngineBullet) LookupAliasForMany(gid []string) (map[string]*string, err
 	return e.AliasStore.LookupAliasForMany(gid)
 }
 
-func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
-	//confirm the gid exists.
-	lookup, err := e.Summary(&engine.GidLookup{
-		Input: gid,
-	})
-	if err != nil {
+func (e *EngineBullet) Alias(lookup engine.GidLookup, alias string) (bool, error) {
+
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
 		return false, err
 	}
 
-	if lookup == nil {
-		return false, errors.New("can't alias a gid that doesn't exist")
-	}
-	return e.AliasStore.Alias(lookup.Gid, alias)
+	//confirm the gid exists.
+	return e.AliasStore.Alias(*gid, alias)
 }
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor

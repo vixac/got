@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
+	"vixac.com/got/engine"
 )
 
 func buildAliasCommand(deps RootDependencies) *cobra.Command {
@@ -29,7 +30,8 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: "Missing gid"})
 				return
 			}
-			_, err := deps.Engine.Alias(gid, alias)
+			lookup := engine.GidLookup{Input: gid}
+			_, err := deps.Engine.Alias(lookup, alias)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return

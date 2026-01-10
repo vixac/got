@@ -92,7 +92,7 @@ type GotAliasInterface interface {
 	LookupAliasForGid(gid string) (*string, error)
 	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
-	Alias(gid string, alias string) (bool, error)
+	Alias(lookup GidLookup, alias string) (bool, error)
 }
 
 func IsValidAlias(input string) bool {
@@ -146,7 +146,8 @@ type GidLookup struct {
 }
 
 type GotItemDisplay struct {
-	Gid           string
+	GotId         GotId
+	DisplayGid    string
 	Title         string
 	Alias         string
 	Deadline      string
@@ -204,7 +205,7 @@ func (i *GotItemDisplay) Shortcut() (string, bool) {
 	if i.Alias != "" {
 		return i.Alias, true
 	} else {
-		return i.Gid, false
+		return i.DisplayGid, false
 	}
 
 }

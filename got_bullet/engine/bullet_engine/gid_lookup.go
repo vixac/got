@@ -14,12 +14,12 @@ type GidLookupInterface interface {
 
 // VX:TODO wants number<GO> lookup
 type BulletGidLookup struct {
-	AliasStore    engine.GotAliasInterface
+	AliasStore    AliasStoreInterface
 	NumberGoStore NumberGoStoreInterface
 	IdGenerator   IdGeneratorInterface
 }
 
-func NewBulletGidLookup(aliasStore engine.GotAliasInterface, numberGoStore NumberGoStoreInterface, idGen IdGeneratorInterface) (*BulletGidLookup, error) {
+func NewBulletGidLookup(aliasStore AliasStoreInterface, numberGoStore NumberGoStoreInterface, idGen IdGeneratorInterface) (*BulletGidLookup, error) {
 	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore, IdGenerator: idGen}, nil
 }
 
