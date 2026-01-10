@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	firstId int32 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
+	firstId int64 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
 	//bucketId            = 100
 //	listName            = "next-id-list"
 //	separator           = "" //VX:TODO this should be something else. I should migrate.
@@ -19,8 +19,8 @@ const (
 )
 
 type IdGeneratorInterface interface {
-	LastId() (int32, error) //fetches the last createdId
-	NextId() (int32, error) //creates a new id, stores it as the lastId, and returns it
+	LastId() (int64, error) //fetches the last createdId
+	NextId() (int64, error) //creates a new id, stores it as the lastId, and returns it
 }
 type IdGenerator struct {
 	Client        bullet_interface.BulletClientInterface
@@ -43,7 +43,7 @@ func NewIdBulletGenerator(client bullet_interface.BulletClientInterface, bucketI
 
 // VX:TODO
 // VX:TODO this is all bad things.
-func (i *IdGenerator) LastId() (int32, error) {
+func (i *IdGenerator) LastId() (int64, error) {
 	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
 	if err != nil {
 		return 0, err
@@ -55,12 +55,12 @@ func (i *IdGenerator) LastId() (int32, error) {
 		return 0, err
 	}
 	valueInt, err := strconv.ParseInt(currentHighest.Value, 10, 32)
-	return int32(valueInt), err
+	return valueInt, err
 
 }
 
 // VX:TODO test, maybe put somewhere else too.
-func (i *IdGenerator) NextId() (int32, error) {
+func (i *IdGenerator) NextId() (int64, error) {
 
 	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
 	if err != nil {
@@ -98,6 +98,6 @@ func (i *IdGenerator) NextId() (int32, error) {
 		if err != nil {
 			return 0, err
 		}
-		return int32(incrementedValue), nil
+		return incrementedValue, nil
 	}
 }

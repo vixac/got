@@ -57,6 +57,7 @@ func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
 	if res == nil {
 		return nil, nil
 	}
+
 	value, ok := res.Values[namespacedId]
 	if !ok {
 		return nil, nil

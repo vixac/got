@@ -1,8 +1,10 @@
 package bullet_engine
 
 import (
+	"errors"
 	"strconv"
 
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
 )
 
@@ -14,10 +16,11 @@ type GidLookupInterface interface {
 type BulletGidLookup struct {
 	AliasStore    engine.GotAliasInterface
 	NumberGoStore NumberGoStoreInterface
+	IdGenerator   IdGeneratorInterface
 }
 
-func NewBulletGidLookup(aliasStore engine.GotAliasInterface, numberGoStore NumberGoStoreInterface) (*BulletGidLookup, error) {
-	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore}, nil
+func NewBulletGidLookup(aliasStore engine.GotAliasInterface, numberGoStore NumberGoStoreInterface, idGen IdGeneratorInterface) (*BulletGidLookup, error) {
+	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore, IdGenerator: idGen}, nil
 }
 
 func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, error) {
@@ -31,6 +34,23 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	- A number<GO> lookup from the last list printed. We know this because its prefixed with 1->9 (its a number < 0)
 	- An alias. if it starts with an alphanumeric, its an alias
 	*/
+
+	//this is short hand for the last Id created
+	if lookup.Input == "0" {
+		lastId, err := b.IdGenerator.LastId()
+		if err != nil {
+			return nil, err
+		}
+		if lastId == 0 {
+			return nil, errors.New("Invalid last id.")
+		}
+		// vx convert to string
+		str, err := bullet_stl.BulletIdIntToaasci(lastId)
+		if err != nil {
+			return nil, err
+		}
+		return engine.NewGotId(str)
+	}
 	firstChar := lookup.Input[0]
 	//this is a gid
 	if firstChar == '0' {
