@@ -40,8 +40,65 @@ type EngineBullet struct {
 
 	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
 
-	//interface conformance
-	//	LongFormStoreInterface
+}
+
+func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
+	// Convert lookup to GID
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil {
+		return err
+	}
+	if gid == nil {
+		return errors.New("could not resolve gid from lookup")
+	}
+
+	// Check if this item is a parent (has children)
+	children, err := e.AncestorList.FetchImmediatelyUnder(*gid)
+	if err != nil {
+		return err
+	}
+	if children != nil && len(children.Ids) > 0 {
+		return errors.New("cannot delete item: it has children")
+	}
+
+	// Delete alias if it exists
+	alias, err := e.LookupAliasForGid(gid.AasciValue)
+	if err != nil {
+		return err
+	}
+	if alias != nil {
+		_, err = e.AliasStore.Unalias(*alias)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Delete longForm entry if it exists
+	err = e.LongFormStore.RemoveItemFromLongStore(gid.IntValue)
+	if err != nil {
+		return err
+	}
+
+	// Delete summary
+	summaryId := engine.SummaryId(gid.IntValue)
+	err = e.SummaryStore.Delete([]engine.SummaryId{summaryId})
+	if err != nil {
+		return err
+	}
+
+	// Delete title
+	err = e.TitleStore.RemoveItem(gid.IntValue)
+	if err != nil {
+		return err
+	}
+
+	// Delete from ancestor list
+	err = e.AncestorList.RemoveItem(*gid)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
@@ -499,14 +556,6 @@ func (e *EngineBullet) MarkResolved(lookup []engine.GidLookup) error {
 	}
 	return nil
 
-}
-
-func (e *EngineBullet) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
-	//check if the gid is an exact match for an item id
-	//check int32 parse, check its length is the right length
-
-	//aliases can't start with a number.
-	return nil, errors.New("not impl")
 }
 
 func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {

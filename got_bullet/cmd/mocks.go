@@ -87,9 +87,9 @@ func (m *MockEngine) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error)
 	return m.nodeIdToReturn, m.errorToThrow
 }
 
-func (m *MockEngine) Delete(lookup engine.GidLookup) (*engine.NodeId, error) {
+func (m *MockEngine) Delete(lookup engine.GidLookup) error {
 	m.resolveLookup = lookup
-	return m.nodeIdToReturn, m.errorToThrow
+	return m.errorToThrow
 }
 func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
 	m.aliasGid = gid

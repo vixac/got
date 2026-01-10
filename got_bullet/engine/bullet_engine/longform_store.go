@@ -11,7 +11,7 @@ type LongFormStoreInterface interface {
 	UpsertItem(id int32, title string) error
 	LongFormFor(id int32) (*string, error)
 	LongFormForMany(ids []int32) (map[int32]string, error)
-	RemoveItem(id int32) error
+	RemoveItemFromLongStore(id int32) error
 }
 type BulletLongFormStore struct {
 	Namespace int32
@@ -81,6 +81,6 @@ func (s *BulletLongFormStore) LongFormFor(id int32) (*string, error) {
 	return nil, nil
 }
 
-func (s *BulletLongFormStore) RemoveItem(id int32) error {
+func (s *BulletLongFormStore) RemoveItemFromLongStore(id int32) error {
 	return errors.New("delete depot not working yet")
 }
