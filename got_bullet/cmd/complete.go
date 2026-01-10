@@ -11,8 +11,8 @@ import (
 func buildCompleteCommand(deps RootDependencies) *cobra.Command {
 
 	var jobsCmd = &cobra.Command{
-		Use:   "complete",
-		Short: "fetch complete jobs under gid",
+		Use:   "completed",
+		Short: "fetch completed jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
 			//VX:TODO no more -u, lets got got jobs <id> optinoal.
 			if len(args) > 1 {

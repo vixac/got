@@ -383,3 +383,130 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
 	assert.Equal(t, *fetchedAlice.State, activeState) //alice has complete bob and complete carol under it. So its now the active node.
 }
+
+func TestAggregatorHandlesDelete(t *testing.T) {
+
+	store := MakeMockSummaryStore()
+	agg, err := NewAggregator(&store)
+	assert.NilError(t, err)
+
+	var aliceId = engine.SummaryId(10)
+	var bob = engine.SummaryId(11)
+	var carolId = engine.SummaryId(12)
+
+	//create alice -> bob
+	err = agg.ItemAdded(AddItemEvent{
+		Id:       aliceId,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{},
+		Deadline: nil,
+	})
+	assert.NilError(t, err)
+
+	assert.Assert(t, store.aggs != nil)
+
+	assert.Equal(t, len(store.aggs), 1)
+
+	agg.ItemAdded(AddItemEvent{
+		Id:       bob,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{aliceId},
+		Deadline: nil,
+	})
+
+	//fetch both
+	assert.Equal(t, len(store.aggs), 2)
+	fetchBoth, err := agg.summaryStore.Fetch([]engine.SummaryId{
+		aliceId,
+		bob,
+	})
+	assert.NilError(t, err)
+	fetchedAlice, ok := fetchBoth[aliceId]
+	assert.Equal(t, ok, true)
+	fetchedBob, ok := fetchBoth[bob]
+	//fmt.Printf("k, bobcounts a, %+v\n", fetchedBob.Counts)
+	assert.Equal(t, ok, true)
+	assert.Assert(t, fetchedAlice.Counts != nil)
+	assert.Assert(t, fetchedBob.Counts == nil)
+
+	assert.Equal(t, fetchedAlice.Counts.Active, 1)
+	assert.Equal(t, fetchedAlice.Counts.Complete, 0)
+	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
+	var nilState *engine.GotState = nil
+	assert.Equal(t, fetchedAlice.State, nilState)
+
+	//complete bob, expect alice to become active
+	err = agg.ItemStateChanged(StateChangeEvent{
+		Id:       bob,
+		OldState: engine.Active,
+		NewState: engine.Complete,
+		Ancestry: []engine.SummaryId{aliceId},
+	})
+	assert.NilError(t, err)
+
+	//refetch
+	fetchBoth, err = agg.summaryStore.Fetch([]engine.SummaryId{
+		aliceId,
+		bob,
+	})
+
+	assert.NilError(t, err)
+	fetchedAlice, ok = fetchBoth[aliceId]
+	assert.Equal(t, ok, true)
+	fetchedBob, ok = fetchBoth[bob]
+	assert.Equal(t, ok, true)
+	assert.Assert(t, fetchedAlice.Counts != nil)
+	assert.Assert(t, fetchedBob.Counts == nil)
+
+	assert.Equal(t, fetchedAlice.Counts.Active, 0)
+	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
+	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
+	var activeState = engine.GotState(engine.Active)
+	assert.Equal(t, *fetchedAlice.State, activeState)
+
+	//now add an active item under alice
+	err = agg.ItemAdded(AddItemEvent{
+		Id:       carolId,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{aliceId},
+		Deadline: nil,
+	})
+
+	assert.NilError(t, err)
+
+	fetchBoth, err = agg.summaryStore.Fetch([]engine.SummaryId{
+		aliceId,
+		carolId,
+	})
+	assert.NilError(t, err)
+
+	fetchedAlice, ok = fetchBoth[aliceId]
+	assert.Equal(t, ok, true)
+	assert.Assert(t, fetchedAlice.State == nil)
+
+	assert.Equal(t, fetchedAlice.Counts.Active, 1)   //carol
+	assert.Equal(t, fetchedAlice.Counts.Complete, 1) //bob
+	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
+
+	//deleting carol carol
+	err = agg.ItemDeleted(ItemDeletedEvent{
+		Id:       carolId,
+		Ancestry: []engine.SummaryId{aliceId},
+	})
+	assert.NilError(t, err)
+
+	fetchBoth, err = agg.summaryStore.Fetch([]engine.SummaryId{
+		aliceId,
+		carolId,
+	})
+	assert.NilError(t, err)
+
+	fetchedAlice, ok = fetchBoth[aliceId]
+	assert.Equal(t, ok, true)
+
+	assert.Equal(t, fetchedAlice.Counts.Active, 0)
+	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
+	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
+	assert.Assert(t, fetchedAlice.State != nil)
+	assert.Equal(t, *fetchedAlice.State, activeState) //alice has complete bob and complete carol under it. So its now the active node.
+}
