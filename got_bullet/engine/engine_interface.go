@@ -92,7 +92,7 @@ type GotAliasInterface interface {
 	LookupAliasForGid(gid string) (*string, error)
 	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
-	Alias(gid string, alias string) (bool, error)
+	Alias(lookup *GidLookup, alias string) (bool, error)
 }
 
 func IsValidAlias(input string) bool {
@@ -146,7 +146,8 @@ type GidLookup struct {
 }
 
 type GotItemDisplay struct {
-	Gid           string
+	Id            GotId
+	DisplayGid    string
 	Title         string
 	Alias         string
 	Deadline      string
@@ -204,7 +205,7 @@ func (i *GotItemDisplay) Shortcut() (string, bool) {
 	if i.Alias != "" {
 		return i.Alias, true
 	} else {
-		return i.Gid, false
+		return i.DisplayGid, false
 	}
 
 }
@@ -248,6 +249,11 @@ func FitsInInt32(v int64) bool {
 
 // this is basically a wrapper for BulletId
 func NewGotId(aasci string) (*GotId, error) {
+	/*
+		if aasci[0] == '0' {
+			fmt.Printf("VX: OK WTFFFF> %s\n", aasci)
+			panic(string(debug.Stack()))
+		}*/
 	intVal, err := bullet_stl.AasciBulletIdToInt(aasci)
 	if !FitsInInt32(intVal) {
 		return nil, errors.New("id is too big")

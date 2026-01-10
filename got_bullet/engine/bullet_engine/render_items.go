@@ -206,7 +206,7 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 				}
 			}
 
-			lastId = &item.Gid
+			lastId = &item.Id.AasciValue
 			pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
 
 			pathSuffixShortcut, isAlias := item.Shortcut()

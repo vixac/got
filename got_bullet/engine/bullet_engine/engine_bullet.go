@@ -32,7 +32,7 @@ type EngineBullet struct {
 	AncestorList  AncestorListInterface
 	TitleStore    TitleStoreInterface
 	GidLookup     GidLookupInterface
-	AliasStore    engine.GotAliasInterface
+	AliasStore    AliasStoreInterface
 	NumberGoStore NumberGoStoreInterface
 	SummaryStore  SummaryStoreInterface
 	LongFormStore LongFormStoreInterface
@@ -171,6 +171,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	}
 	//0->1 numberstore gid -> numberstore
 	//0-> alias store gid -> alias store
+	fmt.Printf("VX: lookup is %s", lookup.Input)
 	parentGid, err := e.GidLookup.InputToGid(lookup)
 	if err != nil || parentGid == nil {
 		return nil, err
@@ -366,7 +367,8 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 		return nil, err
 	}
 	return &engine.GotItemDisplay{
-		Gid:           "0" + gid.AasciValue,
+		Id:            gid,
+		DisplayGid:    "0" + gid.AasciValue,
 		Title:         title,
 		Path:          path,
 		Alias:         alias,
@@ -461,9 +463,9 @@ func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay
 	}
 
 	return &engine.GotItemDisplay{
-		Gid:   gid.AasciValue, //VX:TODO "0" prefix no?
-		Title: *title,
-		Path:  path,
+		DisplayGid: "0" + gid.AasciValue,
+		Title:      *title,
+		Path:       path,
 	}, nil
 
 }
@@ -477,9 +479,12 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 	for i, s := range summaries {
 
 		num := i + 1
+
 		pairs = append(pairs, NumberGoPair{
 			Number: num,
-			Gid:    engine.Gid{Id: s.Gid},
+			Gid: engine.Gid{
+				Id: s.Id.AasciValue,
+			},
 		})
 
 		copy := s
@@ -600,7 +605,7 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 
 	//lookup parent first because if you're looking up lastId it will change
 	var parentGotId *engine.GotId = nil
-	if parent != nil { //last Id symbol
+	if parent != nil {
 		fetchedParent, err := e.GidLookup.InputToGid(parent)
 
 		if err != nil {
@@ -757,19 +762,17 @@ func (e *EngineBullet) LookupAliasForMany(gid []string) (map[string]*string, err
 	return e.AliasStore.LookupAliasForMany(gid)
 }
 
-func (e *EngineBullet) Alias(gid string, alias string) (bool, error) {
+func (e *EngineBullet) Alias(lookup *engine.GidLookup, alias string) (bool, error) {
 	//confirm the gid exists.
-	lookup, err := e.Summary(&engine.GidLookup{
-		Input: gid,
-	})
-	if err != nil {
-		return false, err
-	}
-
 	if lookup == nil {
 		return false, errors.New("can't alias a gid that doesn't exist")
 	}
-	return e.AliasStore.Alias(lookup.Gid, alias)
+	targetGid, err := e.GidLookup.InputToGid(lookup)
+	if err != nil || targetGid == nil {
+		return false, err
+	}
+
+	return e.AliasStore.Alias(targetGid.AasciValue, alias)
 }
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor

@@ -91,8 +91,8 @@ func (m *MockEngine) Delete(lookup engine.GidLookup) error {
 	m.resolveLookup = lookup
 	return m.errorToThrow
 }
-func (m *MockEngine) Alias(gid string, alias string) (bool, error) {
-	m.aliasGid = gid
+func (m *MockEngine) Alias(gid *engine.GidLookup, alias string) (bool, error) {
+	m.aliasGid = gid.Input //VX:TODO i think thats wrong.
 	m.aliasAlias = alias
 	return false, m.errorToThrow
 }

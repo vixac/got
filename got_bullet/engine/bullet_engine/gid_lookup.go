@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -14,12 +15,12 @@ type GidLookupInterface interface {
 
 // VX:TODO wants number<GO> lookup
 type BulletGidLookup struct {
-	AliasStore    engine.GotAliasInterface
+	AliasStore    AliasStoreInterface
 	NumberGoStore NumberGoStoreInterface
 	IdGenerator   IdGeneratorInterface
 }
 
-func NewBulletGidLookup(aliasStore engine.GotAliasInterface, numberGoStore NumberGoStoreInterface, idGen IdGeneratorInterface) (*BulletGidLookup, error) {
+func NewBulletGidLookup(aliasStore AliasStoreInterface, numberGoStore NumberGoStoreInterface, idGen IdGeneratorInterface) (*BulletGidLookup, error) {
 	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore, IdGenerator: idGen}, nil
 }
 
@@ -37,6 +38,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 
 	//this is short hand for the last Id created
 	if lookup.Input == "0" {
+		fmt.Printf("VX: USING LAST\n")
 		lastId, err := b.IdGenerator.LastId()
 		if err != nil {
 			return nil, err
@@ -48,7 +50,9 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 		if err != nil {
 			return nil, err
 		}
-		return engine.NewGotId(str)
+		new, err := engine.NewGotId(str)
+		fmt.Printf("VX LOOKUP 0 new is %s", new.AasciValue)
+		return new, err
 	}
 	firstChar := lookup.Input[0]
 	//this is a gid

@@ -38,7 +38,7 @@ func buildMoreCommand(deps RootDependencies) *cobra.Command {
 				return
 			}
 			var msg = "Found job with gid: "
-			msg += res.Gid
+			msg += res.DisplayGid
 			msg += " , and title '"
 			msg += res.Title
 			msg += "'."

@@ -140,6 +140,7 @@ func (a *BulletAncestorList) RemoveItem(id engine.GotId) error {
 func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
 	//get the subject key for this id, and then use it as a prefix.
 
+	fmt.Printf("VX: FETCHING UNDER id %s %d\n", id.AasciValue, id.IntValue)
 	var ancestorKey = "" //this can be left blank for TheRootNote.
 	if id.AasciValue != TheRootNode.Value {
 		ancestorPairs, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})

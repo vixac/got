@@ -1,6 +1,8 @@
 package bullet_engine
 
 import (
+	"fmt"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
@@ -62,6 +64,7 @@ func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
 	if !ok {
 		return nil, nil
 	}
+	fmt.Printf("VX: number go fetched value %s\n", value)
 
 	return engine.NewGotId(value)
 }
