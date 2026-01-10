@@ -22,7 +22,7 @@ type GotEngine interface {
 	MarkActive(lookup GidLookup) (*NodeId, error)
 	MarkAsNote(lookup GidLookup) (*NodeId, error)
 
-	Delete(lookup GidLookup) (*NodeId, error)
+	Delete(lookup GidLookup) error
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 	OpenThenTimestamp(lookup GidLookup) error
@@ -49,11 +49,9 @@ type GotState int
 
 const (
 	CompleteChar = "✔"
-	ActiveChar   = "•"
-	//ActiveChar = "🟢"
-	//bulletChar = "!"
-	NoteChar  = "~"
-	TNoteChar = "📎"
+	ActiveChar   = "⏺"
+	NoteChar     = "~"
+	TNoteChar    = "📎"
 )
 
 func (g GotState) ToStr() string {

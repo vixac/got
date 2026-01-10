@@ -9,10 +9,13 @@ import (
 )
 
 func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
+
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil || gid == nil {
 		return err
 	}
+
+	//VX:TODO we should stop early if the gid doesn't map to an existing item.
 
 	var note = ""
 	existing, err := e.LongFormStore.LongFormFor(gid.IntValue)

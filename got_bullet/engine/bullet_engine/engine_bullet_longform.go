@@ -14,6 +14,6 @@ func (e *EngineBullet) LongFormForMany(ids []int32) (map[int32]string, error) {
 	return e.LongFormStore.LongFormForMany(ids)
 }
 
-func (e *EngineBullet) RemoveItem(id int32) error {
-	return e.LongFormStore.RemoveItem(id)
+func (e *EngineBullet) RemoveItemFromLongStore(id int32) error {
+	return e.LongFormStore.RemoveItemFromLongStore(id)
 }

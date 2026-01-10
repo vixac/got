@@ -103,7 +103,7 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	if !ok {
 		return errors.New("missing summary for state-changed item.s")
 	}
-	changedItemSummary.State = &e.NewState
+	changedItemSummary.State = e.NewState
 
 	nowTime, err := engine.NewDateTime(time.Now())
 	if err != nil {
@@ -129,7 +129,8 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	}
 
 	//step 1  we decrement the old state and increment the new for all its ancestors
-	isChangeFromActive := e.OldState == engine.Active && e.NewState != engine.Active
+	//we check that the old state was active and the new state isnt active.
+	isChangeFromActive := e.OldState == engine.Active && (e.NewState == nil || *e.NewState != engine.Active)
 
 	//theres a chance we need to convert the parent to active state.
 	isParentInNeedOfPromotingToAcive := isChangeFromActive && parentSummary.Counts.Active == 1
@@ -138,7 +139,11 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	isParentInNeedOfDemotingToGroup := isChangeFromActive && parentSummary.State != nil && parentHasNoOtherActiveChildren
 	//do we bubble this? I think we let the user make these changes.
 
-	incChange := engine.NewCountChange(e.NewState, true)
+	var incChange engine.AggregateCountChange
+	if e.NewState != nil {
+		incChange = engine.NewCountChange(*e.NewState, true)
+	}
+
 	decChange := engine.NewCountChange(e.OldState, false)
 
 	combined := incChange.Combine(decChange)
@@ -190,8 +195,14 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 }
 
 func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
-	fmt.Printf("VX:TODO unhandled event ")
-	return nil
+	//we convert it to a statechanged event with no new state
+	return a.ItemStateChanged(StateChangeEvent{
+		Id:       e.Id,
+		Ancestry: e.Ancestry,
+		OldState: e.State,
+		NewState: nil,
+	})
+
 }
 
 func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {

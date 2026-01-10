@@ -15,7 +15,7 @@ func buildRemoveCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: "Expected the alias as input"})
 				return
 			}
-			_, err := deps.Engine.Delete(engine.GidLookup{Input: args[0]})
+			err := deps.Engine.Delete(engine.GidLookup{Input: args[0]})
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return

@@ -1,8 +1,6 @@
 package bullet_engine
 
 import (
-	"errors"
-
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
@@ -11,7 +9,7 @@ type LongFormStoreInterface interface {
 	UpsertItem(id int32, title string) error
 	LongFormFor(id int32) (*string, error)
 	LongFormForMany(ids []int32) (map[int32]string, error)
-	RemoveItem(id int32) error
+	RemoveItemFromLongStore(id int32) error
 }
 type BulletLongFormStore struct {
 	Namespace int32
@@ -81,6 +79,10 @@ func (s *BulletLongFormStore) LongFormFor(id int32) (*string, error) {
 	return nil, nil
 }
 
-func (s *BulletLongFormStore) RemoveItem(id int32) error {
-	return errors.New("delete depot not working yet")
+func (s *BulletLongFormStore) RemoveItemFromLongStore(id int32) error {
+	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
+	req := bullet_interface.DepotDeleteRequest{
+		Key: namespacedId,
+	}
+	return s.Depot.DepotDeleteOne(req)
 }
