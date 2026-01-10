@@ -23,7 +23,7 @@ type AddItemEvent struct {
 type StateChangeEvent struct {
 	Id       engine.SummaryId
 	OldState engine.GotState
-	NewState engine.GotState
+	NewState *engine.GotState //here we pass nil if the item was removed.
 	Ancestry []engine.SummaryId
 }
 

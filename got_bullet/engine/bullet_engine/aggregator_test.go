@@ -17,6 +17,9 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	var aliceId = engine.SummaryId(10)
 	var bob = engine.SummaryId(11)
 
+	var activeState = engine.GotState(engine.Active)
+	var completeState = engine.GotState(engine.Complete)
+
 	//create alice -> bob
 	err = agg.ItemAdded(AddItemEvent{
 		Id:       aliceId,
@@ -62,7 +65,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{aliceId},
 	})
 	assert.NilError(t, err)
@@ -84,7 +87,6 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
 	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
-	var activeState = engine.GotState(engine.Active)
 	assert.Equal(t, *fetchedAlice.State, activeState)
 
 	//now complete alice:
@@ -93,7 +95,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       aliceId,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{},
 	})
 	assert.NilError(t, err)
@@ -106,7 +108,6 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 
 	fetchedAlice, ok = fetchBoth[aliceId]
 	assert.Equal(t, ok, true)
-	var completeState = engine.GotState(engine.Complete)
 	assert.Equal(t, *fetchedAlice.State, completeState)
 
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
@@ -126,6 +127,9 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	var top = engine.SummaryId(9)
 	var aliceId = engine.SummaryId(10)
 	var bob = engine.SummaryId(11)
+
+	var activeState = engine.GotState(engine.Active)
+	var completeState = engine.GotState(engine.Complete)
 
 	err = agg.ItemAdded(AddItemEvent{
 		Id:       top,
@@ -191,7 +195,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{top, aliceId},
 	})
 	assert.NilError(t, err)
@@ -220,7 +224,6 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
 	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
-	var activeState = engine.GotState(engine.Active)
 	assert.Equal(t, *fetchedAlice.State, activeState)
 
 	assert.Equal(t, fetchTop.Counts.Active, 1)
@@ -233,7 +236,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       aliceId,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{},
 	})
 	assert.NilError(t, err)
@@ -247,7 +250,6 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 
 	fetchedAlice, ok = fetchAll[aliceId]
 	assert.Equal(t, ok, true)
-	var completeState = engine.GotState(engine.Complete)
 	assert.Equal(t, *fetchedAlice.State, completeState)
 
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
@@ -265,6 +267,8 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	var bob = engine.SummaryId(11)
 	var carolId = engine.SummaryId(12)
 
+	var activeState = engine.GotState(engine.Active)
+	var completeState = engine.GotState(engine.Complete)
 	//create alice -> bob
 	err = agg.ItemAdded(AddItemEvent{
 		Id:       aliceId,
@@ -310,7 +314,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{aliceId},
 	})
 	assert.NilError(t, err)
@@ -332,7 +336,6 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
 	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
-	var activeState = engine.GotState(engine.Active)
 	assert.Equal(t, *fetchedAlice.State, activeState)
 
 	//now add an active item under alice
@@ -364,7 +367,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       carolId,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{aliceId},
 	})
 	assert.NilError(t, err)
@@ -393,6 +396,9 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	var aliceId = engine.SummaryId(10)
 	var bob = engine.SummaryId(11)
 	var carolId = engine.SummaryId(12)
+
+	var activeState = engine.GotState(engine.Active)
+	var completeState = engine.GotState(engine.Complete)
 
 	//create alice -> bob
 	err = agg.ItemAdded(AddItemEvent{
@@ -439,7 +445,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	err = agg.ItemStateChanged(StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
-		NewState: engine.Complete,
+		NewState: &completeState,
 		Ancestry: []engine.SummaryId{aliceId},
 	})
 	assert.NilError(t, err)
@@ -461,7 +467,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Active, 0)
 	assert.Equal(t, fetchedAlice.Counts.Complete, 1)
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
-	var activeState = engine.GotState(engine.Active)
+
 	assert.Equal(t, *fetchedAlice.State, activeState)
 
 	//now add an active item under alice

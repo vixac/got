@@ -469,7 +469,7 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 	event := StateChangeEvent{
 		Id:       summaryId,
 		OldState: *oldState,
-		NewState: newState,
+		NewState: &newState,
 		Ancestry: summaryIds, //VX:TODO fetch?
 	}
 	return e.publishStateChangeEvent(event)
