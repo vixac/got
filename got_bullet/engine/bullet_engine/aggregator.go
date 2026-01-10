@@ -190,8 +190,37 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 }
 
 func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
-	fmt.Printf("VX:TODO unhandled event ")
-	return nil
+	// If there are no ancestors, nothing to update
+	if len(e.Ancestry) == 0 {
+		return nil
+	}
+
+	// Fetch all ancestor summaries
+	ancestorAggs, err := a.summaryStore.Fetch(e.Ancestry)
+	if err != nil {
+		return err
+	}
+
+	// Decrement the deleted item's state count on all ancestors
+	upserts := make(map[engine.SummaryId]engine.Summary)
+	decChange := engine.NewCountChange(e.State, false)
+
+	for _, ancestorId := range e.Ancestry {
+		// Skip the root node
+		if ancestorId == engine.SummaryId(TheRootNoteInt32) {
+			continue
+		}
+
+		ancestorSummary, ok := ancestorAggs[ancestorId]
+		if !ok {
+			return errors.New("missing ancestor summary in delete")
+		}
+
+		ancestorSummary.ApplyChange(decChange)
+		upserts[ancestorId] = ancestorSummary
+	}
+
+	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
 func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {

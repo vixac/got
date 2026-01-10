@@ -131,9 +131,9 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 
 	return ancestry, a.Mesh.AppendPairs(pairs)
 }
-
 func (a *BulletAncestorList) RemoveItem(id engine.GotId) error {
-	return errors.New("not impl")
+	object := bullet_stl.ListObject{Value: id.AasciValue}
+	return a.Mesh.RemoveObject(object)
 }
 func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
 	//get the subject key for this id, and then use it as a prefix.
