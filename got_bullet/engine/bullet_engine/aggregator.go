@@ -18,6 +18,14 @@ type Aggregator struct {
 	summaryStore SummaryStoreInterface
 }
 
+type AggregatorInterface interface {
+	ItemAdded(e AddItemEvent) error
+	ItemStateChanged(e StateChangeEvent) error
+	ItemDeleted(e ItemDeletedEvent) error
+	ItemMoved(e ItemMovedEvent) error
+	ItemEdited(e EditItemEvent) error
+}
+
 func NewAggregator(summaryStore SummaryStoreInterface) (*Aggregator, error) {
 	return &Aggregator{
 		summaryStore: summaryStore,
