@@ -1,8 +1,11 @@
 package bullet_engine
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
 )
 
@@ -14,39 +17,55 @@ type NumberGoStoreInterface interface {
 }
 
 type NumberGoPair struct {
-	Number int
-	Gid    engine.Gid
+	Number string `json:"n"`
+	Gid    string `json:"g"`
+}
+
+// everything in one json body
+type NumberGoBlock struct {
+	Pairs map[string]string `json:"p"` //numberGo -> gid
 }
 
 type BulletNumberGoStore struct {
-	Namespace int32
-	Depot     bullet_interface.DepotClientInterface
+	Codec   Codec[NumberGoBlock]
+	DepotId int64
+	Depot   bullet_interface.DepotClientInterface
 }
 
-func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, namespaceId int32) (NumberGoStoreInterface, error) {
+func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec Codec[NumberGoBlock], depotId int64) (NumberGoStoreInterface, error) {
 	return &BulletNumberGoStore{
-		Namespace: namespaceId,
-		Depot:     client,
+		DepotId: depotId,
+		Codec:   codec,
+		Depot:   client,
 	}, nil
 }
 
 func (n *BulletNumberGoStore) AssignNumberPairs(pairs []NumberGoPair) error {
+	pairMap := make(map[string]string)
 
-	var reqs []bullet_interface.DepotRequest
 	for _, p := range pairs {
-		namespacedId := bullet_stl.MakeNamespacedId(n.Namespace, int32(p.Number))
-		reqs = append(reqs, bullet_interface.DepotRequest{
-			Key:   namespacedId,
-			Value: p.Gid.Id,
-		})
+
+		pairMap[p.Number] = p.Gid
 	}
-	return n.Depot.DepotUpsertMany(reqs)
+	block := NumberGoBlock{
+		Pairs: pairMap,
+	}
+
+	json, err := n.Codec.Encode(block)
+	if err != nil {
+		return err
+	}
+	req := bullet_interface.DepotRequest{
+		Key:   n.DepotId,
+		Value: json,
+	}
+	fmt.Printf("VX: JSON IS '%s'\n", json)
+	return n.Depot.DepotUpsertMany([]bullet_interface.DepotRequest{req})
 }
 
 func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
-	namespacedId := bullet_stl.MakeNamespacedId(n.Namespace, int32(number))
 
-	keys := []int64{namespacedId}
+	keys := []int64{n.DepotId}
 	manyReq := bullet_interface.DepotGetManyRequest{
 		Keys: keys,
 	}
@@ -58,10 +77,23 @@ func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
 		return nil, nil
 	}
 
-	value, ok := res.Values[namespacedId]
+	json, ok := res.Values[n.DepotId]
 	if !ok {
 		return nil, nil
 	}
 
+	fmt.Printf("VX: JSON fetched is  IS '%s'\n", json)
+	var block NumberGoBlock
+	err = n.Codec.Decode(json, &block)
+	if err != nil {
+		fmt.Printf("VXL decode error %s", err.Error())
+		return nil, err
+	}
+	numberToStr := strconv.Itoa(number)
+	value, ok := block.Pairs[numberToStr]
+	if !ok {
+		return nil, errors.New("missing number go id")
+	}
+	fmt.Printf("VX: val is %s\n", value)
 	return engine.NewGotId(value)
 }

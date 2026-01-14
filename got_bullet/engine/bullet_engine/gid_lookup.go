@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -64,6 +65,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("VX:NUM CHECK")
 		return b.NumberGoStore.GidFor(number)
 
 	}
