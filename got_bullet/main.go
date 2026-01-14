@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/vixac/bullet/store/boltdb"
 	"github.com/vixac/bullet/store/store_interface"
 
 	migrator "github.com/vixac/bullet/store/migrator"
@@ -31,17 +32,16 @@ func main() {
 		AppId:     123,
 		TenancyId: 0,
 	}
-	/*
-		path := os.Getenv("GOT_BOLT")
-		if path == "" {
-			log.Fatal("missing env GOT_BOLT, which should be the path to the got bolt file")
-		}
+	path := os.Getenv("GOT_BOLT")
+	if path == "" {
+		log.Fatal("missing env GOT_BOLT, which should be the path to the got bolt file")
+	}
 
-		bolt, err := boltdb.NewBoltStore(path)
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
+	_, err := boltdb.NewBoltStore(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	sqlitePath := os.Getenv("GOT_SQLITE")
 	if sqlitePath == "" {
 		log.Fatal("missing env GOT_SQLITE, which should be the path to the got sqlite file")
