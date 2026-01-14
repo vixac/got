@@ -3,7 +3,6 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -389,7 +388,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 
 		num := i + 1
 		pairs = append(pairs, NumberGoPair{
-			Number: strconv.Itoa(num),
+			Number: num,
 			Gid:    s.GotId.AasciValue,
 		})
 

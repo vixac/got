@@ -2,8 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
-	"strconv"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	"vixac.com/got/engine"
@@ -17,13 +15,13 @@ type NumberGoStoreInterface interface {
 }
 
 type NumberGoPair struct {
-	Number string `json:"n"`
+	Number int    `json:"n"`
 	Gid    string `json:"g"`
 }
 
 // everything in one json body
 type NumberGoBlock struct {
-	Pairs map[string]string `json:"p"` //numberGo -> gid
+	Pairs map[int]string `json:"p"` //numberGo -> gid
 }
 
 type BulletNumberGoStore struct {
@@ -41,7 +39,7 @@ func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec 
 }
 
 func (n *BulletNumberGoStore) AssignNumberPairs(pairs []NumberGoPair) error {
-	pairMap := make(map[string]string)
+	pairMap := make(map[int]string)
 
 	for _, p := range pairs {
 
@@ -59,7 +57,6 @@ func (n *BulletNumberGoStore) AssignNumberPairs(pairs []NumberGoPair) error {
 		Key:   n.DepotId,
 		Value: json,
 	}
-	fmt.Printf("VX: JSON IS '%s'\n", json)
 	return n.Depot.DepotUpsertMany([]bullet_interface.DepotRequest{req})
 }
 
@@ -82,18 +79,14 @@ func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
 		return nil, nil
 	}
 
-	fmt.Printf("VX: JSON fetched is  IS '%s'\n", json)
 	var block NumberGoBlock
 	err = n.Codec.Decode(json, &block)
 	if err != nil {
-		fmt.Printf("VXL decode error %s", err.Error())
 		return nil, err
 	}
-	numberToStr := strconv.Itoa(number)
-	value, ok := block.Pairs[numberToStr]
+	value, ok := block.Pairs[number]
 	if !ok {
 		return nil, errors.New("missing number go id")
 	}
-	fmt.Printf("VX: val is %s\n", value)
 	return engine.NewGotId(value)
 }
