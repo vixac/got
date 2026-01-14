@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	idGenBucket    int32 = 100
-	aliasBucket    int32 = 1001
-	nodeBucket     int32 = 1002
-	ancestorBucket int32 = 1003
-	numberGoBucket int32 = 1004
-	titleBucket    int32 = 0 //backwards compatability
-	longFormBucket int32 = 1005
+	idGenBucket     int32 = 100
+	aliasBucket     int32 = 1001
+	nodeBucket      int32 = 1002
+	ancestorBucket  int32 = 1003
+	numberGoDepotId int64 = 2000
+	titleBucket     int32 = 0 //backwards compatability
+	longFormBucket  int32 = 1005
 )
 
 const (
@@ -389,7 +389,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 		num := i + 1
 		pairs = append(pairs, NumberGoPair{
 			Number: num,
-			Gid:    engine.Gid{Id: s.GotId.AasciValue},
+			Gid:    s.GotId.AasciValue,
 		})
 
 		copy := s
@@ -854,7 +854,8 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 
-	numberGoStore, err := NewBulletNumberGoStore(client, numberGoBucket)
+	numberGoCodec := &JSONCodec[NumberGoBlock]{}
+	numberGoStore, err := NewBulletNumberGoStore(client, numberGoCodec, numberGoDepotId)
 	if err != nil {
 		return nil, err
 	}
@@ -868,7 +869,6 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore, idGenerator)
 	if err != nil {
 		return nil, err
-
 	}
 
 	var listeners []EventListenerInterface
