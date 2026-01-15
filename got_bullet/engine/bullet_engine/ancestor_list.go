@@ -190,17 +190,45 @@ func (a *BulletAncestorList) FetchAncestorsOfMany(ids []engine.GotId) (*Ancestor
 		objects = append(objects, bullet_stl.ListObject{Value: id.AasciValue})
 	}
 	ancestors, err := a.Mesh.AllPairsForManyObjects(objects)
-	if err != nil || ancestors == nil {
+	if err != nil {
 		return nil, err
 	}
+	if ancestors == nil {
+		return &AncestorManyLookupResult{
+			Ids: make(map[engine.GotId]AncestorLookupResult),
+		}, nil
+	}
 
-	//we need to do this:
-	/*
-			keyString := ancestors.Pairs[0].Subject.Value
+	result := make(map[engine.GotId]AncestorLookupResult)
+
+	for _, pair := range ancestors.Pairs {
+		// The Object.Value is the ID we queried for
+		gotId, err := engine.NewGotId(pair.Object.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		// The Subject.Value contains the ancestor information delimited by SubjectSeparator
+		keyString := pair.Subject.Value
 		ancestorSplit := strings.Split(keyString, a.SubjectSeparator)
-		//the ancestor inforation is held in the subject string in the order delimited by the SubjectSeparator
-	*/
 
+		var ancestorIds []engine.GotId
+		for _, ancestor := range ancestorSplit {
+			ancestorGotId, err := engine.NewGotId(ancestor)
+			if err != nil {
+				return nil, err
+			}
+			ancestorIds = append(ancestorIds, *ancestorGotId)
+		}
+
+		result[*gotId] = AncestorLookupResult{
+			Ids: ancestorIds,
+		}
+	}
+
+	return &AncestorManyLookupResult{
+		Ids: result,
+	}, nil
 }
 
 func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error) {

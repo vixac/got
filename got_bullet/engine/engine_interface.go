@@ -14,8 +14,6 @@ type SummaryId int32
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngine interface {
-	Summary(lookup *GidLookup) (*GotItemDisplay, error)
-
 	EditTitle(lookup GidLookup, newHeading string) error
 	//state changes
 	MarkResolved(lookup []GidLookup) error
@@ -226,6 +224,13 @@ type PathItem struct {
 
 type GotPath struct {
 	Ancestry []PathItem
+}
+
+func (p *GotPath) Depth() int {
+	if p == nil {
+		return 0
+	}
+	return len(p.Ancestry)
 }
 
 // VX:TODO consider using BUlletId semantics to lazy compute these

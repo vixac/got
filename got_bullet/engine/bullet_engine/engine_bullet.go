@@ -3,6 +3,7 @@ package bullet_engine
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -42,6 +43,11 @@ type EngineBullet struct {
 
 	//interface conformance
 	//	LongFormStoreInterface
+}
+
+type IdAncestorPair struct {
+	Id       engine.GotId
+	Ancestry AncestorLookupResult
 }
 
 func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
@@ -342,42 +348,6 @@ func ToToken(s console.SpaceTime) console.Token {
 	}
 }
 
-// VX:TODO This needs to go. Its old and wierd
-func (e *EngineBullet) Summary(lookup *engine.GidLookup) (*engine.GotItemDisplay, error) {
-
-	gid, err := e.GidLookup.InputToGid(lookup)
-	if err != nil {
-		return nil, err
-	}
-	if gid == nil {
-		return nil, errors.New("no gid")
-	}
-
-	title, err := e.TitleStore.TitleFor(gid.IntValue)
-	if err != nil {
-		return nil, errors.New("no title")
-	}
-	if title == nil {
-		return nil, nil
-	}
-
-	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
-	if err != nil {
-		return nil, errors.New("error fetching ancestors")
-	}
-	path, err := e.ancestorPathFrom(ancestorResult)
-	if err != nil {
-		return nil, err
-	}
-
-	return &engine.GotItemDisplay{
-		DisplayGid: "0" + gid.AasciValue,
-		Title:      *title,
-		Path:       path,
-	}, nil
-
-}
-
 // adds the items to the number go store as well as
 func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent *engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
@@ -419,14 +389,7 @@ func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, erro
 	return nil, e.updateState(lookup, newState)
 }
 
-func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotState) error {
-	gid, err := e.GidLookup.InputToGid(&lookup)
-	if err != nil {
-		return err
-	}
-	if gid == nil {
-		return nil
-	}
+func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *AncestorLookupResult) error {
 	summaryId := engine.SummaryId(gid.IntValue)
 	ids := []engine.SummaryId{summaryId}
 	res, err := e.SummaryStore.Fetch(ids)
@@ -445,34 +408,33 @@ func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotS
 		return errors.New("cant resolve an item without a state")
 	}
 
-	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
-	if err != nil {
-
-		return errors.New("error fetching ancestors")
-	}
 	var summaryIds []engine.SummaryId
-	if ancestorResult != nil {
-		for _, id := range ancestorResult.Ids {
+	if ancestry != nil {
+		for _, id := range ancestry.Ids {
 			summaryIds = append(summaryIds, engine.SummaryId(id.IntValue))
 
 		}
 	}
-
-	thisNode, err := e.Summary(&lookup)
-	if err != nil {
-		return err
-	}
-	if thisNode == nil {
-		return errors.New("missing summary")
-	}
-
 	event := StateChangeEvent{
 		Id:       summaryId,
 		OldState: *oldState,
 		NewState: &newState,
-		Ancestry: summaryIds, //VX:TODO fetch?
+		Ancestry: summaryIds,
 	}
 	return e.publishStateChangeEvent(event)
+}
+
+func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotState) error {
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return err
+	}
+	ancestry, err := e.AncestorList.FetchAncestorsOf(*gid)
+	if err != nil {
+		return errors.New("error fetching ancestors")
+	}
+	return e.performUpdateState(gid, newState, ancestry)
+
 }
 
 func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) error {
@@ -488,112 +450,50 @@ func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) err
 	return e.TitleStore.UpsertItem(gid.IntValue, newHeading)
 }
 
-func (e *EngineBullet) MarkResolved(lookup []engine.GidLookup) error {
+func (e *EngineBullet) fetchAndDepthSortAncestry(gids []engine.GotId) ([]IdAncestorPair, error) {
+	ancestors, err := e.AncestorList.FetchAncestorsOfMany(gids)
+	if err != nil || ancestors == nil {
+		return nil, err
+	}
+	idMap := ancestors.Ids
+	var sortablePairs []IdAncestorPair
 
-	for _, lookup := range lookup {
-		var newState engine.GotState = engine.Complete
+	for id, ancestorResult := range idMap {
+		sortablePairs = append(sortablePairs, IdAncestorPair{
+			Id:       id,
+			Ancestry: ancestorResult,
+		})
+	}
 
-		//If one fails, we stop and return that error.
-		err := e.updateState(lookup, newState)
+	//sorted for leaf nodes first.
+	sort.Slice(sortablePairs, func(i, j int) bool {
+		return len(sortablePairs[i].Ancestry.Ids) > len(sortablePairs[j].Ancestry.Ids)
+	})
+	return sortablePairs, nil
+}
+
+func (e *EngineBullet) MarkResolved(lookups []engine.GidLookup) error {
+	var gids []engine.GotId
+	for _, lookup := range lookups {
+		gid, err := e.GidLookup.InputToGid(&lookup)
+		if err != nil || gid == nil {
+			return err
+		}
+		gids = append(gids, *gid)
+	}
+	sortedPairs, err := e.fetchAndDepthSortAncestry(gids)
+	if err != nil {
+		return err
+	}
+	complete := engine.GotState(engine.Complete)
+	for i, pair := range sortedPairs {
+		err := e.performUpdateState(&pair.Id, complete, &pair.Ancestry)
 		if err != nil {
+			fmt.Printf("Warn: did not complete updating state. Only reached item %d of %d", i, len(sortedPairs))
 			return err
 		}
 	}
 	return nil
-
-}
-
-func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
-	// Convert lookup to GID
-	gid, err := e.GidLookup.InputToGid(&lookup)
-	if err != nil {
-		return err
-	}
-	if gid == nil {
-		return errors.New("could not resolve gid from lookup")
-	}
-
-	// Check if this item is a parent (has children)
-	children, err := e.AncestorList.FetchImmediatelyUnder(*gid)
-	if err != nil {
-		return err
-	}
-	if children != nil && len(children.Ids) > 0 {
-		return errors.New("cannot delete item: it has children")
-	}
-
-	summaryId := engine.SummaryId(gid.IntValue)
-
-	// Fetch state and ancestry BEFORE deletion for the delete event
-	summary, err := e.SummaryStore.Fetch([]engine.SummaryId{summaryId})
-	if err != nil {
-		return err
-	}
-	itemSummary, ok := summary[summaryId]
-	if !ok {
-		return errors.New("item not found in summary store")
-	}
-
-	// Get the state (default to Note if nil)
-	var itemState engine.GotState = engine.Note
-	if itemSummary.State != nil {
-		itemState = *itemSummary.State
-	}
-
-	// Fetch ancestry
-	ancestorResult, err := e.AncestorList.FetchAncestorsOf(*gid)
-	if err != nil {
-		return err
-	}
-	var ancestryIds []engine.SummaryId
-	if ancestorResult != nil {
-		for _, ancestor := range ancestorResult.Ids {
-			ancestryIds = append(ancestryIds, engine.SummaryId(ancestor.IntValue))
-		}
-	}
-
-	// Delete alias if it exists
-	alias, err := e.LookupAliasForGid(gid.AasciValue)
-	if err != nil {
-		return err
-	}
-	if alias != nil {
-		_, err = e.AliasStore.Unalias(*alias)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Delete longForm entry if it exists
-	err = e.LongFormStore.RemoveItemFromLongStore(gid.IntValue)
-	if err != nil {
-		return err
-	}
-
-	// Delete summary
-	err = e.SummaryStore.Delete([]engine.SummaryId{summaryId})
-	if err != nil {
-		return err
-	}
-
-	// Delete title
-	err = e.TitleStore.RemoveItem(gid.IntValue)
-	if err != nil {
-		return err
-	}
-
-	// Delete from ancestor list
-	err = e.AncestorList.RemoveItem(*gid)
-	if err != nil {
-		return err
-	}
-
-	// Publish delete event with state and ancestry
-	return e.publishItemDeletedEvent(ItemDeletedEvent{
-		Id:       summaryId,
-		State:    itemState,
-		Ancestry: ancestryIds,
-	})
 }
 
 func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
