@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strconv"
+
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
@@ -26,7 +28,7 @@ func buildDoneCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
 			}
-			msg := "Success: " + args[0] + " is marked complete."
+			msg := "Success: " + strconv.Itoa(len(args)) + " items  is marked complete."
 			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}

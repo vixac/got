@@ -23,7 +23,7 @@ func SortTheseIntoDFS(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 		})
 	}
 	sort.Slice(sortablePaths, func(i, j int) bool {
-		return sortablePaths[i].PathString < sortablePaths[j].PathString
+		return sortablePaths[i].PathString < sortablePaths[j].PathString //this is actually a bit of a hack. the length of the path is nearly right but the sort will on occasion be wrong based on lengths.
 	})
 	var backToItems []engine.GotItemDisplay
 	for _, i := range sortablePaths {

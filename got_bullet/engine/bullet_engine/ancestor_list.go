@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -12,6 +11,10 @@ import (
 
 type AncestorLookupResult struct {
 	Ids []engine.GotId
+}
+
+type AncestorManyLookupResult struct {
+	Ids map[engine.GotId]AncestorLookupResult
 }
 
 type DescendantLookupResult struct {
@@ -35,6 +38,7 @@ type AncestorListInterface interface {
 	RemoveItem(id engine.GotId) error
 	FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error)
 	FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error)
+	FetchAncestorsOfMany(id []engine.GotId) (*AncestorManyLookupResult, error)
 
 	//VX:TODO move semantics oh dear. MoveItem(id engine.GotId, under *engine.GotId) error
 }
@@ -67,10 +71,7 @@ type Ancestry struct {
 	Ids []engine.GotId
 }
 
-//aah crap it needs to be a two way mesh.
-
 func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error) {
-	fmt.Printf("attempting to insert id %s into ancestry\n", id.AasciValue)
 	if id.AasciValue == TheRootNode.Value {
 		return nil, errors.New("inserting the root node is not permitted")
 	}
@@ -180,6 +181,53 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 
 	return &DescendantLookupResult{
 		Ids: ids,
+	}, nil
+}
+
+func (a *BulletAncestorList) FetchAncestorsOfMany(ids []engine.GotId) (*AncestorManyLookupResult, error) {
+	var objects []bullet_stl.ListObject
+	for _, id := range ids {
+		objects = append(objects, bullet_stl.ListObject{Value: id.AasciValue})
+	}
+	ancestors, err := a.Mesh.AllPairsForManyObjects(objects)
+	if err != nil {
+		return nil, err
+	}
+	if ancestors == nil {
+		return &AncestorManyLookupResult{
+			Ids: make(map[engine.GotId]AncestorLookupResult),
+		}, nil
+	}
+
+	result := make(map[engine.GotId]AncestorLookupResult)
+
+	for _, pair := range ancestors.Pairs {
+		// The Object.Value is the ID we queried for
+		gotId, err := engine.NewGotId(pair.Object.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		// The Subject.Value contains the ancestor information delimited by SubjectSeparator
+		keyString := pair.Subject.Value
+		ancestorSplit := strings.Split(keyString, a.SubjectSeparator)
+
+		var ancestorIds []engine.GotId
+		for _, ancestor := range ancestorSplit {
+			ancestorGotId, err := engine.NewGotId(ancestor)
+			if err != nil {
+				return nil, err
+			}
+			ancestorIds = append(ancestorIds, *ancestorGotId)
+		}
+
+		result[*gotId] = AncestorLookupResult{
+			Ids: ancestorIds,
+		}
+	}
+
+	return &AncestorManyLookupResult{
+		Ids: result,
 	}, nil
 }
 
