@@ -489,6 +489,7 @@ func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) err
 }
 
 func (e *EngineBullet) MarkResolved(lookup []engine.GidLookup) error {
+
 	for _, lookup := range lookup {
 		var newState engine.GotState = engine.Complete
 
@@ -601,7 +602,7 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
 
-	//lookup parent first because if you're looking up lastId it will change
+	//lookup parent first because if you're looking up lastId, the lastId will change half way through this func
 	var parentGotId *engine.GotId = nil
 	if parent != nil { //last Id symbol
 		fetchedParent, err := e.GidLookup.InputToGid(parent)
@@ -660,7 +661,6 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 
 	var headingToStore = heading
 	if engine.IsValidAlias(heading) {
-		//headingToStore = "" //VX:Note I've decided against nulling the title because if you unalias, the meaning of this thing is totally gone.
 		_, err := e.AliasStore.Alias(gotId, heading)
 		if err != nil {
 			return nil, err
