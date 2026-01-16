@@ -1,29 +1,28 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
 )
 
 func buildMvCommand(deps RootDependencies) *cobra.Command {
-	var (
-		targetGid    string
-		newParentGid string
-	)
 	var moveCmd = &cobra.Command{
-		Use:   "mv",
-		Short: "move all items to a new gid",
+		Use:   "move",
+		Short: "move <leaf> <newParent>",
 		Run: func(cmd *cobra.Command, args []string) {
-			if targetGid == "" {
-				deps.Printer.Error(console.Message{Message: "missing target"})
+
+			if len(args) != 2 {
+				err := errors.New("Invalid args. just 2 please.")
+				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
 			}
-			if newParentGid == "" {
-				deps.Printer.Error(console.Message{Message: "missing parent"})
-				return
-			}
-			oldParent, err := deps.Engine.Move(engine.GidLookup{Input: targetGid}, engine.GidLookup{Input: newParentGid})
+			target := args[0]
+			newParent := args[1]
+
+			oldParent, err := deps.Engine.Move(engine.GidLookup{Input: target}, engine.GidLookup{Input: newParent})
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
@@ -31,15 +30,12 @@ func buildMvCommand(deps RootDependencies) *cobra.Command {
 
 			var msg string
 			if oldParent == nil {
-				msg = "Success: " + targetGid + " moved to new parent " + newParentGid
+				msg = "Success: " + target + " moved to new parent " + newParent
 			} else {
-				msg = "Success: " + targetGid + " moved from old parent '" + oldParent.Title + "' to " + newParentGid
+				msg = "Success: " + target + " moved from old parent '" + oldParent.Title + "' to " + newParent
 			}
 			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}
-
-	moveCmd.Flags().StringVarP(&targetGid, "gid", "g", "", "Target item")
-	moveCmd.Flags().StringVarP(&newParentGid, "destination", "d", "", "Destination Parent")
 	return moveCmd
 }
