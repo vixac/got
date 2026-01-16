@@ -36,7 +36,7 @@ func TestDoneCommand_Valid(t *testing.T) {
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 0)
 	assert.Equal(t, len(p.messages), 1)
-	assert.Equal(t, p.messages[0].Message, "Success: abc is marked complete.")
+	assert.Equal(t, p.messages[0].Message, "Success: 1 items is marked complete.")
 }
 
 func TestDoneCommand_ValidButThrows(t *testing.T) {

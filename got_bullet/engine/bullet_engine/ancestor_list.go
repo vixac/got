@@ -32,6 +32,11 @@ var (
 	}
 )
 
+type MoveItemResult struct {
+	OldAncestry *Ancestry
+	NewAncestry *Ancestry
+}
+
 // The engine interface for whatever is going to store ancestor and descendant trees
 type AncestorListInterface interface {
 	AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error)
@@ -39,8 +44,7 @@ type AncestorListInterface interface {
 	FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error)
 	FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error)
 	FetchAncestorsOfMany(id []engine.GotId) (*AncestorManyLookupResult, error)
-
-	//VX:TODO move semantics oh dear. MoveItem(id engine.GotId, under *engine.GotId) error
+	MoveItem(id engine.GotId, under *engine.GotId) (*MoveItemResult, error)
 }
 
 // subject separator is used to divide the subject into a list of ancestors, eg a:b:c, and then the objcet separator
@@ -255,5 +259,61 @@ func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupR
 
 	return &AncestorLookupResult{
 		Ids: ids,
+	}, nil
+}
+
+// MoveItem moves a leaf node to a new parent. Returns an error if the node has children.
+// Returns the old and new ancestry for use by aggregators to update counts.
+func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*MoveItemResult, error) {
+	if id.AasciValue == TheRootNode.Value {
+		return nil, errors.New("moving the root node is not permitted")
+	}
+
+	// Check if the item exists and get its current ancestors
+	currentAncestors, err := a.FetchAncestorsOf(id)
+	if err != nil {
+		return nil, err
+	}
+	if currentAncestors == nil {
+		return nil, errors.New("item does not exist")
+	}
+
+	// Check if this is a leaf node (no children)
+	children, err := a.FetchImmediatelyUnder(id)
+	if err != nil {
+		return nil, err
+	}
+	if children != nil && len(children.Ids) > 0 {
+		return nil, errors.New("cannot move non-leaf node: item has children")
+	}
+
+	// Build old ancestry (current ancestors + the item itself is NOT included, just its ancestors)
+	oldAncestry := &Ancestry{
+		Ids: currentAncestors.Ids,
+	}
+
+	// Remove the item from its current location
+	err = a.RemoveItem(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the item under the new parent
+	newAncestry, err := a.AddItem(id, under)
+	if err != nil {
+		return nil, err
+	}
+
+	// If newAncestry is nil (added under root), create it with just the root
+	if newAncestry == nil {
+		rootId, _ := engine.NewGotId(TheRootNode.Value)
+		newAncestry = &Ancestry{
+			Ids: []engine.GotId{*rootId},
+		}
+	}
+
+	return &MoveItemResult{
+		OldAncestry: oldAncestry,
+		NewAncestry: newAncestry,
 	}, nil
 }

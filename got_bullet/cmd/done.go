@@ -28,7 +28,7 @@ func buildDoneCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
 			}
-			msg := "Success: " + strconv.Itoa(len(args)) + " items  is marked complete."
+			msg := "Success: " + strconv.Itoa(len(args)) + " items is marked complete."
 			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}
