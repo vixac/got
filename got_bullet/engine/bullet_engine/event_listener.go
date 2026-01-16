@@ -33,9 +33,9 @@ type ItemDeletedEvent struct {
 	Ancestry []engine.SummaryId
 }
 type ItemMovedEvent struct {
-	Id        engine.SummaryId
-	OldParent *engine.SummaryId
-	NewParent *engine.SummaryId
+	Id          engine.SummaryId
+	OldAncestry []engine.SummaryId
+	NewAncestry []engine.SummaryId
 }
 
 type EditItemEvent struct {

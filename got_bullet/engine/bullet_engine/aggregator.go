@@ -214,8 +214,82 @@ func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
 }
 
 func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
-	fmt.Printf("VX:TODO unhandled event ")
-	return nil
+	// Fetch the moved item's summary to get its state
+	movedItemSummary, err := a.summaryStore.Fetch([]engine.SummaryId{e.Id})
+	if err != nil {
+		return err
+	}
+	summary, ok := movedItemSummary[e.Id]
+	if !ok {
+		return errors.New("missing summary for moved item")
+	}
+
+	// If the item has no state (it's a group), we can't update counts based on it
+	// Groups don't contribute to ancestor counts directly
+	if summary.State == nil {
+		return errors.New("cannot move a group node - only leaf nodes with state can be moved")
+	}
+
+	// Collect all ancestor IDs we need to fetch (excluding root)
+	var allAncestorIds []engine.SummaryId
+	for _, id := range e.OldAncestry {
+		if id != engine.SummaryId(TheRootNoteInt32) {
+			allAncestorIds = append(allAncestorIds, id)
+		}
+	}
+	for _, id := range e.NewAncestry {
+		if id != engine.SummaryId(TheRootNoteInt32) {
+			allAncestorIds = append(allAncestorIds, id)
+		}
+	}
+
+	// Fetch all ancestor summaries
+	ancestorSummaries, err := a.summaryStore.Fetch(allAncestorIds)
+	if err != nil {
+		return err
+	}
+
+	upserts := make(map[engine.SummaryId]engine.Summary)
+
+	// Decrement the moved item's state from all old ancestors
+	decChange := engine.NewCountChange(*summary.State, false)
+	for _, id := range e.OldAncestry {
+		if id == engine.SummaryId(TheRootNoteInt32) {
+			continue
+		}
+		ancestorSummary, ok := ancestorSummaries[id]
+		if !ok {
+			return fmt.Errorf("missing summary for old ancestor %d", id)
+		}
+		ancestorSummary.ApplyChange(decChange)
+		upserts[id] = ancestorSummary
+	}
+
+	// Increment the moved item's state on all new ancestors
+	incChange := engine.NewCountChange(*summary.State, true)
+	for _, id := range e.NewAncestry {
+		if id == engine.SummaryId(TheRootNoteInt32) {
+			continue
+		}
+		// Check if we already have this ancestor in upserts (could be shared between old and new)
+		if existingUpsert, ok := upserts[id]; ok {
+			existingUpsert.ApplyChange(incChange)
+			upserts[id] = existingUpsert
+		} else {
+			ancestorSummary, ok := ancestorSummaries[id]
+			if !ok {
+				return fmt.Errorf("missing summary for new ancestor %d", id)
+			}
+			ancestorSummary.ApplyChange(incChange)
+			upserts[id] = ancestorSummary
+		}
+	}
+
+	if len(upserts) == 0 {
+		return nil
+	}
+
+	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
 func (a *Aggregator) ItemEdited(e EditItemEvent) error {

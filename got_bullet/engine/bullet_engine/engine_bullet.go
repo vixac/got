@@ -506,25 +506,33 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 		return nil, err
 	}
 	moveRes, err := e.AncestorList.MoveItem(*gid, parent)
-	if err != nil || moveRes == nil || moveRes.OldAncestry == nil || moveRes.OldAncestry.Ids == nil {
+	if err != nil {
 		return nil, err
 	}
-	var oldParent *engine.SummaryId = nil
-	if len(moveRes.OldAncestry.Ids) > 0 {
-		lastId := moveRes.OldAncestry.Ids[len(moveRes.OldAncestry.Ids)-1]
-		oldParentId := engine.SummaryId(lastId.IntValue)
-		oldParent = &oldParentId
+	if moveRes == nil {
+		return nil, errors.New("move returned nil result")
 	}
 
-	var newParentPointer *engine.SummaryId = nil
-	if parent != nil {
-		newParentId := engine.SummaryId(parent.IntValue)
-		newParentPointer = &newParentId
+	// Convert old ancestry to SummaryIds
+	var oldAncestry []engine.SummaryId
+	if moveRes.OldAncestry != nil {
+		for _, id := range moveRes.OldAncestry.Ids {
+			oldAncestry = append(oldAncestry, engine.SummaryId(id.IntValue))
+		}
 	}
+
+	// Convert new ancestry to SummaryIds
+	var newAncestry []engine.SummaryId
+	if moveRes.NewAncestry != nil {
+		for _, id := range moveRes.NewAncestry.Ids {
+			newAncestry = append(newAncestry, engine.SummaryId(id.IntValue))
+		}
+	}
+
 	e.publishMoveEvent(ItemMovedEvent{
-		Id:        engine.SummaryId(gid.IntValue),
-		OldParent: oldParent,
-		NewParent: newParentPointer,
+		Id:          engine.SummaryId(gid.IntValue),
+		OldAncestry: oldAncestry,
+		NewAncestry: newAncestry,
 	})
 
 	return nil, nil
