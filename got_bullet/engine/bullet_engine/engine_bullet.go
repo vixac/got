@@ -497,7 +497,37 @@ func (e *EngineBullet) MarkResolved(lookups []engine.GidLookup) error {
 }
 
 func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
-	return nil, errors.New("not impl")
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return nil, err
+	}
+	parent, err := e.GidLookup.InputToGid(&newParent)
+	if err != nil {
+		return nil, err
+	}
+	moveRes, err := e.AncestorList.MoveItem(*gid, parent)
+	if err != nil || moveRes == nil || moveRes.OldAncestry == nil || moveRes.OldAncestry.Ids == nil {
+		return nil, err
+	}
+	var oldParent *engine.SummaryId = nil
+	if len(moveRes.OldAncestry.Ids) > 0 {
+		lastId := moveRes.OldAncestry.Ids[len(moveRes.OldAncestry.Ids)-1]
+		oldParentId := engine.SummaryId(lastId.IntValue)
+		oldParent = &oldParentId
+	}
+
+	var newParentPointer *engine.SummaryId = nil
+	if parent != nil {
+		newParentId := engine.SummaryId(parent.IntValue)
+		newParentPointer = &newParentId
+	}
+	e.publishMoveEvent(ItemMovedEvent{
+		Id:        engine.SummaryId(gid.IntValue),
+		OldParent: oldParent,
+		NewParent: newParentPointer,
+	})
+
+	return nil, nil
 }
 
 func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
@@ -599,6 +629,18 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		Alias: "",
 	}, nil
 }
+
+func (e *EngineBullet) publishMoveEvent(event ItemMovedEvent) error {
+	for _, l := range e.EventListeners {
+		err := l.ItemMoved(event)
+		if err != nil {
+			fmt.Printf("VX: Listner error was %s\n", err.Error())
+			fmt.Printf("VX:TODO listener had an error and I dont think it shoudl stop anything so I'm ignoring it")
+		}
+	}
+	return nil
+}
+
 func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemAdded(event)
