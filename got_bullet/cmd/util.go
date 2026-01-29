@@ -17,9 +17,26 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		return
 	}
 
-	//deps.Printer.Print(console.Message{Message: "\n-----------------------------------------\n\n"})
+	var sections [][]engine.GotItemDisplay
+	if options.GroupByTimeFrame {
+		//VX:TODO
+		var today []engine.GotItemDisplay
+		var yesterday []engine.GotItemDisplay
+		var lastWeek []engine.GotItemDisplay
+		var theRest []engine.GotItemDisplay
+		for _, r := range res.Result {
 
-	table, err := bullet_engine.NewTable(res, options)
+		}
+	} else {
+		sections = append(sections, res.Result)
+		if res.Parent != nil {
+			sections = append(sections, []engine.GotItemDisplay{*res.Parent})
+		}
+	}
+
+	table, err := bullet_engine.NewTable(&bullet_engine.GotTableSections{
+		Sections: sections,
+	}, options)
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return
