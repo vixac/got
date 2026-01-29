@@ -158,7 +158,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 
 		if i != 0 {
 			//section divider
-			rows = append(rows, console.NewDividerRow(".", console.TokenTextTertiary{}))
+			rows = append(rows, console.NewDividerRow("-", console.TokenTextTertiary{}))
 		}
 		for _, item := range section {
 			itemRow := NewGotRow()

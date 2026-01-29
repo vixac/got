@@ -9,43 +9,15 @@ import (
 	"vixac.com/got/engine/bullet_engine"
 )
 
-func (e *EngineBullet) addDailyDividers(items []engine.GotItemDisplay) []engine.GotItemDisplay {
-
-	var finalResult []engine.GotItemDisplay
-	//VX:TODO go to midnight instead of now:
-
-	midnight := LastMidnightUTC()
-	today := midnight.Unix()
-	yesterday := midnight.AddDate(0, 0, -1).Unix()
-	lastWeek := midnight.AddDate(0, 0, -7).Unix()
-
-	var lastWeekInPlace = false
-	var yesterdayInPlace = false
-	var todayInPlace = false
-	for _, i := range items {
-		dateOfThisItem, err := i.SummaryObj.UpdatedDate.ToDate()
-		timeOfThisItem := time.Time(*dateOfThisItem).Unix()
-		//itemDate := Date(dateOfThisItemStr)
-		if err != nil {
-			fmt.Printf("Error dating this item. Not adding daily dividers. This is a quiet failure.")
-			return items
-		}
-		if !lastWeekInPlace {
-			if timeOfThisItem > lastWeek && timeOfThisItem < yesterday {
-
-				lastWeekInPlace = true
-
-			}
-
-		} else if !yesterdayInPlace {
-
-		} else if !todayInPlace {
-
-		}
-		finalResult = append(finalResult, i)
-	}
-	return finalResult
-
+func LastMidnightUTC() time.Time {
+	now := time.Now().UTC()
+	return time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		0, 0, 0, 0,
+		time.UTC,
+	)
 }
 
 func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bullet_engine.TableRenderOptions, deps RootDependencies) {
@@ -72,9 +44,39 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		var lastWeekItems []engine.GotItemDisplay
 		var theRestItems []engine.GotItemDisplay
 		for _, r := range res.Result {
-			r.SummaryObj.UpdatedDate
-
+			dateOfThisItem, err := r.SummaryObj.UpdatedDate.ToDate()
+			if dateOfThisItem == nil {
+				theRestItems = append(theRestItems, r)
+				continue
+			}
+			timeOfThisItem := time.Time(*dateOfThisItem).Unix()
+			if err != nil {
+				fmt.Printf("VX: Unhandled error parsing faulty date.")
+				return
+			}
+			if timeOfThisItem > todayTime {
+				todayItems = append(todayItems, r)
+			} else if timeOfThisItem > yesterday {
+				yesterdayItems = append(yesterdayItems, r)
+			} else if timeOfThisItem > lastWeek {
+				lastWeekItems = append(lastWeekItems, r)
+			} else {
+				theRestItems = append(theRestItems, r)
+			}
 		}
+		if len(theRestItems) > 0 {
+			sections = append(sections, theRestItems)
+		}
+		if len(lastWeekItems) > 0 {
+			sections = append(sections, lastWeekItems)
+		}
+		if len(yesterdayItems) > 0 {
+			sections = append(sections, yesterdayItems)
+		}
+		if len(todayItems) > 0 {
+			sections = append(sections, todayItems)
+		}
+
 	} else {
 		sections = append(sections, res.Result)
 		if res.Parent != nil {
