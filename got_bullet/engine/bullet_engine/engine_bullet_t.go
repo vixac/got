@@ -1,6 +1,7 @@
 package bullet_engine
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"time"
@@ -13,6 +14,17 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil || gid == nil {
 		return err
+	}
+	summaryId := engine.SummaryId(gid.IntValue)
+	exists, err := e.SummaryStore.Fetch([]engine.SummaryId{summaryId})
+	if err != nil {
+		return err
+	}
+	if exists != nil {
+		_, ok := exists[summaryId]
+		if !ok {
+			return errors.New("This gid does not exist.")
+		}
 	}
 
 	//VX:TODO we should stop early if the gid doesn't map to an existing item.
