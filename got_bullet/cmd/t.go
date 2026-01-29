@@ -20,7 +20,7 @@ func buildTCommand(deps RootDependencies) *cobra.Command {
 
 			err := deps.Engine.OpenThenTimestamp(lookup)
 			if err != nil {
-				deps.Printer.Print(console.Message{Message: "error"})
+				deps.Printer.Print(console.Message{Message: "error: " + err.Error()})
 			} else {
 				deps.Printer.Print(console.Message{Message: "<>"})
 			}

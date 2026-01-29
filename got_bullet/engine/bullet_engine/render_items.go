@@ -16,6 +16,7 @@ type TableRenderOptions struct {
 	ShowCreatedColumn bool
 	ShowUpdatedColumn bool
 	SortByPath        bool
+	GroupByTimeFrame  bool
 }
 
 func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
@@ -97,15 +98,22 @@ func NewGotRow() GotRow {
 		Title:         emptyCell,
 	}
 }
+
+// Each section gets a divider between them
+type GotTableSections struct {
+	Sections [][]engine.GotItemDisplay
+}
+
 func (g GotRow) TableRow() console.TableRow {
 	cells := []console.TableCell{
 		g.ItemNumber, g.Created, g.Updated, g.Path, g.GroupStart, g.CompleteCount, g.ActiveCount, g.GroupEnd, g.Deadline, g.LongForm, g.State, g.Tags, g.Title,
 	}
 	return console.NewCellTableRow(cells)
 }
-func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (console.ConsoleTable, error) {
 
-	if len(fetched.Result) == 0 {
+func NewTable(sections *GotTableSections, options TableRenderOptions) (console.ConsoleTable, error) {
+
+	if len(sections.Sections) == 0 {
 		return console.ConsoleTable{}, nil
 	}
 
@@ -140,209 +148,191 @@ func NewTable(fetched *engine.GotFetchResult, options TableRenderOptions) (conso
 	var lastParentId *string = nil
 	var lastId *string = nil
 
-	for _, item := range fetched.Result {
-		itemRow := NewGotRow()
-		numSnippets := []console.Snippet{
-			console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
-		}
-		itemRow.ItemNumber = console.NewTableCell(numSnippets)
-		if options.ShowCreatedColumn {
-			itemRow.Created = console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{})
-		}
-		if options.ShowUpdatedColumn {
-			itemRow.Updated = console.NewTableCellFromStr(" "+item.Updated+" ", console.TokenNote{})
-		}
+	for i, section := range sections.Sections {
 
-		if options.FlatPaths {
-			pathCell := renderPathFlat(&item)
-			itemRow.Path = pathCell
+		if i != 0 {
+			//section divider
+			rows = append(rows, console.NewDividerRow("-", console.TokenTextTertiary{}))
+		}
+		for _, item := range section {
+			itemRow := NewGotRow()
+			numSnippets := []console.Snippet{
+				console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
+			}
+			itemRow.ItemNumber = console.NewTableCell(numSnippets)
+			if options.ShowCreatedColumn {
+				itemRow.Created = console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{})
+			}
+			if options.ShowUpdatedColumn {
+				itemRow.Updated = console.NewTableCellFromStr(" "+item.Updated+" ", console.TokenNote{})
+			}
 
-		} else {
-			var pathSnippets []console.Snippet
-			parentIndex := len(item.Path.Ancestry) - 1
+			if options.FlatPaths {
+				pathCell := renderPathFlat(&item)
+				itemRow.Path = pathCell
 
-			var treePattern = ""
-			for i, node := range item.Path.Ancestry {
-				var wordLength = 0
-				if node.Alias != nil {
-					wordLength = len(*node.Alias)
-				} else if node.Id != "0" {
-					wordLength = len(node.Id)
-				}
-				if i != parentIndex {
-					treePattern += console.FitString("", wordLength, " ")
-					continue
+			} else {
+				var pathSnippets []console.Snippet
+				var parentIndex int = -1
+				var ancestryPath []engine.PathItem // paths are optional so we support empty array
+				if item.Path != nil {
+					parentIndex = len(item.Path.Ancestry) - 1
+					ancestryPath = item.Path.Ancestry
 				}
 
-				if i == parentIndex {
-					thisParent := "0" + item.Path.Ancestry[parentIndex].Id
-					isSibling := lastParentId != nil && *lastParentId == thisParent
-					isFirstChild := lastId != nil && *lastId == thisParent
+				var treePattern = ""
 
-					if !isFirstChild && !isSibling {
-						rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+				for i, node := range ancestryPath {
+					var wordLength = 0
+					if node.Alias != nil {
+						wordLength = len(*node.Alias)
+					} else if node.Id != "0" {
+						wordLength = len(node.Id)
+					}
+					if i != parentIndex {
+						treePattern += console.FitString("", wordLength, " ")
+						continue
 					}
 
-					lastParentId = &thisParent
+					if i == parentIndex {
+						thisParent := "0" + ancestryPath[parentIndex].Id
+						isSibling := lastParentId != nil && *lastParentId == thisParent
+						isFirstChild := lastId != nil && *lastId == thisParent
+
+						if !isFirstChild && !isSibling {
+							rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+						}
+
+						lastParentId = &thisParent
+					}
+
+					if wordLength == 0 {
+						continue
+					}
+					switch wordLength {
+					case 1:
+						treePattern += "└"
+					case 2:
+						treePattern += "└ "
+					case 3:
+						treePattern += "└ "
+					default:
+						halfWordLength := wordLength / 2
+						treePattern += console.FitString("", halfWordLength-1, " ")
+						treePattern += "└"
+						treePattern += console.FitString("", halfWordLength-1, separatorChar)
+						treePattern += " "
+
+					}
 				}
 
-				if wordLength == 0 {
-					continue
-				}
-				switch wordLength {
-				case 1:
-					treePattern += "└"
-				case 2:
-					treePattern += "└ "
-				case 3:
-					treePattern += "└ "
-				default:
-					halfWordLength := wordLength / 2
-					treePattern += console.FitString("", halfWordLength-1, " ")
-					treePattern += "└"
-					treePattern += console.FitString("", halfWordLength-1, separatorChar)
-					treePattern += " "
+				lastId = &item.DisplayGid
+				pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
 
+				pathSuffixShortcut, isAlias := item.Shortcut()
+				var pathSuffixToken console.Token
+				if isAlias {
+					pathSuffixToken = console.TokenAlias{}
+				} else {
+					pathSuffixToken = console.TokenGid{}
 				}
+				pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+mediumPadding, pathSuffixToken))
+				itemRow.Path = console.NewTableCell(pathSnippets)
 			}
+			//path
 
-			lastId = &item.DisplayGid
-			pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
-
-			pathSuffixShortcut, isAlias := item.Shortcut()
-			var pathSuffixToken console.Token
-			if isAlias {
-				pathSuffixToken = console.TokenAlias{}
+			if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
+				itemRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
+				itemRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
+				itemRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active), console.TokenPrimary{})
+				itemRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
+			}
+			itemRow.Deadline = console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken)
+			if item.HasTNote {
+				itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
+			}
+			itemRow.State = stateToCell(item.SummaryObj.State)
+			//tags
+			if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
+				//VX:TODO invert the if
 			} else {
-				pathSuffixToken = console.TokenGid{}
-			}
-			pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+mediumPadding, pathSuffixToken))
-			itemRow.Path = console.NewTableCell(pathSnippets)
-		}
-		//path
 
-		if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
-			itemRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
-			itemRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
-			itemRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Active), console.TokenPrimary{})
-			itemRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
-		}
-		itemRow.Deadline = console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken)
-		if item.HasTNote {
-			itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
-		}
-		itemRow.State = stateToCell(item.SummaryObj.State)
-		//tags
-		if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
-			//VX:TODO invert the if
-		} else {
-
-			tagStr := ""
-			for i, t := range item.SummaryObj.Tags {
-				if i == 0 {
-					tagStr = "("
-				} else {
-					tagStr += ","
+				tagStr := ""
+				for i, t := range item.SummaryObj.Tags {
+					if i == 0 {
+						tagStr = "("
+					} else {
+						tagStr += ","
+					}
+					tagStr += t.Literal.Display
 				}
-				tagStr += t.Literal.Display
+				if tagStr != "" {
+					tagStr += ")"
+				}
+				itemRow.Tags = console.NewTableCellFromStr(tagStr, console.TokenAlert{})
 			}
-			if tagStr != "" {
-				tagStr += ")"
-			}
-			itemRow.Tags = console.NewTableCellFromStr(tagStr, console.TokenAlert{})
-		}
 
-		//title
-		var titleToken console.Token
-		var titlePrefix = ""
-		if item.IsNote() {
-			titleToken = console.TokenNote{}
-		} else if item.SummaryObj.Counts != nil {
-			titleToken = console.TokenGroup{}
-		} else {
-			titlePrefix = "  "
-			titleToken = console.TokenSecondary{}
-		}
-		maxTitleLen := 100
-
-		//check if we need to truncate
-		var truncationIndex = -1
-		for j := maxTitleLen; j < len(item.Title); j++ {
-			if item.Title[j] == ' ' {
-				truncationIndex = j
-				break
+			//title
+			var titleToken console.Token
+			var titlePrefix = ""
+			if item.IsNote() {
+				titleToken = console.TokenNote{}
+			} else if item.SummaryObj.Counts != nil {
+				titleToken = console.TokenGroup{}
+			} else {
+				titlePrefix = "  "
+				titleToken = console.TokenSecondary{}
 			}
-		}
-		//we need to truncate, so we append ... on first line, and then prefix ... on second, and right pad the second line.
-		if truncationIndex > 0 {
-			var firstLine = ""
-			var secondLine = "" //only wrapping to 2 lines, not recursively. Because yagni
-			for i := 0; i < len(item.Title); i++ {
-				if i < truncationIndex {
-					firstLine += string(item.Title[i])
-				} else {
-					secondLine += string(item.Title[i])
+			maxTitleLen := 100
+
+			//check if we need to truncate
+			var truncationIndex = -1
+			for j := maxTitleLen; j < len(item.Title); j++ {
+				if item.Title[j] == ' ' {
+					truncationIndex = j
+					break
 				}
 			}
-			dotDotDot := " ..."
-			paddingRequired := len(firstLine) - len(secondLine)
-			paddedSecondString := secondLine
-			if paddingRequired > 0 {
-				paddedSecondString = ""
-				for i := 0; i < paddingRequired; i++ {
-					paddedSecondString += " "
+			//we need to truncate, so we append ... on first line, and then prefix ... on second, and right pad the second line.
+			if truncationIndex > 0 {
+				var firstLine = ""
+				var secondLine = "" //only wrapping to 2 lines, not recursively. Because yagni
+				for i := 0; i < len(item.Title); i++ {
+					if i < truncationIndex {
+						firstLine += string(item.Title[i])
+					} else {
+						secondLine += string(item.Title[i])
+					}
 				}
-				paddedSecondString += dotDotDot + secondLine
+				dotDotDot := " ..."
+				paddingRequired := len(firstLine) - len(secondLine)
+				paddedSecondString := secondLine
+				if paddingRequired > 0 {
+					paddedSecondString = ""
+					for i := 0; i < paddingRequired; i++ {
+						paddedSecondString += " "
+					}
+					paddedSecondString += dotDotDot + secondLine
+				}
+				itemRow.Title = console.NewTableCellFromStr(titlePrefix+firstLine+dotDotDot, titleToken)
+				totalEmptyCells := len(titleCells) - 1
+				var overflowRowCells []console.TableCell
+				for i := 0; i < totalEmptyCells; i++ {
+					overflowRowCells = append(overflowRowCells, emptyCell)
+				}
+				overflowRowCells = append(overflowRowCells, console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken))
+
+				overFlowRow := NewGotRow()
+				overFlowRow.Title = console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken)
+
+				rows = append(rows, itemRow.TableRow())
+				rows = append(rows, overFlowRow.TableRow())
+
+			} else { //no truncation
+				itemRow.Title = console.NewTableCellFromStr(titlePrefix+item.Title, titleToken)
+				rows = append(rows, itemRow.TableRow())
 			}
-			itemRow.Title = console.NewTableCellFromStr(titlePrefix+firstLine+dotDotDot, titleToken)
-			totalEmptyCells := len(titleCells) - 1
-			var overflowRowCells []console.TableCell
-			for i := 0; i < totalEmptyCells; i++ {
-				overflowRowCells = append(overflowRowCells, emptyCell)
-			}
-			overflowRowCells = append(overflowRowCells, console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken))
-
-			overFlowRow := NewGotRow()
-			overFlowRow.Title = console.NewTableCellFromStr(titlePrefix+paddedSecondString, titleToken)
-
-			rows = append(rows, itemRow.TableRow())
-			rows = append(rows, overFlowRow.TableRow())
-
-		} else { //no truncation
-			itemRow.Title = console.NewTableCellFromStr(titlePrefix+item.Title, titleToken)
-			rows = append(rows, itemRow.TableRow())
 		}
-	}
-
-	if fetched.Parent != nil {
-		parentRow := NewGotRow()
-		if options.ShowCreatedColumn {
-			parentRow.Created = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
-		}
-		if options.ShowUpdatedColumn {
-			parentRow.Updated = console.NewTableCellFromStr(fetched.Parent.Created+" ", console.TokenGroup{})
-		}
-		pathCell := renderPathFlat(fetched.Parent)
-		parentRow.Path = pathCell
-
-		if fetched.Parent.SummaryObj != nil && fetched.Parent.SummaryObj.Counts != nil {
-			parentRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
-			parentRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
-			parentRow.ActiveCount = console.NewTableCellFromStr(zeroIsEmpty(fetched.Parent.SummaryObj.Counts.Active), console.TokenPrimary{})
-			parentRow.GroupEnd = console.NewTableCellFromStr("]", console.TokenTextTertiary{})
-		}
-		parentRow.Deadline = console.NewTableCellFromStr(fetched.Parent.Deadline+" ", fetched.Parent.DeadlineToken)
-
-		if fetched.Parent.HasTNote {
-			parentRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
-		}
-		parentRow.State = stateToCell(fetched.Parent.SummaryObj.State)
-		//VX:TODO title token and truncations.
-		parentRow.Title = console.NewTableCellFromStr(fetched.Parent.Title, console.TokenSecondary{})
-		rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
-		rows = append(rows, parentRow.TableRow())
-		//rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
-
 	}
 	return console.NewConsoleTable(rows)
 }

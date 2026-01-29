@@ -37,6 +37,7 @@ func buildHistoryCommand(deps RootDependencies) *cobra.Command {
 				ShowCreatedColumn: true,
 				ShowUpdatedColumn: true,
 				SortByPath:        false,
+				GroupByTimeFrame:  true,
 			}
 			renderTable(lookup, states, options, deps)
 		},
