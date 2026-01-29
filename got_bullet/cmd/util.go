@@ -38,7 +38,6 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		todayTime := midnight.Unix()
 		yesterday := midnight.AddDate(0, 0, -1).Unix()
 		lastWeek := midnight.AddDate(0, 0, -7).Unix()
-		//VX:TODO
 		var todayItems []engine.GotItemDisplay
 		var yesterdayItems []engine.GotItemDisplay
 		var lastWeekItems []engine.GotItemDisplay

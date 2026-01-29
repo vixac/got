@@ -27,8 +27,6 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 		}
 	}
 
-	//VX:TODO we should stop early if the gid doesn't map to an existing item.
-
 	var note = ""
 	existing, err := e.LongFormStore.LongFormFor(gid.IntValue)
 	if err != nil {
