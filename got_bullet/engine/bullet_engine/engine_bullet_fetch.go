@@ -30,8 +30,16 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 
 	//VX:TODO we should be able to apply the state filtering here so that complete items aren't fetched unless necessary. Because many complete , few active.
 	all, err := e.AncestorList.FetchImmediatelyUnder(*parentGid)
-	if err != nil || all == nil {
+	if err != nil {
 		return nil, err
+	}
+
+	// we tolerate having no children here because we want to render the parent no matter what.
+	var allIds map[string]AncestorLookupResult
+	if all != nil {
+		allIds = all.Ids
+	} else {
+		allIds = make(map[string]AncestorLookupResult)
 	}
 
 	var plusParent = 0
@@ -39,16 +47,16 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		plusParent = 1
 	}
 	//get string ids of all items to do the alias lookup
-	stringIds := make([]string, len(all.Ids)+plusParent)
+	stringIds := make([]string, len(allIds)+plusParent)
 
 	i := 0
-	for k := range all.Ids {
+	for k := range allIds {
 		stringIds[i] = k
 		i++
 	}
 	//fetch theparent too if its not the root node.
 	if !parentIsRoot {
-		stringIds[len(all.Ids)] = parentGid.AasciValue
+		stringIds[len(allIds)] = parentGid.AasciValue
 	}
 
 	aliasMap, err := e.AliasStore.LookupAliasForMany(stringIds)
@@ -59,20 +67,23 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	//VX:TODO so there's no ancestor path available for the parent. its a bug basically. Because aren't fetching the PARENT when we call FetchImmediatelyUnder. In theory we could return the parent perhaps? Not sure.
 	var intIds []int32
 	ancestorPaths := make(map[int32]engine.GotPath)
-	for id, ancestorLookup := range all.Ids {
+	if all != nil {
+		for id, ancestorLookup := range allIds {
 
-		intId, err := bullet_stl.AasciBulletIdToInt(id)
-		if err != nil {
-			return nil, err
-		}
-		intIds = append(intIds, int32(intId))
+			intId, err := bullet_stl.AasciBulletIdToInt(id)
+			if err != nil {
+				return nil, err
+			}
+			intIds = append(intIds, int32(intId))
 
-		path := ancestorPathFor(&ancestorLookup, aliasMap)
+			path := ancestorPathFor(&ancestorLookup, aliasMap)
 
-		if path != nil {
-			ancestorPaths[int32(intId)] = *path
+			if path != nil {
+				ancestorPaths[int32(intId)] = *path
+			}
 		}
 	}
+
 	//this is a bit of a workaround beacuse the intIds come from the for loop above, which is on the result of FetchimmediatelyUnder, which has no parent.
 	if !parentIsRoot {
 		intIds = append(intIds, parentGid.IntValue)

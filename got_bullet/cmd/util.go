@@ -111,7 +111,7 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		return
 	}
 	if res == nil || (len(res.Result) == 0 && res.Parent == nil) {
-		deps.Printer.Print(console.Message{Message: "no items found"})
+		deps.Printer.Print(console.Message{Message: "No items found."})
 		return
 	}
 
