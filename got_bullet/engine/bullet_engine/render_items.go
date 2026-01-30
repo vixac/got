@@ -145,8 +145,8 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
 
 	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line
-	var lastParentId *string = nil
-	var lastId *string = nil
+	//var lastParentId *string = nil
+	//var lastId *string = nil
 
 	for i, section := range sections.Sections {
 
@@ -194,18 +194,21 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 						continue
 					}
 
-					if i == parentIndex {
-						thisParent := "0" + ancestryPath[parentIndex].Id
-						isSibling := lastParentId != nil && *lastParentId == thisParent
-						isFirstChild := lastId != nil && *lastId == thisParent
+					//VX:TODO this logic adds a space line each time
+					/*
+						if i == parentIndex {
+							thisParent := "0" + ancestryPath[parentIndex].Id
 
-						if !isFirstChild && !isSibling {
-							rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+							//						isSibling := lastParentId != nil && *lastParentId == thisParent
+							//				isFirstChild := lastId != nil && *lastId == thisParent
+
+							//	if !isFirstChild && !isSibling {
+							//		rows = append(rows, console.NewDividerRow(" ", console.TokenTextTertiary{}))
+							//	}
+
+							lastParentId = &thisParent
 						}
-
-						lastParentId = &thisParent
-					}
-
+					*/
 					if wordLength == 0 {
 						continue
 					}
@@ -226,7 +229,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 					}
 				}
 
-				lastId = &item.DisplayGid
+				//lastId = &item.DisplayGidi
 				pathSnippets = append(pathSnippets, console.NewSnippet(treePattern, console.TokenTextTertiary{}))
 
 				pathSuffixShortcut, isAlias := item.Shortcut()
