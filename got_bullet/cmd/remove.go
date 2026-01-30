@@ -11,11 +11,16 @@ func buildRemoveCommand(deps RootDependencies) *cobra.Command {
 		Use:   "remove",
 		Short: "Remove an item",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 1 {
-				deps.Printer.Error(console.Message{Message: "Expected the alias as input"})
+			if len(args) < 1 {
+				deps.Printer.Error(console.Message{Message: "Expected at least one lookup as input"})
 				return
 			}
-			err := deps.Engine.Delete(engine.GidLookup{Input: args[0]})
+
+			var lookups []engine.GidLookup
+			for _, arg := range args {
+				lookups = append(lookups, engine.GidLookup{Input: arg})
+			}
+			err := deps.Engine.DeleteMany(lookups)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return

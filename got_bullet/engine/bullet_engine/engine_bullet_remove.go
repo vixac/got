@@ -6,15 +6,22 @@ import (
 	"vixac.com/got/engine"
 )
 
-func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
-	// Convert lookup to GID
-	gid, err := e.GidLookup.InputToGid(&lookup)
+func (e *EngineBullet) DeleteMany(lookups []engine.GidLookup) error {
+	sortedPairs, err := e.ResolveBulkLookupsReverseDepthSorted(lookups)
 	if err != nil {
 		return err
 	}
-	if gid == nil {
-		return errors.New("could not resolve gid from lookup")
+	for _, pair := range sortedPairs {
+		err = e.Delete(&pair.Id)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (e *EngineBullet) Delete(gid *engine.GotId) error {
+	// Convert lookup to GID
 
 	// Check if this item is a parent (has children)
 	children, err := e.AncestorList.FetchImmediatelyUnder(*gid)
@@ -73,6 +80,18 @@ func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
 		return err
 	}
 
+	//we publish the event BEFORE we move it, so that the increments can be successfuly updated on the ancestors
+	//This is a strange order, but basically if anything in this chain breaks, we have a partially deleted item
+	//which is no good.
+	// Publish delete event with state and ancestry
+	err = e.publishItemDeletedEvent(ItemDeletedEvent{
+		Id:       summaryId,
+		State:    itemState,
+		Ancestry: ancestryIds,
+	})
+	if err != nil {
+		return err
+	}
 	// Delete summary
 	err = e.SummaryStore.Delete([]engine.SummaryId{summaryId})
 	if err != nil {
@@ -91,10 +110,6 @@ func (e *EngineBullet) Delete(lookup engine.GidLookup) error {
 		return err
 	}
 
-	// Publish delete event with state and ancestry
-	return e.publishItemDeletedEvent(ItemDeletedEvent{
-		Id:       summaryId,
-		State:    itemState,
-		Ancestry: ancestryIds,
-	})
+	return nil
+
 }
