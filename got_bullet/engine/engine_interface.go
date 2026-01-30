@@ -19,8 +19,7 @@ type GotEngine interface {
 	MarkResolved(lookup []GidLookup) error
 	MarkActive(lookup GidLookup) (*NodeId, error)
 	MarkAsNote(lookup GidLookup) (*NodeId, error)
-
-	Delete(lookup GidLookup) error
+	DeleteMany(lookups []GidLookup) error
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 	OpenThenTimestamp(lookup GidLookup) error

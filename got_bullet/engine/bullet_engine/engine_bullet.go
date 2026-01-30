@@ -282,16 +282,28 @@ func (e *EngineBullet) fetchAndDepthSortAncestry(gids []engine.GotId) ([]IdAnces
 	return sortablePairs, nil
 }
 
-func (e *EngineBullet) MarkResolved(lookups []engine.GidLookup) error {
+// VX:TODO move somewhere global
+
+// resolves all gidlookups into gotids and then sorts them to deepest first.
+func (e *EngineBullet) ResolveBulkLookupsReverseDepthSorted(lookups []engine.GidLookup) ([]IdAncestorPair, error) {
 	var gids []engine.GotId
 	for _, lookup := range lookups {
 		gid, err := e.GidLookup.InputToGid(&lookup)
 		if err != nil || gid == nil {
-			return err
+			return nil, err
 		}
 		gids = append(gids, *gid)
 	}
 	sortedPairs, err := e.fetchAndDepthSortAncestry(gids)
+	if err != nil {
+		return nil, err
+	}
+	return sortedPairs, nil
+}
+
+func (e *EngineBullet) MarkResolved(lookups []engine.GidLookup) error {
+
+	sortedPairs, err := e.ResolveBulkLookupsReverseDepthSorted(lookups)
 	if err != nil {
 		return err
 	}

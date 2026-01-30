@@ -11,7 +11,7 @@ import (
 func buildDoneCommand(deps RootDependencies) *cobra.Command {
 	var doneCmd = &cobra.Command{
 		Use:   "done",
-		Short: "Complete an item",
+		Short: "Complete one or more items",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				deps.Printer.Error(console.Message{Message: "Expected at least one lookup as input"})

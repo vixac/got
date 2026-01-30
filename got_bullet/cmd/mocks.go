@@ -65,6 +65,11 @@ func (m *MockEngine) LookupAliasForMany(gid []string) (map[string]*string, error
 	return nil, errors.New("not impl")
 }
 
+func (m *MockEngine) DeleteMany(lookups []engine.GidLookup) error {
+
+	return errors.New("deleteMany not impl")
+}
+
 func (m *MockEngine) Unalias(alias string) (*engine.GotId, error) {
 	m.unaliasAlias = alias
 	return m.gotIdToReturn, m.errorToThrow
@@ -87,10 +92,6 @@ func (m *MockEngine) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error)
 	return m.nodeIdToReturn, m.errorToThrow
 }
 
-func (m *MockEngine) Delete(lookup engine.GidLookup) error {
-	m.resolveLookup = lookup
-	return m.errorToThrow
-}
 func (m *MockEngine) Alias(lookup engine.GidLookup, alias string) (bool, error) {
 	m.resolveLookup = lookup
 	m.aliasAlias = alias

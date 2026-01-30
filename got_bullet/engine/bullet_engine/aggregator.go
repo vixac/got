@@ -109,7 +109,9 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	//step 1. change the state of this leaf.
 	changedItemSummary, ok := ancestorAggs[e.Id]
 	if !ok {
-		return errors.New("missing summary for state-changed item.s")
+		fmt.Printf("VX: missing id %d\n", e.Id)
+		str := "missing summary for state-changed item. "
+		return errors.New(str)
 	}
 	changedItemSummary.State = e.NewState
 
