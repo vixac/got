@@ -101,7 +101,29 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([][]engine.GotItemD
 	if len(currentSection) > 0 {
 		sections = append(sections, currentSection)
 	}
-	return sections, nil
+
+	//if theres a sequence of sections with only 1 item, we group them. This should act as though all leaf nodes are put into a single section.
+	var squashedSections [][]engine.GotItemDisplay
+	var leafSection []engine.GotItemDisplay
+	for _, s := range sections {
+		if len(s) == 1 {
+			leafSection = append(leafSection, s[0])
+		} else {
+			squashedSections = append(squashedSections, s)
+		}
+	}
+
+	//here we create a new sections array and put the leaf nodes at the top. This is not performant.
+	var finalSections [][]engine.GotItemDisplay
+
+	if len(leafSection) > 0 {
+		finalSections = append(finalSections, leafSection)
+	}
+	for _, s := range squashedSections {
+		finalSections = append(finalSections, s)
+	}
+
+	return finalSections, nil
 }
 
 func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bullet_engine.TableRenderOptions, deps RootDependencies) {
