@@ -69,15 +69,24 @@ func setionsByTimeframe(res *engine.GotFetchResult) ([][]engine.GotItemDisplay, 
 func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([][]engine.GotItemDisplay, error) {
 	const MaxUint = ^uint(0)
 	var minDepth int = int(MaxUint >> 1)
+	var maxDepth int = 0
 	for _, r := range res.Result {
 		depth := r.Path.Depth()
-		fmt.Printf("VX: depth is %d\n", depth)
 		if minDepth > depth {
 			minDepth = depth
 		}
+		if maxDepth < depth {
+			maxDepth = depth
+		}
 	}
-	fmt.Printf("VXL MIN DEPTHS IS %d\n", minDepth)
 	var sections [][]engine.GotItemDisplay
+	//this is a flat response, so don't break it up into sections
+	if minDepth == maxDepth {
+		sections = append(sections, res.Result)
+		return sections, nil
+
+	}
+
 	//everytime we reach an item of minDepth (that is a top level node relative to this search), we start a new section
 	var currentSection []engine.GotItemDisplay
 	for _, r := range res.Result {
