@@ -46,8 +46,8 @@ func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 
 	}
 	//add the gid or alias of this item into it's own path.
-	if len(pathSnippets) > 0 { //we don't want the ":" at top level items because it screws alignment, but otherwise we use ":" instead of "/" to show that this is the id of this node.
-		pathSnippets = append(pathSnippets, console.NewSnippet("/ ", console.TokenTextTertiary{}))
+	if len(pathSnippets) > 0 { // here is for the leaf node. We currently print it withthe same prefix as the rest of the path, but we could ":" if we wanted to.
+		pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenTextTertiary{}))
 	}
 
 	pathSuffixShortcut, isAlias := item.Shortcut()

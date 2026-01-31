@@ -66,8 +66,7 @@ func (m *MockEngine) LookupAliasForMany(gid []string) (map[string]*string, error
 }
 
 func (m *MockEngine) DeleteMany(lookups []engine.GidLookup) error {
-
-	return errors.New("deleteMany not impl")
+	return m.errorToThrow
 }
 
 func (m *MockEngine) Unalias(alias string) (*engine.GotId, error) {

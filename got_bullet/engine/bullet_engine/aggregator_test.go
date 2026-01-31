@@ -709,7 +709,7 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	fetchedAlice := fetchAll[aliceId]
 	fetchedBob := fetchAll[bobId]
 
-	assert.Equal(t, fetchedTop.Counts.Active, 2)  // bob + carol
+	assert.Equal(t, fetchedTop.Counts.Active, 2)   // bob + carol
 	assert.Equal(t, fetchedAlice.Counts.Active, 1) // carol
 	assert.Assert(t, fetchedBob.Counts == nil)     // bob is a leaf
 
@@ -738,6 +738,91 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	// bob: now has carol, so Counts.Active = 1
 	assert.Assert(t, fetchedBob.Counts != nil)
 	assert.Equal(t, fetchedBob.Counts.Active, 1)
+}
+
+func TestAggregatorMoveItemToALeaf(t *testing.T) {
+	store := MakeMockSummaryStore()
+	agg, err := NewAggregator(&store)
+	assert.NilError(t, err)
+
+	var topId = engine.SummaryId(9)
+	var aliceId = engine.SummaryId(10)
+	var bobId = engine.SummaryId(11)
+	var carolId = engine.SummaryId(12)
+
+	// Create hierarchy: top -> alice -> carol (active), top -> bob (empty)
+	err = agg.ItemAdded(AddItemEvent{
+		Id:       topId,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{},
+		Deadline: nil,
+	})
+	assert.NilError(t, err)
+
+	err = agg.ItemAdded(AddItemEvent{
+		Id:       aliceId,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{topId},
+		Deadline: nil,
+	})
+	assert.NilError(t, err)
+
+	err = agg.ItemAdded(AddItemEvent{
+		Id:       bobId,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{topId},
+		Deadline: nil,
+	})
+	assert.NilError(t, err)
+
+	err = agg.ItemAdded(AddItemEvent{
+		Id:       carolId,
+		State:    engine.Active,
+		Ancestry: []engine.SummaryId{topId, aliceId},
+		Deadline: nil,
+	})
+	assert.NilError(t, err)
+
+	// Verify initial counts:
+	// - top has 2 active (bob as leaf + carol under alice)
+	// - alice has 1 active (carol)
+	// - bob is a leaf (nil Counts)
+	fetchAll, err := agg.summaryStore.Fetch([]engine.SummaryId{topId, aliceId, bobId})
+	assert.NilError(t, err)
+
+	fetchedTop := fetchAll[topId]
+	fetchedAlice := fetchAll[aliceId]
+	fetchedBob := fetchAll[bobId]
+
+	assert.Equal(t, fetchedTop.Counts.Active, 2)   // bob + carol
+	assert.Equal(t, fetchedAlice.Counts.Active, 1) // carol
+	assert.Assert(t, fetchedBob.Counts == nil)     // bob is a leaf
+
+	// Move bob from to carol and confirm carol becomes a group
+	//Old: top -> alice -> carol (active), top -> bob (empty)
+	//New: top -> alice, top -> bob -> carol
+	// Old ancestry: [top, alice]
+	// New ancestry: [top, bob]
+	err = agg.ItemMoved(ItemMovedEvent{
+		Id:          bobId,
+		OldAncestry: []engine.SummaryId{topId},
+		NewAncestry: []engine.SummaryId{topId, carolId},
+	})
+	assert.NilError(t, err)
+
+	// Verify: top still has 2 active, alice has 0 active, carol now has 1 active
+	fetchAll, err = agg.summaryStore.Fetch([]engine.SummaryId{topId, aliceId, carolId})
+	assert.NilError(t, err)
+
+	fetchedTop = fetchAll[topId]
+	fetchedAlice = fetchAll[aliceId]
+	fetchedCarol := fetchAll[carolId]
+
+	// top: decrement 1 (old) + increment 1 (new) = net 0 change, still 2
+	assert.Equal(t, fetchedTop.Counts.Active, 2)
+	// carol how has bob, so carol should have an active count
+	assert.Assert(t, fetchedCarol.Counts != nil)
+	assert.Equal(t, fetchedCarol.Counts.Active, 1)
 }
 
 func TestAggregatorMoveNoteItem(t *testing.T) {

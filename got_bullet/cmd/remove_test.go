@@ -20,7 +20,7 @@ func TestRemoveommand_MissingGID(t *testing.T) {
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 1)
 
-	assert.Equal(t, p.errors[0].Message, "Expected the alias as input")
+	assert.Equal(t, p.errors[0].Message, "Expected at least one lookup as input")
 }
 
 func TestRemoveCommand_Valid(t *testing.T) {
