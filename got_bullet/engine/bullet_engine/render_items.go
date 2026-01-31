@@ -76,7 +76,6 @@ type GotRow struct {
 	Deadline      console.TableCell
 	LongForm      console.TableCell
 	State         console.TableCell
-	Tags          console.TableCell
 	Title         console.TableCell
 }
 
@@ -94,7 +93,6 @@ func NewGotRow() GotRow {
 		Deadline:      emptyCell,
 		LongForm:      emptyCell,
 		State:         emptyCell,
-		Tags:          emptyCell,
 		Title:         emptyCell,
 	}
 }
@@ -106,7 +104,7 @@ type GotTableSections struct {
 
 func (g GotRow) TableRow() console.TableRow {
 	cells := []console.TableCell{
-		g.ItemNumber, g.Created, g.Updated, g.Path, g.GroupStart, g.CompleteCount, g.ActiveCount, g.GroupEnd, g.Deadline, g.LongForm, g.State, g.Tags, g.Title,
+		g.ItemNumber, g.Created, g.Updated, g.Path, g.GroupStart, g.CompleteCount, g.ActiveCount, g.GroupEnd, g.Deadline, g.LongForm, g.State, g.Title,
 	}
 	return console.NewCellTableRow(cells)
 }
@@ -138,7 +136,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 	titleRow.CompleteCount = console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{})
 	titleRow.ActiveCount = console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{})
 	titleRow.Deadline = console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{})
-	titleRow.Tags = console.NewTableCellFromStr("Tags ", console.TokenPrimary{})
+	//titleRow.Tags = console.NewTableCellFromStr("Tags ", console.TokenPrimary{})
 	titleRow.Title = console.NewTableCellFromStr("Title ", console.TokenTextTertiary{})
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow.TableRow())
@@ -255,15 +253,15 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
 			}
 			itemRow.State = stateToCell(item.SummaryObj.State)
+			tagStr := ""
 			//tags
 			if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
 				//VX:TODO invert the if
 			} else {
 
-				tagStr := ""
 				for i, t := range item.SummaryObj.Tags {
 					if i == 0 {
-						tagStr = "("
+						tagStr = " ("
 					} else {
 						tagStr += ","
 					}
@@ -272,8 +270,9 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				if tagStr != "" {
 					tagStr += ")"
 				}
-				itemRow.Tags = console.NewTableCellFromStr(tagStr, console.TokenAlert{})
+				tagStr += " "
 			}
+			tagSnippet := console.NewSnippet(tagStr, console.TokenAlert{})
 
 			//title
 			var titleToken console.Token
@@ -289,14 +288,18 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 			maxTitleLen := 100
 
 			//check if we need to truncate
+
+			totalTitle := tagStr + item.Title
 			var truncationIndex = -1
-			for j := maxTitleLen; j < len(item.Title); j++ {
-				if item.Title[j] == ' ' {
+			for j := maxTitleLen; j < len(totalTitle); j++ {
+				if totalTitle[j] == ' ' {
 					truncationIndex = j
 					break
 				}
 			}
+
 			//we need to truncate, so we append ... on first line, and then prefix ... on second, and right pad the second line.
+
 			if truncationIndex > 0 {
 				var firstLine = ""
 				var secondLine = "" //only wrapping to 2 lines, not recursively. Because yagni
@@ -317,7 +320,10 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 					}
 					paddedSecondString += dotDotDot + secondLine
 				}
-				itemRow.Title = console.NewTableCellFromStr(titlePrefix+firstLine+dotDotDot, titleToken)
+
+				titleSnippet := console.NewSnippet(titlePrefix+firstLine+dotDotDot, titleToken)
+
+				itemRow.Title = console.NewTableCell([]console.Snippet{tagSnippet, titleSnippet})
 				totalEmptyCells := len(titleCells) - 1
 				var overflowRowCells []console.TableCell
 				for i := 0; i < totalEmptyCells; i++ {
@@ -332,7 +338,8 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				rows = append(rows, overFlowRow.TableRow())
 
 			} else { //no truncation
-				itemRow.Title = console.NewTableCellFromStr(titlePrefix+item.Title, titleToken)
+				titleSnippet := console.NewSnippet(titlePrefix+item.Title, titleToken)
+				itemRow.Title = console.NewTableCell([]console.Snippet{tagSnippet, titleSnippet})
 				rows = append(rows, itemRow.TableRow())
 			}
 		}
