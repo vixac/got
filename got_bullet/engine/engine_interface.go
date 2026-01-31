@@ -130,6 +130,12 @@ type DateLookup struct {
 	UserInput string
 }
 
+func NowDateLookup() DateLookup {
+	return DateLookup{
+		UserInput: "<now>",
+	}
+}
+
 // For now we'll treat this as a tag literal.
 type TagLookup struct {
 	Input string

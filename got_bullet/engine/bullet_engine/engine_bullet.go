@@ -106,10 +106,19 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 }
 
 func deadline(summary engine.Summary, now time.Time) (string, console.Token, error) {
+
 	var displayDeadline = ""
 	var deadlineToken console.Token = console.TokenSecondary{}
 	//VX:TODO get this date wrangling out. Its business logic	//if theres a deadline and either its a group or its an active job
 	if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
+
+		//this "n" is not strongly typed and I feel bad.
+		//handle all the special cases
+		if summary.Deadline.Special == "n" {
+			return "---Now---", console.TokenComplete{}, nil
+		}
+
+		//if its not special, its assumed to be a normal deadline
 
 		deadlineDate, err := summary.Deadline.ToDate()
 		if err != nil {
@@ -395,19 +404,13 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}
 
 	var deadline *engine.DateTime = nil
-
 	if date != nil {
-		deadlineTime, err := console.ParseRelativeDate(date.UserInput, time.Now())
+		dateTime, err := engine.NewDeadlineFromDateLookup(date.UserInput, time.Now())
 		if err != nil {
 			return nil, err
 		}
-		formatted := deadlineTime.Format("Mon 2 Jan 2006")
-		fmt.Printf("VX: Deadline date it %s", formatted)
-		dateJsonByes, err := deadlineTime.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		deadline = &engine.DateTime{Date: string(dateJsonByes)}
+		deadline = &dateTime
+		fmt.Printf("VX: setting date time and got: %+v\n", deadline)
 	}
 
 	//add item to ancestry
