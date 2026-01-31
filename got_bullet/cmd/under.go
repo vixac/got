@@ -11,6 +11,8 @@ import (
 
 func buildUnderCommand(deps RootDependencies) *cobra.Command {
 
+	var n = false
+	var now *bool = &n
 	cmd := &cobra.Command{
 		Use:   "under <alias> <heading>",
 		Short: "Create a task with no deadline, under provided parent",
@@ -45,5 +47,6 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVarP(now, "now", "n", false, "Whether this is scheduled for now.")
 	return cmd
 }

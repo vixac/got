@@ -6,10 +6,13 @@ import (
 
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
+	"vixac.com/got/engine"
 )
 
 func buildToCommand(deps RootDependencies) *cobra.Command {
 
+	var n = false
+	var now *bool = &n
 	cmd := &cobra.Command{
 		Use:   "to <heading>",
 		Short: "Create a task with no parent and no date",
@@ -26,8 +29,13 @@ func buildToCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
+			var dateLookup *engine.DateLookup = nil
+			if *now {
+				d := engine.NowDateLookup()
+				dateLookup = &d
+			}
 			_, err := deps.Engine.CreateBuck(nil,
-				nil,
+				dateLookup,
 				true, //this is the only differece between til and event
 				heading,
 			)
@@ -38,5 +46,7 @@ func buildToCommand(deps RootDependencies) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVarP(now, "now", "n", false, "Whether this is scheduled for now.")
+
 	return cmd
 }

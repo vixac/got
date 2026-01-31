@@ -136,7 +136,6 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 	titleRow.CompleteCount = console.NewTableCellFromStr(engine.CompleteChar+smallPadding, console.TokenComplete{})
 	titleRow.ActiveCount = console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{})
 	titleRow.Deadline = console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{})
-	//titleRow.Tags = console.NewTableCellFromStr("Tags ", console.TokenPrimary{})
 	titleRow.Title = console.NewTableCellFromStr("Title ", console.TokenTextTertiary{})
 	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
 	rows = append(rows, titleRow.TableRow())

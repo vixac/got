@@ -43,6 +43,12 @@ func (t TokenComplete) Name() string {
 	return "complete"
 }
 
+type TokenNow struct{}
+
+func (t TokenNow) Name() string {
+	return "now"
+}
+
 type TokenAlias struct{}
 
 func (t TokenAlias) Name() string {

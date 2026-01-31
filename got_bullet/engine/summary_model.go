@@ -56,12 +56,13 @@ func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Ta
 }
 
 type DateTime struct {
-	Date   string `json:"d,omitempty"`
-	Millis int64  `json:"e,omitempty"`
+	Special string `json:"s,omitempty"` //denotes a non-date datetime, such as "now"
+	Date    string `json:"d,omitempty"`
+	Millis  int64  `json:"e,omitempty"`
 }
 
 func (d *DateTime) EpochMillis() int64 {
-	if d == nil {
+	if d == nil || d.Special != "" {
 		return 0
 	}
 	if d.Millis != 0 {
@@ -75,7 +76,7 @@ func (d *DateTime) EpochMillis() int64 {
 	return startOfDay.UnixMilli()
 }
 func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
-	if d == nil {
+	if d == nil || d.Special != "" {
 		return nil, nil
 	}
 	var date console.RFC3339Time
@@ -87,9 +88,10 @@ func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 	return &date, nil
 }
 func (d *DateTime) JsonDateToReadable() (string, error) {
-	if d == nil {
+	if d == nil || d.Special != "" {
 		return "", nil
 	}
+
 	var date console.RFC3339Time
 	dateBytes := []byte(d.Date)
 	err := json.Unmarshal(dateBytes, &date)
@@ -112,6 +114,12 @@ func NewDateTime(time time.Time) (DateTime, error) {
 }
 
 func NewDeadlineFromDateLookup(inputString string, now time.Time) (DateTime, error) {
+	if inputString == "<now>" {
+		return DateTime{
+			Special: "n",
+		}, nil
+	}
+
 	deadlineTime, err := console.ParseRelativeDate(inputString, now)
 	if err != nil {
 		return DateTime{}, err
