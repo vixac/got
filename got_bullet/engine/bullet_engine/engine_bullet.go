@@ -115,7 +115,7 @@ func deadline(summary engine.Summary, now time.Time) (string, console.Token, err
 		//this "n" is not strongly typed and I feel bad.
 		//handle all the special cases
 		if summary.Deadline.Special == "n" {
-			return "---Now---", console.TokenComplete{}, nil
+			return "---Now---", console.TokenNow{}, nil
 		}
 
 		//if its not special, its assumed to be a normal deadline
@@ -410,7 +410,6 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 			return nil, err
 		}
 		deadline = &dateTime
-		fmt.Printf("VX: setting date time and got: %+v\n", deadline)
 	}
 
 	//add item to ancestry

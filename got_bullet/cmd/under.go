@@ -35,8 +35,14 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
+			var dateLookup *engine.DateLookup = nil
+			if *now {
+				d := engine.NowDateLookup()
+				dateLookup = &d
+			}
+
 			_, err := deps.Engine.CreateBuck(&engine.GidLookup{Input: parentAlias},
-				nil,
+				dateLookup,
 				true, //the only difference between note and under
 				heading,
 			)
