@@ -40,7 +40,8 @@ func (c MagentaColor) Col() string {
 type BrightMagentaColor struct{}
 
 func (c BrightMagentaColor) Col() string {
-	return "\033[38;5;219;5m"
+	return "\033[38;5;219m"
+	//flashing: return "\033[38;5;219;5m"
 }
 
 type BigGreenColor struct{}
