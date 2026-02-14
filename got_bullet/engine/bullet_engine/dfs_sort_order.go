@@ -18,13 +18,14 @@ func SortTheseIntoDFS(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 	for _, item := range items {
 		fullPath := item.FullPathString()
 		sortablePaths = append(sortablePaths, PathPair{
-			PathString: fullPath,
+			PathString: fullPath.IdPath,
 			Item:       item,
 		})
 	}
 	sort.Slice(sortablePaths, func(i, j int) bool {
 		return sortablePaths[i].PathString < sortablePaths[j].PathString //this is actually a bit of a hack. the length of the path is nearly right but the sort will on occasion be wrong based on lengths.
 	})
+
 	var backToItems []engine.GotItemDisplay
 	for _, i := range sortablePaths {
 		backToItems = append(backToItems, i.Item)
