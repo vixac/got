@@ -180,34 +180,57 @@ func (i *GotItemDisplay) IsComplete() bool {
 	return false
 }
 
+type PathString struct {
+	DisplayPath string //either ID or alias for each node
+	IdPath      string //path but based on ids only
+}
+
+type Shortcut struct {
+	Display string //alias or id
+	Id      string //just the id
+}
+
 // VX:TODO not tested, used for sorting the items.
-func (i *GotItemDisplay) FullPathString() string {
-	var path = ""
+func (i *GotItemDisplay) FullPathString() PathString {
+	var displayPath = ""
+	var idPath = ""
+	delimiter := "/"
 	for _, p := range i.Path.Ancestry {
 		s, _ := p.Shortcut()
-		path += "/" + s
+		displayPath += delimiter + s.Display
+		idPath += delimiter + s.Id
+
 	}
 	s, _ := i.Shortcut()
-	return path + "/" + s
+	displayPath += delimiter + s.Display
+	idPath += delimiter + s.Id
+	return PathString{DisplayPath: displayPath, IdPath: idPath}
 }
 
 // either alias or gid, and true for alias, false for gid
-func (i *PathItem) Shortcut() (string, bool) {
+func (i *PathItem) Shortcut() (Shortcut, bool) {
+	var display = ""
+	var aliased = false
 	if i.Alias != nil {
-		return *i.Alias, true
+		display = *i.Alias
+		aliased = true
 	} else {
-		return i.Id, false
+		display = i.Id
 	}
-
+	return Shortcut{Display: display, Id: i.Id}, aliased
 }
 
 // either alias or gid, and true for alias, false for gid
-func (i *GotItemDisplay) Shortcut() (string, bool) {
+func (i *GotItemDisplay) Shortcut() (Shortcut, bool) {
+	var display = ""
+	var aliased = false
 	if i.Alias != "" {
-		return i.Alias, true
+		display = i.Alias
+		aliased = true
 	} else {
-		return i.DisplayGid, false
+		display = i.DisplayGid //this one has a "0" prefix
 	}
+	return Shortcut{Display: display, Id: i.GotId.AasciValue}, aliased //i.GotId.Aasci value has no 0 prefix, useful for the actual path.
 
 }
 

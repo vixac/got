@@ -58,7 +58,7 @@ func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 		pathSuffixToken = console.TokenGid{}
 	}
 	endOfPathPadding := "  " //put some padding at the end of path to make summaries appear as one
-	pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+endOfPathPadding, pathSuffixToken))
+	pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut.Display+endOfPathPadding, pathSuffixToken))
 
 	return console.NewTableCell(pathSnippets)
 }
@@ -236,7 +236,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				} else {
 					pathSuffixToken = console.TokenGid{}
 				}
-				pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut+mediumPadding, pathSuffixToken))
+				pathSnippets = append(pathSnippets, console.NewSnippet(pathSuffixShortcut.Display+mediumPadding, pathSuffixToken))
 				itemRow.Path = console.NewTableCell(pathSnippets)
 			}
 			//path
