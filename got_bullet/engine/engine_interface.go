@@ -20,6 +20,7 @@ type GotEngine interface {
 	MarkActive(lookup GidLookup) (*NodeId, error)
 	MarkAsNote(lookup GidLookup) (*NodeId, error)
 	DeleteMany(lookups []GidLookup) error
+	Collpase(lookup GidLookup) error
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 	OpenThenTimestamp(lookup GidLookup) error
