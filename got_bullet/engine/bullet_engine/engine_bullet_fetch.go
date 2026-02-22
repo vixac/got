@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -105,7 +104,6 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 			continue //VX:TODO this is an error
 		}
 		if summary.Flags["collapsed"] {
-			fmt.Printf("VX: THIS IS COLLAPSED: %d\n", id)
 			collapsedIds[id] = true
 		}
 	}
@@ -210,10 +208,10 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 				}
 				ancestorSummary, ok := summaries[engine.SummaryId(backToInt)]
 				if !ok {
-					return nil, errors.New("Missing summary for ancestor")
+					continue
+					//return nil, errors.New("Missing summary for ancestor")
 				}
 				if ancestorSummary.Flags != nil && ancestorSummary.Flags["collapsed"] {
-					fmt.Printf("VX: we are hiding this node beacuse its parent is collapsed %d\n", backToInt)
 					shouldShow = false
 				}
 

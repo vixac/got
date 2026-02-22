@@ -20,7 +20,7 @@ type GotEngine interface {
 	MarkActive(lookup GidLookup) (*NodeId, error)
 	MarkAsNote(lookup GidLookup) (*NodeId, error)
 	DeleteMany(lookups []GidLookup) error
-	Collpase(lookup GidLookup) error
+	ToggleCollapse(lookup GidLookup, collapsed bool) error
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 	OpenThenTimestamp(lookup GidLookup) error
@@ -46,10 +46,11 @@ const (
 type GotState int
 
 const (
-	CompleteChar = "✔"
-	ActiveChar   = "⏺"
-	NoteChar     = "~"
-	TNoteChar    = "📎"
+	CompleteChar  = "✔"
+	ActiveChar    = "⏺"
+	NoteChar      = "~"
+	TNoteChar     = "📎"
+	CollapsedChar = "📁"
 )
 
 func (g GotState) ToStr() string {
@@ -160,6 +161,10 @@ type GotItemDisplay struct {
 	Path          *GotPath
 	NumberGo      int
 	HasTNote      bool
+}
+
+func (i *GotItemDisplay) IsCollapsed() bool {
+	return i.SummaryObj.Flags != nil && i.SummaryObj.Flags["collapsed"] == true
 }
 
 func (i *GotItemDisplay) IsNote() bool {

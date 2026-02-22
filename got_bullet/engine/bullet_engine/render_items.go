@@ -75,6 +75,7 @@ type GotRow struct {
 	GroupEnd      console.TableCell
 	Deadline      console.TableCell
 	LongForm      console.TableCell
+	Collapsed     console.TableCell
 	State         console.TableCell
 	Title         console.TableCell
 }
@@ -92,6 +93,7 @@ func NewGotRow() GotRow {
 		GroupEnd:      emptyCell,
 		Deadline:      emptyCell,
 		LongForm:      emptyCell,
+		Collapsed:     emptyCell,
 		State:         emptyCell,
 		Title:         emptyCell,
 	}
@@ -104,7 +106,7 @@ type GotTableSections struct {
 
 func (g GotRow) TableRow() console.TableRow {
 	cells := []console.TableCell{
-		g.ItemNumber, g.Created, g.Updated, g.Path, g.GroupStart, g.CompleteCount, g.ActiveCount, g.GroupEnd, g.Deadline, g.LongForm, g.State, g.Title,
+		g.ItemNumber, g.Created, g.Updated, g.Path, g.GroupStart, g.CompleteCount, g.ActiveCount, g.GroupEnd, g.Deadline, g.Collapsed, g.LongForm, g.State, g.Title,
 	}
 	return console.NewCellTableRow(cells)
 }
@@ -248,9 +250,13 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				itemRow.CompleteCount = console.NewTableCellFromStr(zeroIsEmpty(item.SummaryObj.Counts.Complete)+smallPadding, console.TokenComplete{})
 			}
 			itemRow.Deadline = console.NewTableCellFromStr(item.Deadline+" ", item.DeadlineToken)
+			if item.IsCollapsed() {
+				itemRow.Collapsed = console.NewTableCellFromStr(engine.CollapsedChar+" ", console.TokenGroup{})
+			}
 			if item.HasTNote {
 				itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
 			}
+
 			itemRow.State = stateToCell(item.SummaryObj.State)
 			tagStr := ""
 			//tags

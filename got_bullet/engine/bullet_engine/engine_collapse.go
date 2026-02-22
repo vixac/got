@@ -6,13 +6,32 @@ import (
 	"vixac.com/got/engine"
 )
 
-func (e *EngineBullet) Collpase(lookup engine.GidLookup) error {
+func (e *EngineBullet) ToggleCollapse(lookup engine.GidLookup, collapse bool) error {
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil || gid == nil {
 		return err
 	}
-	//VX:TODO so this needs to add the item to a set of all collapsed items
-	//which get chceked.
-	return errors.New("Not impl.")
+	summaryId := engine.SummaryId(gid.IntValue)
+	summaries, err := e.SummaryStore.Fetch([]engine.SummaryId{summaryId})
+	if err != nil {
+		return err
+	}
+	summary, ok := summaries[summaryId]
+	if !ok {
+		return errors.New("missing summary, can't collapse it")
+	}
+	if summary.Flags == nil {
+		summary.Flags = make(map[string]bool)
+	}
+	if collapse {
+		summary.Flags["collapsed"] = true
+	} else {
+		summary.Flags["collapsed"] = false
+	}
 
+	err = e.SummaryStore.UpsertSummary(summaryId, summary)
+	if err != nil {
+		return err
+	}
+	return nil
 }
