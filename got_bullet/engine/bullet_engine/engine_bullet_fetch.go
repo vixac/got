@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -88,18 +89,29 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	if !parentIsRoot {
 		intIds = append(intIds, parentGid.IntValue)
 	}
-
-	//titleStore: allIds -> title
-	titles, err := e.TitleStore.TitleForMany(intIds)
-	if err != nil {
-		return nil, err
-	}
-
 	var summaryIds []engine.SummaryId
 	for _, v := range intIds {
 		summaryIds = append(summaryIds, engine.SummaryId(v))
 	}
 	summaries, err := e.SummaryStore.Fetch(summaryIds)
+	if err != nil {
+		return nil, err
+	}
+
+	var collapsedIds = make(map[engine.SummaryId]bool)
+	for _, id := range summaryIds {
+		summary, ok := summaries[id]
+		if !ok {
+			continue //VX:TODO this is an error
+		}
+		if summary.Flags["collapsed"] {
+			fmt.Printf("VX: THIS IS COLLAPSED: %d\n", id)
+			collapsedIds[id] = true
+		}
+	}
+
+	//titleStore: allIds -> title
+	titles, err := e.TitleStore.TitleForMany(intIds)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +198,25 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 			//this is an edge case where if you're not rendering complete nodes, you also don't want to render notes under complete nodes.
 			if *summary.State == engine.Note && isParentComplete && !shouldFetchComplete {
 				shouldShow = false
+			}
+		}
+		//of those can would be shown based on their state, we hide the ones that are under a collapsed parent
+		if shouldShow {
+			for _, pathItem := range path.Ancestry {
+				ancestorId := pathItem.Id
+				backToInt, _ := bullet_stl.AasciBulletIdToInt(ancestorId) //so many conversions. VX:TODO just create a 2 way map or whatever. Maybe that map is its own type.
+				if parentGid != nil && backToInt == int64(parentGid.IntValue) {
+					continue //we don't care if the parent of the request is collapsed, because they've called for it
+				}
+				ancestorSummary, ok := summaries[engine.SummaryId(backToInt)]
+				if !ok {
+					return nil, errors.New("Missing summary for ancestor")
+				}
+				if ancestorSummary.Flags != nil && ancestorSummary.Flags["collapsed"] {
+					fmt.Printf("VX: we are hiding this node beacuse its parent is collapsed %d\n", backToInt)
+					shouldShow = false
+				}
+
 			}
 		}
 
