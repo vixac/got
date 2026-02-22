@@ -69,6 +69,10 @@ func (m *MockEngine) DeleteMany(lookups []engine.GidLookup) error {
 	return m.errorToThrow
 }
 
+func (m *MockEngine) ToggleCollapse(lookup engine.GidLookup, collapsed bool) error {
+	return m.errorToThrow
+}
+
 func (m *MockEngine) Unalias(alias string) (*engine.GotId, error) {
 	m.unaliasAlias = alias
 	return m.gotIdToReturn, m.errorToThrow

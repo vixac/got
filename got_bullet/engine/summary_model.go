@@ -18,12 +18,13 @@ type AggCount struct {
 // VX:TODO its either state OR its counts.
 // deadline is separate. Maybe it doesn't belong here but we'll see.
 type Summary struct {
-	State       *GotState `json:"s,omitempty"`
-	Counts      *AggCount `json:"c"`
-	Deadline    *DateTime `json:"d"`
-	CreatedDate *DateTime `json:"cr,omitempty"`
-	UpdatedDate *DateTime `json:"u,omitempty"`
-	Tags        []Tag     `json:"t,omitempty"`
+	State       *GotState       `json:"s,omitempty"`
+	Counts      *AggCount       `json:"c"`
+	Deadline    *DateTime       `json:"d"`
+	CreatedDate *DateTime       `json:"cr,omitempty"`
+	UpdatedDate *DateTime       `json:"u,omitempty"`
+	Tags        []Tag           `json:"t,omitempty"`
+	Flags       map[string]bool `json:"f,omitempty"`
 }
 
 type TagLiteral struct {
@@ -44,7 +45,11 @@ func (lhs Tag) EqualTo(rhs Tag) bool {
 	return lhs.Literal.Display == rhs.Literal.Display
 }
 
-func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Tag) Summary {
+func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Tag, flags []string) Summary {
+	var flagMap = make(map[string]bool)
+	for _, f := range flags {
+		flagMap[f] = true
+	}
 	return Summary{
 		State:       &state,
 		Counts:      nil,
@@ -52,6 +57,7 @@ func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Ta
 		CreatedDate: created,
 		UpdatedDate: created,
 		Tags:        tags,
+		Flags:       flagMap,
 	}
 }
 
@@ -183,7 +189,7 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 // no count, no deadline for some reason
 func NewLeafSummary(state GotState, deadline *DateTime, now time.Time, tags []Tag) Summary {
 	dateTime, _ := NewDateTime(now)
-	return NewSummary(state, deadline, &dateTime, tags)
+	return NewSummary(state, deadline, &dateTime, tags, []string{})
 }
 
 func (c AggCount) ChangeState(state GotState, inc int) AggCount {
