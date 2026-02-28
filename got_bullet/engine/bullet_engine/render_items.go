@@ -291,7 +291,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				titlePrefix = "  "
 				titleToken = console.TokenSecondary{}
 			}
-			maxTitleLen := 100
+			maxTitleLen := 90
 
 			//check if we need to truncate
 
