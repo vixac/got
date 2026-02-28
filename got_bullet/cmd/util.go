@@ -127,7 +127,7 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([][]engine.GotItemD
 }
 
 func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bullet_engine.TableRenderOptions, deps RootDependencies) {
-	res, err := deps.Engine.FetchItemsBelow(lookup, options.SortByPath, states)
+	res, err := deps.Engine.FetchItemsBelow(lookup, options.SortByPath, states, options.HideUnderCollapsed)
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return

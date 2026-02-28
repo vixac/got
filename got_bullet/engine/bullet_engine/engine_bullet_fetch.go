@@ -9,7 +9,7 @@ import (
 )
 
 // lets rewrite this maybe.
-func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState) (*engine.GotFetchResult, error) {
+func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState, hideUnderCollapsed bool) (*engine.GotFetchResult, error) {
 
 	now := time.Now()
 	statesToFetch := make(map[engine.GotState]bool)
@@ -198,8 +198,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 				shouldShow = false
 			}
 		}
-		//of those can would be shown based on their state, we hide the ones that are under a collapsed parent
-		if shouldShow {
+		//of those can would be shown based on their state, we hide the ones that are under a collapsed parent, unless we are ignoring collapsed
+		if hideUnderCollapsed && shouldShow {
 			for _, pathItem := range path.Ancestry {
 				ancestorId := pathItem.Id
 				backToInt, _ := bullet_stl.AasciBulletIdToInt(ancestorId) //so many conversions. VX:TODO just create a 2 way map or whatever. Maybe that map is its own type.

@@ -33,10 +33,11 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
 			states := []engine.GotState{engine.Active, engine.Note}
 			options := bullet_engine.TableRenderOptions{
-				FlatPaths:         false,
-				ShowCreatedColumn: true,
-				ShowUpdatedColumn: true,
-				SortByPath:        true,
+				FlatPaths:          false,
+				ShowCreatedColumn:  true,
+				ShowUpdatedColumn:  true,
+				SortByPath:         true,
+				HideUnderCollapsed: true,
 			}
 			renderTable(lookup, states, options, deps)
 		},

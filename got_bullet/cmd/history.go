@@ -33,11 +33,12 @@ func buildHistoryCommand(deps RootDependencies) *cobra.Command {
 
 			states := []engine.GotState{engine.Active, engine.Note, engine.Complete}
 			options := bullet_engine.TableRenderOptions{
-				FlatPaths:         true,
-				ShowCreatedColumn: true,
-				ShowUpdatedColumn: true,
-				SortByPath:        false,
-				GroupByTimeFrame:  true,
+				FlatPaths:          true,
+				ShowCreatedColumn:  true,
+				ShowUpdatedColumn:  true,
+				SortByPath:         false,
+				GroupByTimeFrame:   true,
+				HideUnderCollapsed: false,
 			}
 			renderTable(lookup, states, options, deps)
 		},

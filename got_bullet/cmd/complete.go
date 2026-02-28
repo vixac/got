@@ -33,10 +33,11 @@ func buildCompleteCommand(deps RootDependencies) *cobra.Command {
 
 			states := []engine.GotState{engine.Complete}
 			options := bullet_engine.TableRenderOptions{
-				FlatPaths:         true,
-				ShowCreatedColumn: true,
-				ShowUpdatedColumn: true,
-				SortByPath:        false, //for now this means sort by updated, because we dont have more options yet.
+				FlatPaths:          true,
+				ShowCreatedColumn:  true,
+				ShowUpdatedColumn:  true,
+				SortByPath:         false, //for now this means sort by updated, because we dont have more options yet.
+				HideUnderCollapsed: false,
 			}
 			renderTable(lookup, states, options, deps)
 		},
