@@ -80,7 +80,7 @@ type GotFetchResult struct {
 
 // All the lookup stuff
 type GotFetchInterface interface {
-	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState) (*GotFetchResult, error)
+	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
 }
 
 // The interface for all aliasing functionality

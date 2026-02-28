@@ -57,7 +57,7 @@ func (m *MockEngine) TagItem(lookup engine.GidLookup, tag engine.TagLookup) erro
 func (e MockEngine) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
 	return errors.New("not impl")
 }
-func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState) (*engine.GotFetchResult, error) {
+func (e *MockEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState, hideUnderCollapsed bool) (*engine.GotFetchResult, error) {
 	return nil, errors.New("not impl")
 }
 

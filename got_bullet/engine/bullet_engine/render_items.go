@@ -12,11 +12,12 @@ const (
 )
 
 type TableRenderOptions struct {
-	FlatPaths         bool
-	ShowCreatedColumn bool
-	ShowUpdatedColumn bool
-	SortByPath        bool
-	GroupByTimeFrame  bool
+	FlatPaths          bool
+	ShowCreatedColumn  bool
+	ShowUpdatedColumn  bool
+	SortByPath         bool
+	GroupByTimeFrame   bool
+	HideUnderCollapsed bool
 }
 
 func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
