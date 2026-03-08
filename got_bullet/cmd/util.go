@@ -20,8 +20,8 @@ func LastMidnightUTC() time.Time {
 	)
 }
 
-func setionsByTimeframe(res *engine.GotFetchResult) ([][]engine.GotItemDisplay, error) {
-	var sections [][]engine.GotItemDisplay
+func setionsByTimeframe(res *engine.GotFetchResult) ([]bullet_engine.TableSection, error) {
+	var sections []bullet_engine.TableSection
 	midnight := LastMidnightUTC()
 	todayTime := midnight.Unix()
 	yesterday := midnight.AddDate(0, 0, -1).Unix()
@@ -51,22 +51,22 @@ func setionsByTimeframe(res *engine.GotFetchResult) ([][]engine.GotItemDisplay, 
 		}
 	}
 	if len(theRestItems) > 0 {
-		sections = append(sections, theRestItems)
+		sections = append(sections, bullet_engine.TableSection{Name: "", Items: theRestItems})
 	}
 	if len(lastWeekItems) > 0 {
-		sections = append(sections, lastWeekItems)
+		sections = append(sections, bullet_engine.TableSection{Name: " Last Week ", Items: lastWeekItems})
 	}
 	if len(yesterdayItems) > 0 {
-		sections = append(sections, yesterdayItems)
+		sections = append(sections, bullet_engine.TableSection{Name: " Yesterday ", Items: yesterdayItems})
 	}
 	if len(todayItems) > 0 {
-		sections = append(sections, todayItems)
+		sections = append(sections, bullet_engine.TableSection{Name: " Today ", Items: todayItems})
 	}
 	return sections, nil
 }
 
 // creates a section for each of the top level siblings.
-func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([][]engine.GotItemDisplay, error) {
+func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.TableSection, error) {
 	const MaxUint = ^uint(0)
 	var minDepth int = int(MaxUint >> 1)
 	var maxDepth int = 0
@@ -79,10 +79,10 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([][]engine.GotItemD
 			maxDepth = depth
 		}
 	}
-	var sections [][]engine.GotItemDisplay
+	var sections []bullet_engine.TableSection
 	//this is a flat response, so don't break it up into sections
 	if minDepth == maxDepth {
-		sections = append(sections, res.Result)
+		sections = append(sections, bullet_engine.TableSection{Name: "", Items: res.Result})
 		return sections, nil
 
 	}
@@ -92,35 +92,35 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([][]engine.GotItemD
 	for _, r := range res.Result {
 		if r.Path.Depth() == minDepth && len(currentSection) > 0 {
 			//flush the current section and start a new one
-			sections = append(sections, currentSection)
+			sections = append(sections, bullet_engine.TableSection{Name: "", Items: currentSection})
 			currentSection = []engine.GotItemDisplay{}
 		}
 
 		currentSection = append(currentSection, r)
 	}
 	if len(currentSection) > 0 {
-		sections = append(sections, currentSection)
+		sections = append(sections, bullet_engine.TableSection{Name: "", Items: currentSection})
 	}
 
 	//if theres a sequence of sections with only 1 item, we group them. This should act as though all leaf nodes are put into a single section.
 	var squashedSections [][]engine.GotItemDisplay
 	var leafSection []engine.GotItemDisplay
 	for _, s := range sections {
-		if len(s) == 1 {
-			leafSection = append(leafSection, s[0])
+		if len(s.Items) == 1 {
+			leafSection = append(leafSection, s.Items[0])
 		} else {
-			squashedSections = append(squashedSections, s)
+			squashedSections = append(squashedSections, s.Items)
 		}
 	}
 
 	//here we create a new sections array and put the leaf nodes at the top. This is not performant.
-	var finalSections [][]engine.GotItemDisplay
+	var finalSections []bullet_engine.TableSection
 
 	if len(leafSection) > 0 {
-		finalSections = append(finalSections, leafSection)
+		finalSections = append(finalSections, bullet_engine.TableSection{Name: "", Items: leafSection})
 	}
 	for _, s := range squashedSections {
-		finalSections = append(finalSections, s)
+		finalSections = append(finalSections, bullet_engine.TableSection{Name: "", Items: s})
 	}
 
 	return finalSections, nil
@@ -137,7 +137,7 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		return
 	}
 
-	var sections [][]engine.GotItemDisplay
+	var sections []bullet_engine.TableSection
 	if options.GroupByTimeFrame {
 		timeFrameSections, err := setionsByTimeframe(res)
 		if err != nil {
@@ -153,7 +153,7 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		}
 		sections = siblingSections
 		if res.Parent != nil {
-			sections = append(sections, []engine.GotItemDisplay{*res.Parent})
+			sections = append(sections, bullet_engine.TableSection{Name: "", Items: []engine.GotItemDisplay{*res.Parent}})
 		}
 	}
 

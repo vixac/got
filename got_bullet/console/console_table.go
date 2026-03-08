@@ -90,7 +90,15 @@ func (c *ConsoleTable) Render(printer Messenger, scheme Theme) {
 	//now we actually print
 	for i, row := range c.Rows {
 		if row.DividerRow != nil {
-			dividerStr := nchars(row.DividerRow.Separator, renderedRowLength)
+			var dividerStr = ""
+			if row.DividerRow.MiddleWord != "" {
+				eachSideLen := (renderedRowLength / 2) - len(row.DividerRow.MiddleWord)
+				borders := nchars(row.DividerRow.Separator, eachSideLen)
+				dividerStr = borders + row.DividerRow.MiddleWord + borders
+			} else {
+				dividerStr = nchars(row.DividerRow.Separator, renderedRowLength)
+			}
+
 			dividerMessage := Message{
 				Message: dividerStr,
 				Color:   scheme.ColorFor(row.DividerRow.Token).Col(),
@@ -159,18 +167,20 @@ type CellRow struct {
 	RowLength int
 }
 type DividerRow struct {
-	Separator string
-	Token     Token
+	Separator  string
+	Token      Token
+	MiddleWord string
 }
 type TableRow struct {
 	CellRow    *CellRow
 	DividerRow *DividerRow
 }
 
-func NewDividerRow(separator string, token Token) TableRow {
+func NewDividerRow(separator string, token Token, middleWord string) TableRow {
 	div := DividerRow{
-		Separator: separator,
-		Token:     token,
+		Separator:  separator,
+		Token:      token,
+		MiddleWord: middleWord,
 	}
 	return TableRow{
 		DividerRow: &div,

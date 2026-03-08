@@ -100,9 +100,14 @@ func NewGotRow() GotRow {
 	}
 }
 
+type TableSection struct {
+	Name  string
+	Items []engine.GotItemDisplay
+}
+
 // Each section gets a divider between them
 type GotTableSections struct {
-	Sections [][]engine.GotItemDisplay
+	Sections []TableSection
 }
 
 func (g GotRow) TableRow() console.TableRow {
@@ -140,9 +145,9 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 	titleRow.ActiveCount = console.NewTableCellFromStr(engine.ActiveChar, console.TokenPrimary{})
 	titleRow.Deadline = console.NewTableCellFromStr("Deadline ", console.TokenTextTertiary{})
 	titleRow.Title = console.NewTableCellFromStr("Title ", console.TokenTextTertiary{})
-	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}))
+	rows = append(rows, console.NewDividerRow("─", console.TokenTextTertiary{}, ""))
 	rows = append(rows, titleRow.TableRow())
-	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}))
+	rows = append(rows, console.NewDividerRow("=", console.TokenTextTertiary{}, ""))
 
 	//unfortunately because of these 2 variables, the path rendering is contextual so we cant just do it line by line
 	//var lastParentId *string = nil
@@ -152,9 +157,9 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 
 		if i != 0 {
 			//section divider
-			rows = append(rows, console.NewDividerRow("-", console.TokenTextTertiary{}))
+			rows = append(rows, console.NewDividerRow("-", console.TokenTextTertiary{}, section.Name))
 		}
-		for _, item := range section {
+		for _, item := range section.Items {
 			itemRow := NewGotRow()
 			numSnippets := []console.Snippet{
 				console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
