@@ -1,2 +1,0 @@
-grep -v $1 $2 > $2.tmp
-mv $2.tmp $2
