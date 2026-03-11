@@ -51,7 +51,7 @@ type CreateBuckRequest struct {
 }
 
 type GotCreateItemInterface interface {
-	CreateBuck(parent *GidLookup, date *DateLookup, completable bool, heading string) (*NodeId, error)
+	CreateBuck(request CreateBuckRequest) (*GotId, error)
 }
 
 // descendant types

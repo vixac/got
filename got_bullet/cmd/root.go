@@ -40,17 +40,16 @@ func NewRootCommand(deps RootDependencies) *cobra.Command {
 	gotCommands = append(gotCommands, buildScheduleCommand(deps))
 	gotCommands = append(gotCommands, buildTCommand(deps))
 	gotCommands = append(gotCommands, buildEditCommand(deps))
-	gotCommands = append(gotCommands, buildItCommand(deps))
+	//gotCommands = append(gotCommands, buildItCommand(deps))
 	gotCommands = append(gotCommands, buildToCommand(deps))
-	gotCommands = append(gotCommands, buildNoteCommand(deps))
+	//VX:Note that note is paused. gotCommands = append(gotCommands, buildNoteCommand(deps))
 	gotCommands = append(gotCommands, buildRemoveCommand(deps))
 
-	gotCommands = append(gotCommands, buildEventCommand(deps))
 	gotCommands = append(gotCommands, buildUnderCommand(deps))
 	gotCommands = append(gotCommands, buildUnaliasCommand(deps))
 	gotCommands = append(gotCommands, buildDoneCommand(deps))
 	gotCommands = append(gotCommands, buildAliasCommand(deps))
-	gotCommands = append(gotCommands, buildTillCommand(deps))
+	//gotCommands = append(gotCommands, buildTillCommand(deps))
 
 	gotCommands = append(gotCommands, buildMvCommand(deps))
 

@@ -35,17 +35,24 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			var dateLookup *engine.DateLookup = nil
+			var dateLookup *string = nil
+			//VX:Note we should support other datelookups here too.
 			if *now {
 				d := engine.NowDateLookup()
-				dateLookup = &d
+				dateLookup = &d.UserInput
 			}
+			req := engine.CreateBuckRequest{
+				Heading:             heading,
+				ScheduleLookupInput: dateLookup,
+				GidLookupInput:      &parentAlias,
+			}
+			id, err := deps.Engine.CreateBuck(req)
+			if err != nil {
+				deps.Printer.Error(console.Message{Message: err.Error()})
+				return err
+			}
+			deps.Printer.Print(console.Message{Message: id.AasciValue})
 
-			_, err := deps.Engine.CreateBuck(&engine.GidLookup{Input: parentAlias},
-				dateLookup,
-				true, //the only difference between note and under
-				heading,
-			)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err

@@ -23,26 +23,33 @@ func buildToCommand(deps RootDependencies) *cobra.Command {
 				return err
 			}
 
+			var dateLookup *string = nil
+			//VX:Note we should support other datelookups here too.
+			if *now {
+				d := engine.NowDateLookup()
+				dateLookup = &d.UserInput
+			}
 			heading := strings.Join(args, " ")
 			if heading == "" {
 				err := errors.New("missing heading")
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			var dateLookup *engine.DateLookup = nil
-			if *now {
-				d := engine.NowDateLookup()
-				dateLookup = &d
+			req := engine.CreateBuckRequest{
+				Heading:             heading,
+				ScheduleLookupInput: dateLookup,
 			}
-			_, err := deps.Engine.CreateBuck(nil,
-				dateLookup,
-				true, //this is the only differece between til and event
-				heading,
-			)
+			id, err := deps.Engine.CreateBuck(req)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
+			if id == nil {
+				deps.Printer.Print(console.Message{Message: "VX: dev error. Wheres the id"})
+				return nil
+			}
+
+			deps.Printer.Print(console.Message{Message: id.AasciValue})
 			return nil
 		},
 	}

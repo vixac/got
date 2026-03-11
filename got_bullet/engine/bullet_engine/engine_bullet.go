@@ -369,12 +369,13 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 	return nil, nil
 }
 
-func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
+func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.GotId, error) {
 
 	//lookup parent first because if you're looking up lastId, the lastId will change half way through this func
 	var parentGotId *engine.GotId = nil
-	if parent != nil { //last Id symbol
-		fetchedParent, err := e.GidLookup.InputToGid(parent)
+	if request.GidLookupInput != nil { //last Id symbol
+		parent := engine.GidLookup{Input: *request.GidLookupInput}
+		fetchedParent, err := e.GidLookup.InputToGid(&parent)
 
 		if err != nil {
 			return nil, err
@@ -404,8 +405,9 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	}
 
 	var deadline *engine.DateTime = nil
-	if date != nil {
-		dateTime, err := engine.NewDeadlineFromDateLookup(date.UserInput, time.Now())
+	if request.ScheduleLookupInput != nil {
+
+		dateTime, err := engine.NewDeadlineFromDateLookup(*request.ScheduleLookupInput, time.Now())
 		if err != nil {
 			return nil, err
 		}
@@ -421,9 +423,9 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 	// if the heading is a valid alias, we just create the alias
 	// and dont add it as a heading.
 
-	var headingToStore = heading
-	if engine.IsValidAlias(heading) {
-		_, err := e.AliasStore.Alias(gotId, heading)
+	var headingToStore = request.Heading
+	if engine.IsValidAlias(headingToStore) {
+		_, err := e.AliasStore.Alias(gotId, headingToStore)
 		if err != nil {
 			return nil, err
 		}
@@ -442,23 +444,19 @@ func (e *EngineBullet) CreateBuck(parent *engine.GidLookup, date *engine.DateLoo
 		}
 	}
 
+	//VX:Note here we choose the state. Looks like it could come in as complete here.
 	var newState engine.GotState = engine.Note
-	if completable {
-		newState = engine.Active
-	}
+	newState = engine.Active
+
 	e.publishAddEvent(AddItemEvent{
 		Id:       engine.SummaryId(newId),
 		State:    newState,
 		Ancestry: summaryIds,
 		Deadline: deadline,
 	})
-
-	return &engine.NodeId{
-		Gid: engine.Gid{
-			Id: stringId,
-		},
-		Title: heading,
-		Alias: "",
+	return &engine.GotId{
+		AasciValue: "0" + stringId,
+		IntValue:   int32(newId),
 	}, nil
 }
 

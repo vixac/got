@@ -1,12 +1,7 @@
 package cmd
 
-import (
-	"errors"
-	"testing"
-
-	"gotest.tools/assert"
-)
-
+//VX:Note that note is paused.
+/*
 func TestNoteCommand_MissingArgs(t *testing.T) {
 	var p = MockMessenger{}
 	var e = MockEngine{}
@@ -102,3 +97,4 @@ func TestNoteCommand_Valid(t *testing.T) {
 	// Should not print errors
 	assert.Equal(t, len(p.errors), 0)
 }
+*/

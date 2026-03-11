@@ -1,11 +1,7 @@
 package cmd
 
-import (
-	"errors"
-	"testing"
-
-	"gotest.tools/assert"
-)
+/*
+//VX:Note it is paused
 
 func TestItCommand_MissingValid(t *testing.T) {
 	var p = MockMessenger{}
@@ -54,3 +50,4 @@ func TestItommand_CreateBuck_ErrorFromEngine(t *testing.T) {
 	assert.Equal(t, p.errors[0].Message, "db error")
 	assert.Equal(t, e.createCompletable, false)
 }
+*/

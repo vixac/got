@@ -1,14 +1,7 @@
 package cmd
 
-import (
-	"errors"
-	"strings"
-
-	"github.com/spf13/cobra"
-	"vixac.com/got/console"
-	"vixac.com/got/engine"
-)
-
+//VX:Note that note is paused.
+/*
 func buildNoteCommand(deps RootDependencies) *cobra.Command {
 	var parentAlias string
 
@@ -50,3 +43,4 @@ func buildNoteCommand(deps RootDependencies) *cobra.Command {
 	cmd.Flags().StringVarP(&parentAlias, "for", "f", "", "Alias to assign the task under")
 	return cmd
 }
+*/
