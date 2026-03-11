@@ -111,21 +111,33 @@ func IsValidAlias(input string) bool {
 
 func CheckNumber(p []byte) bool {
 	r := string(p)
+
 	sep := 0
-	for _, b := range r {
+	for i, b := range r {
+
 		if unicode.IsNumber(b) {
 			continue
 		}
-		if b == rune('.') {
+
+		if b == '-' {
+			if i != 0 {
+				return false
+			}
+			continue
+		}
+
+		if b == '.' {
 			if sep > 0 {
 				return false
 			}
 			sep++
 			continue
 		}
+
 		return false
 	}
-	return true
+
+	return len(r) > 0
 }
 
 type DateLookup struct {
