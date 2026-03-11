@@ -32,6 +32,24 @@ type GotEngine interface {
 	GotFetchInterface
 }
 
+/**
+VX:TODO initial state will require an update state call after creation, and if the update date is set,
+then we also need to ask the update date not to change
+*/
+// Contains the values for fields that would normally be populated by the engine
+type CreateOverrideSettings struct {
+	UpdatedDate  string `json:"updatedDate,omitempty"`
+	CreatedDate  string `json:"createdDate,omitempty"`
+	InitialState int    `json:"initialState,omitempty"`
+}
+
+type CreateBuckRequest struct {
+	GidLookupInput      *string                 `json:"lookupInput,omitempty"`
+	ScheduleLookupInput *string                 `json:"scheduleInput,omitempty"`
+	Heading             string                  `json:"heading,omitempty"`
+	OverrideSettings    *CreateOverrideSettings `json:"overrideSettings,omitempty"`
+}
+
 type GotCreateItemInterface interface {
 	CreateBuck(parent *GidLookup, date *DateLookup, completable bool, heading string) (*NodeId, error)
 }
