@@ -1,12 +1,7 @@
 package cmd
 
-import (
-	"errors"
-	"testing"
-
-	"gotest.tools/assert"
-)
-
+/*
+Til is paused
 func TestTillCommand_MissingAliasValid(t *testing.T) {
 	var p = MockMessenger{}
 	var e = MockEngine{}
@@ -93,3 +88,4 @@ func TestTillCommand_Valid(t *testing.T) {
 	// Should not print any errors
 	assert.Equal(t, len(p.errors), 0)
 }
+*/

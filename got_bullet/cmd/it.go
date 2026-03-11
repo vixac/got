@@ -1,13 +1,7 @@
 package cmd
 
-import (
-	"errors"
-	"strings"
-
-	"github.com/spf13/cobra"
-	"vixac.com/got/console"
-)
-
+/*
+//VX:Note it is paused
 func buildItCommand(deps RootDependencies) *cobra.Command {
 
 	cmd := &cobra.Command{
@@ -27,11 +21,10 @@ func buildItCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			_, err := deps.Engine.CreateBuck(nil,
-				nil,
-				false, //this is the only differece between to and it
-				heading,
-			)
+			req := engine.CreateBuckRequest{
+				Heading: heading,
+			}
+			_, err := deps.Engine.CreateBuck(req)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
@@ -42,3 +35,4 @@ func buildItCommand(deps RootDependencies) *cobra.Command {
 	}
 	return cmd
 }
+*/

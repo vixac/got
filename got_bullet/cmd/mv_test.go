@@ -20,7 +20,7 @@ func TestMoveCommand_MissingGID(t *testing.T) {
 	cmd.SetArgs([]string{}) // no --gid flag
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 1)
-	assert.Equal(t, p.errors[0].Message, "missing target")
+	assert.Equal(t, p.errors[0].Message, "Invalid args. just 2 please.")
 }
 func TestMoveCommand_MissingParent(t *testing.T) {
 
@@ -31,10 +31,10 @@ func TestMoveCommand_MissingParent(t *testing.T) {
 		Engine:  &e,
 	}
 	cmd := buildMvCommand(mockDeps)
-	cmd.SetArgs([]string{"--gid", "abc"}) // no --alias flag
+	cmd.SetArgs([]string{"item"})
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 1)
-	assert.Equal(t, p.errors[0].Message, "missing parent")
+	assert.Equal(t, p.errors[0].Message, "Invalid args. just 2 please.")
 }
 
 func TestMoveCommandValidButEngineThrows(t *testing.T) {
@@ -47,7 +47,7 @@ func TestMoveCommandValidButEngineThrows(t *testing.T) {
 		Engine:  &e,
 	}
 	cmd := buildMvCommand(mockDeps)
-	cmd.SetArgs([]string{"--gid", "abc", "--destination", "new_parent"})
+	cmd.SetArgs([]string{"abc", "new_parent"})
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 1)
 	assert.Equal(t, p.errors[0].Message, "test error")
@@ -64,7 +64,7 @@ func TestMoveCommand_Valid(t *testing.T) {
 		Engine:  &e,
 	}
 	cmd := buildMvCommand(mockDeps)
-	cmd.SetArgs([]string{"--gid", "abc", "--destination", "new_parent"})
+	cmd.SetArgs([]string{"abc", "new_parent"})
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 0)
 	assert.Equal(t, e.moveLookup.Input, "abc")

@@ -41,10 +41,10 @@ type MockEngine struct {
 	moveNewParent engine.GidLookup
 
 	// New fields for till command
-	createParent      *engine.GidLookup
-	createDate        *engine.DateLookup
-	createCompletable bool
-	heading           string
+	createParent *string
+	createDate   *string
+	//createCompletable bool
+	heading string
 }
 
 func (m *MockEngine) OpenThenTimestamp(lookup engine.GidLookup) error {
@@ -119,10 +119,13 @@ func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (
 	return m.nodeIdToReturn, m.errorToThrow
 }
 
-func (m *MockEngine) CreateBuck(parent *engine.GidLookup, date *engine.DateLookup, completable bool, heading string) (*engine.NodeId, error) {
-	m.createParent = parent
-	m.createDate = date
-	m.createCompletable = completable
-	m.heading = heading
-	return m.nodeIdToReturn, m.errorToThrow
+func (m *MockEngine) CreateBuck(request engine.CreateBuckRequest) (*engine.GotId, error) {
+	m.createParent = request.GidLookupInput
+	if request.OverrideSettings != nil {
+		m.createDate = &request.OverrideSettings.CreatedDate
+	}
+
+	//m.createCompletable = completable
+	m.heading = request.Heading
+	return m.gotIdToReturn, m.errorToThrow
 }

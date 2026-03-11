@@ -41,7 +41,6 @@ func (b *BulletGidLookup) ReturnLastId(offset int) (*engine.GotId, error) {
 }
 
 func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, error) {
-	fmt.Printf("VX: lookup input is '%s'\n", lookup.Input)
 	if lookup == nil || len(lookup.Input) == 0 {
 		return engine.NewGotId(TheRootNode.Value)
 	}
