@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -23,7 +24,24 @@ func NewBulletGidLookup(aliasStore AliasStoreInterface, numberGoStore NumberGoSt
 	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore, IdGenerator: idGen}, nil
 }
 
+// Fetch the last id and return the value of it, adding the offset to the id
+func (b *BulletGidLookup) ReturnLastId(offset int) (*engine.GotId, error) {
+	lastId, err := b.IdGenerator.LastId()
+	if err != nil {
+		return nil, err
+	}
+	if lastId == 0 {
+		return nil, errors.New("Invalid last id.")
+	}
+	str, err := bullet_stl.BulletIdIntToaasci(lastId + int64(offset))
+	if err != nil {
+		return nil, err
+	}
+	return engine.NewGotId(str)
+}
+
 func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, error) {
+	fmt.Printf("VX: lookup input is '%s'\n", lookup.Input)
 	if lookup == nil || len(lookup.Input) == 0 {
 		return engine.NewGotId(TheRootNode.Value)
 	}
@@ -37,20 +55,10 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 
 	//this is short hand for the last Id created
 	if lookup.Input == "0" {
-		lastId, err := b.IdGenerator.LastId()
-		if err != nil {
-			return nil, err
-		}
-		if lastId == 0 {
-			return nil, errors.New("Invalid last id.")
-		}
-		str, err := bullet_stl.BulletIdIntToaasci(lastId)
-		if err != nil {
-			return nil, err
-		}
-		return engine.NewGotId(str)
+		return b.ReturnLastId(0)
 	}
 	firstChar := lookup.Input[0]
+	//this is a negative lookup. It means we want the id n steps before 0. We solve this by getting the last Id and decrementing by the input
 	//this is a gid
 	if firstChar == '0' {
 		//we trim the first character and move on
@@ -64,9 +72,16 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 		if err != nil {
 			return nil, err
 		}
-		return b.NumberGoStore.GidFor(number)
+		if number > 0 {
+			return b.NumberGoStore.GidFor(number)
+		} else {
+			//this is a request to fetch the lastId minus this value.
+			fmt.Printf("VX: WE are doing decrements now!")
+			return b.ReturnLastId(number)
+		}
 
 	}
+	fmt.Printf("VX: not a number apprentlay")
 	return b.AliasStore.Lookup(lookup.Input)
 
 }
