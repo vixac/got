@@ -23,11 +23,13 @@ func buildToCommand(deps RootDependencies) *cobra.Command {
 				return err
 			}
 
-			var dateLookup *string = nil
+			var dateLookup *engine.DateLookup = nil
 			//VX:Note we should support other datelookups here too.
 			if *now {
 				d := engine.NowDateLookup()
-				dateLookup = &d.UserInput
+				dateLookup = &engine.DateLookup{
+					UserInput: d.UserInput,
+				}
 			}
 			heading := strings.Join(args, " ")
 			if heading == "" {
@@ -35,10 +37,7 @@ func buildToCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			req := engine.CreateBuckRequest{
-				Heading:             heading,
-				ScheduleLookupInput: dateLookup,
-			}
+			req := engine.NewCreateBuckRequest(nil, dateLookup, heading, engine.Active, nil)
 			id, err := deps.Engine.CreateBuck(req)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})

@@ -22,10 +22,10 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			parentAlias := args[0]
+			parentLookup := args[0]
 			heading := strings.Join(args[1:], " ")
 
-			if parentAlias == "" {
+			if parentLookup == "" {
 				err := errors.New("missing alias")
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
@@ -35,27 +35,21 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			var dateLookup *string = nil
-			//VX:Note we should support other datelookups here too.
+			var dateLookup *engine.DateLookup = nil
 			if *now {
 				d := engine.NowDateLookup()
-				dateLookup = &d.UserInput
+				dateLookup = &engine.DateLookup{
+					UserInput: d.UserInput,
+				}
 			}
-			req := engine.CreateBuckRequest{
-				Heading:             heading,
-				ScheduleLookupInput: dateLookup,
-				GidLookupInput:      &parentAlias,
-			}
+			req := engine.NewCreateBuckRequest(&engine.GidLookup{Input: parentLookup}, dateLookup, heading, engine.Active, nil)
 			id, err := deps.Engine.CreateBuck(req)
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return err
 			}
-			deps.Printer.Print(console.Message{Message: id.AasciValue})
-
-			if err != nil {
-				deps.Printer.Error(console.Message{Message: err.Error()})
-				return err
+			if id != nil {
+				deps.Printer.Print(console.Message{Message: id.AasciValue})
 			}
 			return nil
 		},

@@ -76,7 +76,7 @@ func TestUnderCommand_CreateBuck_ErrorFromEngine(t *testing.T) {
 	assert.Equal(t, p.errors[0].Message, "db error")
 
 	// Confirm the engine call
-	assert.Equal(t, e.createParent, "parentAlias")
+	assert.Equal(t, *e.createParent, "parentAlias")
 	assert.Assert(t, e.createDate == nil)
 	// assert.Equal(t, e.createCompletable, true)
 }
@@ -95,7 +95,7 @@ func TestUnderCommand_Valid(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Engine should be called correctly
-	assert.Equal(t, e.createParent, "parentAlias")
+	assert.Equal(t, *e.createParent, "parentAlias")
 	assert.Assert(t, e.createDate == nil)
 	//	assert.Equal(t, e.createCompletable, true)
 

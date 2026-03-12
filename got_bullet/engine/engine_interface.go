@@ -38,9 +38,9 @@ then we also need to ask the update date not to change
 */
 // Contains the values for fields that would normally be populated by the engine
 type CreateOverrideSettings struct {
-	UpdatedDate  string `json:"updatedDate,omitempty"`
-	CreatedDate  string `json:"createdDate,omitempty"`
-	InitialState int    `json:"initialState,omitempty"`
+	UpdatedDate  string    `json:"updatedDate,omitempty"`
+	CreatedDate  string    `json:"createdDate,omitempty"`
+	ScheduleDate *DateTime `json:"deadlineDate,omitempty"`
 }
 
 type CreateBuckRequest struct {
@@ -48,6 +48,25 @@ type CreateBuckRequest struct {
 	ScheduleLookupInput *string                 `json:"scheduleInput,omitempty"`
 	Heading             string                  `json:"heading,omitempty"`
 	OverrideSettings    *CreateOverrideSettings `json:"overrideSettings,omitempty"`
+	InitialState        GotState                `json:"state,omitempty"`
+}
+
+func NewCreateBuckRequest(lookup *GidLookup, dateLookup *DateLookup, heading string, state GotState, overrides *CreateOverrideSettings) CreateBuckRequest {
+	var gidLookupString *string = nil
+	var scheduleLookup *string = nil
+	if lookup != nil {
+		gidLookupString = &lookup.Input
+	}
+	if dateLookup != nil {
+		scheduleLookup = &dateLookup.UserInput
+	}
+	return CreateBuckRequest{
+		GidLookupInput:      gidLookupString,
+		ScheduleLookupInput: scheduleLookup,
+		Heading:             heading,
+		OverrideSettings:    overrides,
+		InitialState:        state,
+	}
 }
 
 type GotCreateItemInterface interface {

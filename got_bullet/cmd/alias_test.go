@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -38,7 +37,6 @@ func TestAliasCommandValidButEngineThrows(t *testing.T) {
 	cmd := buildAliasCommand(mockDeps)
 	cmd.SetArgs([]string{"new_name", "abc"})
 	_ = cmd.Execute()
-	fmt.Printf("VX: aliasGId is %s\n", e.aliasGid)
 	assert.Equal(t, len(p.errors), 1)
 	assert.Equal(t, p.errors[0].Message, "test error")
 	assert.Equal(t, e.resolveLookup.Input, "abc")
