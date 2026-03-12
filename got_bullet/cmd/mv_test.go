@@ -84,7 +84,7 @@ func TestMoveCommand_ValidButWithExistingParent(t *testing.T) {
 		Engine:  &e,
 	}
 	cmd := buildMvCommand(mockDeps)
-	cmd.SetArgs([]string{"--gid", "abc", "--destination", "new_parent"})
+	cmd.SetArgs([]string{"abc", "new_parent"})
 	_ = cmd.Execute()
 	if len(p.errors) != 0 {
 		t.Errorf("expected  no errors. 0 != %d", len(p.errors))

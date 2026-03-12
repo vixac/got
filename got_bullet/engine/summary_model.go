@@ -187,7 +187,7 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 }
 
 // no count, no deadline for some reason
-func NewLeafSummary(state GotState, deadline *DateTime, now time.Time, tags []Tag) Summary {
+func NewNowSummary(state GotState, deadline *DateTime, now time.Time, tags []Tag) Summary {
 	dateTime, _ := NewDateTime(now)
 	return NewSummary(state, deadline, &dateTime, tags, []string{})
 }

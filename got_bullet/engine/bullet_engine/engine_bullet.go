@@ -405,7 +405,9 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 	}
 
 	var deadline *engine.DateTime = nil
-	if request.ScheduleLookupInput != nil {
+	if request.OverrideSettings != nil && request.OverrideSettings.ScheduleDate != nil {
+		deadline = request.OverrideSettings.ScheduleDate
+	} else if request.ScheduleLookupInput != nil {
 
 		dateTime, err := engine.NewDeadlineFromDateLookup(*request.ScheduleLookupInput, time.Now())
 		if err != nil {
@@ -444,9 +446,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		}
 	}
 
-	//VX:Note here we choose the state. Looks like it could come in as complete here.
-	var newState engine.GotState = engine.Note
-	newState = engine.Active
+	var newState engine.GotState = request.InitialState
 
 	e.publishAddEvent(AddItemEvent{
 		Id:       engine.SummaryId(newId),
