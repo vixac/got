@@ -7,6 +7,41 @@ import (
 	"vixac.com/got/engine"
 )
 
+func TestCreateBuckWithOverrideSettings(t *testing.T) {
+	mock_client := BuildTestClient()
+	sut, err := NewEngineBullet(mock_client)
+	assert.NoError(t, err)
+
+	override := engine.CreateOverrideSettings{
+		UpdatedDate: "2026-01-14T18:39:21.429465Z",
+		CreatedDate: "2026-01-13T18:39:21.429465Z",
+		ScheduleDate: &engine.DateTime{
+			Special: "n",
+		},
+	}
+
+	buck1Id := int32(360)
+	req1 := engine.NewCreateBuckRequest(nil, nil, "buck1", engine.Active, &override)
+	id, err := sut.CreateBuck(req1)
+	assert.NoError(t, err)
+	assert.Equal(t, id.IntValue, buck1Id)
+
+	//fetch items below -1, which is buck1, (buck2 is 0 as it was added most recently)
+	items, err := sut.FetchItemsBelow(&engine.GidLookup{
+		Input: "",
+	}, false, []engine.GotState{engine.Active}, false)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(items.Result), 1)
+
+	firstItem := items.Result[0]
+	assert.Equal(t, firstItem.GotId.IntValue, buck1Id)
+
+	assert.Equal(t, firstItem.Created, "2026-01-09")
+	assert.Equal(t, firstItem.Updated, "2026-01-08")
+
+}
+
 func TestCreateCompleteBuck(t *testing.T) {
 	mock_client := BuildTestClient()
 	sut, err := NewEngineBullet(mock_client)

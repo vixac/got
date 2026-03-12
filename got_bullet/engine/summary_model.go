@@ -45,7 +45,7 @@ func (lhs Tag) EqualTo(rhs Tag) bool {
 	return lhs.Literal.Display == rhs.Literal.Display
 }
 
-func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Tag, flags []string) Summary {
+func NewSummary(state GotState, deadline *DateTime, created *DateTime, updated *DateTime, tags []Tag, flags []string) Summary {
 	var flagMap = make(map[string]bool)
 	for _, f := range flags {
 		flagMap[f] = true
@@ -55,7 +55,7 @@ func NewSummary(state GotState, deadline *DateTime, created *DateTime, tags []Ta
 		Counts:      nil,
 		Deadline:    deadline,
 		CreatedDate: created,
-		UpdatedDate: created,
+		UpdatedDate: updated,
 		Tags:        tags,
 		Flags:       flagMap,
 	}
@@ -81,6 +81,7 @@ func (d *DateTime) EpochMillis() int64 {
 	startOfDay := time.Time(*date)
 	return startOfDay.UnixMilli()
 }
+
 func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 	if d == nil || d.Special != "" {
 		return nil, nil
@@ -93,20 +94,44 @@ func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 	}
 	return &date, nil
 }
+
+func NewTimeFromString(str string) (*console.RFC3339Time, error) {
+	const layout = "2006-01-02T15:04:05.999999Z"
+	res, err := time.Parse(layout, str)
+	//layout := "2026-01-14T18:39:21.429465Z"
+	//fmt.Printf("VX: string is %s\n", str)
+	//res, err := time.Parse(layout, str) //time.Parse(time.RFC3339, string)
+	if err != nil {
+		fmt.Printf("VX: parsing failed %+v\n", err)
+		return nil, err
+	}
+	rfc := console.RFC3339Time(res)
+	return &rfc, nil
+	/*
+		fmt.Printf("VX string is %s\n", string)
+		var date console.RFC3339Time
+		dateBytes := []byte(string)
+		err := json.Unmarshal(dateBytes, &date)
+		if err != nil {
+			fmt.Printf("VX: date bytes error %+v\n", err)
+			return nil, err
+		}
+		return &date, nil
+	*/
+}
+
 func (d *DateTime) JsonDateToReadable() (string, error) {
 	if d == nil || d.Special != "" {
 		return "", nil
 	}
 
-	var date console.RFC3339Time
-	dateBytes := []byte(d.Date)
-	err := json.Unmarshal(dateBytes, &date)
+	date, err := NewTimeFromString(d.Date)
 	if err != nil {
-		fmt.Printf("VXL ERROR parsing is %s", err)
+		fmt.Printf("VX: ERROR parsing is %s", err)
 		return "", err
 	}
 
-	dateStr := console.DayFormat(time.Time(date))
+	dateStr := console.DayFormat(time.Time(*date))
 	return dateStr, nil
 }
 
@@ -189,7 +214,7 @@ func (lhs AggregateCountChange) Combine(rhs AggregateCountChange) AggregateCount
 // no count, no deadline for some reason
 func NewNowSummary(state GotState, deadline *DateTime, now time.Time, tags []Tag) Summary {
 	dateTime, _ := NewDateTime(now)
-	return NewSummary(state, deadline, &dateTime, tags, []string{})
+	return NewSummary(state, deadline, &dateTime, &dateTime, tags, []string{})
 }
 
 func (c AggCount) ChangeState(state GotState, inc int) AggCount {

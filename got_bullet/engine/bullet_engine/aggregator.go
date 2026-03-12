@@ -46,7 +46,37 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 
 	//step 1. We create the new summary object for the new item
 	upserts := make(map[engine.SummaryId]engine.Summary)
-	upserts[e.Id] = engine.NewNowSummary(e.State, e.Deadline, time.Now(), []engine.Tag{})
+
+	//we override the update and create times
+	nowTime := time.Now()
+	var createdTime time.Time = nowTime
+	var updatedTime time.Time = nowTime
+	if e.OverrideSettings != nil {
+		if e.OverrideSettings.CreatedDate != "" {
+
+			createdDate, err := engine.NewTimeFromString(e.OverrideSettings.CreatedDate)
+			if err != nil {
+				return err
+			}
+			createdTime = time.Time(*createdDate)
+		}
+		if e.OverrideSettings.UpdatedDate != "" {
+			updatedDate, err := engine.NewTimeFromString(e.OverrideSettings.UpdatedDate)
+			if err != nil {
+				return err
+			}
+			updatedTime = time.Time(*updatedDate)
+		}
+	}
+	createdDate, err := engine.NewDateTime(createdTime)
+	if err != nil {
+		return nil
+	}
+	updatedDate, err := engine.NewDateTime(updatedTime)
+	if err != nil {
+		return nil
+	}
+	upserts[e.Id] = engine.NewSummary(e.State, e.Deadline, &createdDate, &updatedDate, []engine.Tag{}, []string{})
 
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
 	if enrichedEvent.ParentIsLeaf() {

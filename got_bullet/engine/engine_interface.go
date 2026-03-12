@@ -40,7 +40,6 @@ then we also need to ask the update date not to change
 type CreateOverrideSettings struct {
 	UpdatedDate  string    `json:"updatedDate,omitempty"`
 	CreatedDate  string    `json:"createdDate,omitempty"`
-	InitialState int       `json:"initialState,omitempty"`
 	ScheduleDate *DateTime `json:"deadlineDate,omitempty"`
 }
 

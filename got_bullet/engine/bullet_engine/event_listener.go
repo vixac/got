@@ -13,12 +13,12 @@ const (
 	EventTypeChangeState = 101
 )
 
-// VX:TODO ADD EVENT
 type AddItemEvent struct {
-	Id       engine.SummaryId
-	State    engine.GotState
-	Ancestry []engine.SummaryId
-	Deadline *engine.DateTime
+	Id               engine.SummaryId
+	State            engine.GotState
+	Ancestry         []engine.SummaryId
+	Deadline         *engine.DateTime
+	OverrideSettings *engine.CreateOverrideSettings
 }
 type StateChangeEvent struct {
 	Id       engine.SummaryId
