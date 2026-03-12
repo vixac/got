@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -75,12 +74,9 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 			return b.NumberGoStore.GidFor(number)
 		} else {
 			//this is a request to fetch the lastId minus this value.
-			fmt.Printf("VX: WE are doing decrements now!")
 			return b.ReturnLastId(number)
 		}
-
 	}
-	fmt.Printf("VX: not a number apprentlay")
 	return b.AliasStore.Lookup(lookup.Input)
 
 }
