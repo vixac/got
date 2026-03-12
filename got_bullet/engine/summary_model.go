@@ -98,26 +98,12 @@ func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 func NewTimeFromString(str string) (*console.RFC3339Time, error) {
 	const layout = "2006-01-02T15:04:05.999999Z"
 	res, err := time.Parse(layout, str)
-	//layout := "2026-01-14T18:39:21.429465Z"
-	//fmt.Printf("VX: string is %s\n", str)
-	//res, err := time.Parse(layout, str) //time.Parse(time.RFC3339, string)
 	if err != nil {
 		fmt.Printf("VX: parsing failed %+v\n", err)
 		return nil, err
 	}
 	rfc := console.RFC3339Time(res)
 	return &rfc, nil
-	/*
-		fmt.Printf("VX string is %s\n", string)
-		var date console.RFC3339Time
-		dateBytes := []byte(string)
-		err := json.Unmarshal(dateBytes, &date)
-		if err != nil {
-			fmt.Printf("VX: date bytes error %+v\n", err)
-			return nil, err
-		}
-		return &date, nil
-	*/
 }
 
 func (d *DateTime) JsonDateToReadable() (string, error) {
@@ -125,7 +111,7 @@ func (d *DateTime) JsonDateToReadable() (string, error) {
 		return "", nil
 	}
 
-	date, err := NewTimeFromString(d.Date)
+	date, err := d.ToDate()
 	if err != nil {
 		fmt.Printf("VX: ERROR parsing is %s", err)
 		return "", err

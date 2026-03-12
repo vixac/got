@@ -37,8 +37,8 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	firstItem := items.Result[0]
 	assert.Equal(t, firstItem.GotId.IntValue, buck1Id)
 
-	assert.Equal(t, firstItem.Created, "2026-01-09")
-	assert.Equal(t, firstItem.Updated, "2026-01-08")
+	//VX:TODO we either inject now or we change the way this is displayed. assert.Equal(t, firstItem.Created, "58 days ago")
+	assert.Equal(t, firstItem.Updated, "2026-01-14")
 
 }
 
