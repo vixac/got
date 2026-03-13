@@ -38,11 +38,13 @@ then we also need to ask the update date not to change
 */
 // Contains the values for fields that would normally be populated by the engine
 type CreateOverrideSettings struct {
-	UpdatedDate  string    `json:"updatedDate,omitempty"`
-	CreatedDate  string    `json:"createdDate,omitempty"`
-	ScheduleDate *DateTime `json:"deadlineDate,omitempty"`
+	OverrideId   *int32    `json:"g,omitempty"`
+	UpdatedDate  string    `json:"u,omitempty"`
+	CreatedDate  string    `json:"c,omitempty"`
+	ScheduleDate *DateTime `json:"d,omitempty"`
 	Tags         []Tag     `json:"t,omitempty"`
 	Flags        []string  `json:"f,omitempty"`
+	LongForm     *string   `json:"l,omitempty"` //VX:TODO when we transition to tblocks, this will need an optional id for replication.
 }
 
 type CreateBuckRequest struct {
