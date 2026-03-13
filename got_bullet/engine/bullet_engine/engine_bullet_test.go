@@ -12,12 +12,28 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	sut, err := NewEngineBullet(mock_client)
 	assert.NoError(t, err)
 
+	flags := []string{"flag1", "flag2"}
+
+	tag1Literal := engine.TagLiteral{
+		Display: "tag1",
+		Token:   "",
+	}
+	tag1 := engine.Tag{
+		Identifier: nil,
+		Literal:    &tag1Literal,
+	}
+	tags := []engine.Tag{
+		tag1,
+	}
+
 	override := engine.CreateOverrideSettings{
 		UpdatedDate: "2026-01-14T18:39:21.429465Z",
 		CreatedDate: "2026-01-13T18:39:21.429465Z",
 		ScheduleDate: &engine.DateTime{
 			Special: "n",
 		},
+		Tags:  tags,
+		Flags: flags,
 	}
 
 	buck1Id := int32(360)
@@ -40,6 +56,14 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	//VX:TODO we either inject now or we change the way this is displayed. assert.Equal(t, firstItem.Created, "58 days ago")
 	assert.Equal(t, firstItem.Updated, "2026-01-14")
 	assert.Equal(t, firstItem.Deadline, "---Now---")
+
+	item1Tags := firstItem.SummaryObj.Tags
+	item1Flags := firstItem.SummaryObj.Flags
+	assert.Equal(t, len(item1Tags), 1)
+	assert.Equal(t, len(item1Flags), 2)
+	assert.Equal(t, item1Tags[0].Literal.Display, "tag1")
+	assert.Equal(t, item1Flags["flag1"], true)
+	assert.Equal(t, item1Flags["flag2"], true)
 
 }
 

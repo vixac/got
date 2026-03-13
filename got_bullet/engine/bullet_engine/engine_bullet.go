@@ -127,8 +127,6 @@ func deadline(summary engine.Summary, now time.Time) (string, console.Token, err
 			return "", deadlineToken, errors.New("Missing deadline date.")
 		}
 
-		fmt.Printf("VX: DEADLINE TIME \n %+v", *deadlineDate)
-
 		deadStr, spaceTime := console.HumanizeDate(time.Time(*deadlineDate), now)
 		displayDeadline = deadStr
 		deadlineToken = ToToken(spaceTime)
