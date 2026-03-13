@@ -76,7 +76,16 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	if err != nil {
 		return nil
 	}
-	upserts[e.Id] = engine.NewSummary(e.State, e.Deadline, &createdDate, &updatedDate, []engine.Tag{}, []string{})
+	var tags []engine.Tag = []engine.Tag{}
+	var flags []string = []string{}
+	if e.OverrideSettings != nil && e.OverrideSettings.Tags != nil {
+		tags = e.OverrideSettings.Tags
+	}
+	if e.OverrideSettings != nil && e.OverrideSettings.Flags != nil {
+		flags = e.OverrideSettings.Flags
+	}
+
+	upserts[e.Id] = engine.NewSummary(e.State, e.Deadline, &createdDate, &updatedDate, tags, flags)
 
 	//here we walk through the notion table: https://www.notion.so/Summary-2b69775b667e804886a8caafc3497136
 	if enrichedEvent.ParentIsLeaf() {

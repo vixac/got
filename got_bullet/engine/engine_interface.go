@@ -41,6 +41,8 @@ type CreateOverrideSettings struct {
 	UpdatedDate  string    `json:"updatedDate,omitempty"`
 	CreatedDate  string    `json:"createdDate,omitempty"`
 	ScheduleDate *DateTime `json:"deadlineDate,omitempty"`
+	Tags         []Tag     `json:"t,omitempty"`
+	Flags        []string  `json:"f,omitempty"`
 }
 
 type CreateBuckRequest struct {
