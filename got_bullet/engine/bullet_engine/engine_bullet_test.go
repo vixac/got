@@ -26,21 +26,25 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 		tag1,
 	}
 
+	var overrideId int32 = 1360
+	var longForm string = "This is a long form text entry."
 	override := engine.CreateOverrideSettings{
+		OverrideId:  &overrideId,
 		UpdatedDate: "2026-01-14T18:39:21.429465Z",
 		CreatedDate: "2026-01-13T18:39:21.429465Z",
 		ScheduleDate: &engine.DateTime{
 			Special: "n",
 		},
-		Tags:  tags,
-		Flags: flags,
+		Tags:     tags,
+		Flags:    flags,
+		LongForm: &longForm,
 	}
 
-	buck1Id := int32(360)
+	buck1Id := overrideId
 	req1 := engine.NewCreateBuckRequest(nil, nil, "buck1", engine.Active, &override)
 	id, err := sut.CreateBuck(req1)
 	assert.NoError(t, err)
-	assert.Equal(t, id.IntValue, buck1Id)
+	assert.Equal(t, id.IntValue, overrideId)
 
 	//fetch items below -1, which is buck1, (buck2 is 0 as it was added most recently)
 	items, err := sut.FetchItemsBelow(&engine.GidLookup{
@@ -64,6 +68,10 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, item1Tags[0].Literal.Display, "tag1")
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
+
+	longformRes, err := sut.LongFormStore.LongFormForMany([]int32{buck1Id})
+	assert.Equal(t, len(longformRes), 1)
+	assert.Equal(t, longformRes[buck1Id], "This is a long form text entry.")
 
 }
 

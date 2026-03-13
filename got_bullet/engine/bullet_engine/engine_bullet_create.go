@@ -25,22 +25,30 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		parentGotId = fetchedParent
 	}
 
-	newId, err := e.IgGenerator.NextId()
-	newId32 := int32(newId)
-	if int64(newId32) != newId {
-		return nil, errors.New("Error. We appear to have ran out of int32 id space.")
+	var newId int32
+	if request.OverrideSettings != nil && request.OverrideSettings.OverrideId != nil {
+		newId = int32(*request.OverrideSettings.OverrideId)
+	} else {
+
+		newIdFromNext, err := e.IgGenerator.NextId()
+
+		if int64(int32(newIdFromNext)) != newIdFromNext {
+			return nil, errors.New("Error. We appear to have ran out of int32 id space.")
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		newId = int32(newIdFromNext)
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	stringId, err := bullet_stl.BulletIdIntToaasci(int64(newId))
 	if err != nil {
 		return nil, err
 	}
 	gotId := engine.GotId{
 		AasciValue: stringId,
-		IntValue:   newId32,
+		IntValue:   newId,
 	}
 
 	var deadline *engine.DateTime = nil
@@ -73,9 +81,18 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 	}
 
 	//add item heading to depot
-	err = e.TitleStore.UpsertItem(newId32, headingToStore)
+	err = e.TitleStore.UpsertItem(newId, headingToStore)
 	if err != nil {
 		return nil, err
+	}
+
+	//if longform is present in the override, add that too.
+	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
+
+		err = e.LongFormStore.UpsertItem(newId, *request.OverrideSettings.LongForm)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var summaryIds []engine.SummaryId
