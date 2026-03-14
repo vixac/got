@@ -14,10 +14,6 @@ const (
 	firstId int64 = 360 //maps to a1 with bullet_stl.AasciBulletIdToInt
 )
 
-type IdGeneratorInterface interface {
-	LastId() (int64, error) //fetches the last createdId
-	NextId() (int64, error) //creates a new id, stores it as the lastId, and returns it
-}
 type IdGenerator struct {
 	Client        bullet_interface.BulletClientInterface
 	BucketId      int32
@@ -27,7 +23,7 @@ type IdGenerator struct {
 }
 
 // Change of setup, here we're allowing the class to define its own bucketId etc. Perhaps not ideal.
-func NewIdBulletGenerator(client bullet_interface.BulletClientInterface, bucketId int32, listName string, separator string, latestSubject string) IdGeneratorInterface {
+func NewIdBulletGenerator(client bullet_interface.BulletClientInterface, bucketId int32, listName string, separator string, latestSubject string) engine.IdGeneratorInterface {
 	return &IdGenerator{
 		Client:        client,
 		BucketId:      bucketId,

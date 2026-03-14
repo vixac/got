@@ -8,18 +8,14 @@ import (
 	"vixac.com/got/engine"
 )
 
-type GidLookupInterface interface {
-	InputToGid(lookup *engine.GidLookup) (*engine.GotId, error)
-}
-
 // VX:TODO wants number<GO> lookup
 type BulletGidLookup struct {
-	AliasStore    AliasStoreInterface
-	NumberGoStore NumberGoStoreInterface
-	IdGenerator   IdGeneratorInterface
+	AliasStore    engine.AliasStoreInterface
+	NumberGoStore engine.NumberGoStoreInterface
+	IdGenerator   engine.IdGeneratorInterface
 }
 
-func NewBulletGidLookup(aliasStore AliasStoreInterface, numberGoStore NumberGoStoreInterface, idGen IdGeneratorInterface) (*BulletGidLookup, error) {
+func NewBulletGidLookup(aliasStore engine.AliasStoreInterface, numberGoStore engine.NumberGoStoreInterface, idGen engine.IdGeneratorInterface) (*BulletGidLookup, error) {
 	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore, IdGenerator: idGen}, nil
 }
 

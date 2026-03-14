@@ -6,6 +6,7 @@ import (
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 // lets rewrite this maybe.
@@ -35,11 +36,11 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	}
 
 	// we tolerate having no children here because we want to render the parent no matter what.
-	var allIds map[string]AncestorLookupResult
+	var allIds map[string]engine.AncestorLookupResult
 	if all != nil {
 		allIds = all.Ids
 	} else {
-		allIds = make(map[string]AncestorLookupResult)
+		allIds = make(map[string]engine.AncestorLookupResult)
 	}
 
 	var plusParent = 0
@@ -147,7 +148,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		if err != nil {
 			return nil, err
 		}
-		summaryId := NewSummaryId(*gotId)
+		summaryId := engine_util.NewSummaryId(*gotId)
 		summary, ok := summaries[summaryId]
 		if !ok {
 			return nil, errors.New("missing summary in fetchItems Below")

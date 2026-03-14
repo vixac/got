@@ -32,6 +32,90 @@ type GotEngine interface {
 	GotFetchInterface
 }
 
+type IdGeneratorInterface interface {
+	LastId() (int64, error) //fetches the last createdId
+	NextId() (int64, error) //creates a new id, stores it as the lastId, and returns it
+}
+
+// The store that holds on to the meanings of the number goes, so when user
+// can use them async
+type NumberGoStoreInterface interface {
+	AssignNumberPairs(pairs []NumberGoPair) error
+	GidFor(number int) (*GotId, error)
+}
+
+type NumberGoPair struct {
+	Number int    `json:"n"`
+	Gid    string `json:"g"`
+}
+
+type MoveItemResult struct {
+	OldAncestry *Ancestry
+	NewAncestry *Ancestry
+}
+
+type AncestorLookupResult struct {
+	Ids []GotId
+}
+
+type AncestorManyLookupResult struct {
+	Ids map[GotId]AncestorLookupResult
+}
+
+type SummaryStoreInterface interface {
+	UpsertSummary(id SummaryId, agg Summary) error
+	UpsertManySummaries(aggs map[SummaryId]Summary) error
+	Fetch(ids []SummaryId) (map[SummaryId]Summary, error)
+	Delete(ids []SummaryId) error
+}
+
+type GidLookupInterface interface {
+	InputToGid(lookup *GidLookup) (*GotId, error)
+}
+
+type DescendantLookupResult struct {
+	//each decendant gid mapped to their AncestorLookupResult
+	Ids map[string]AncestorLookupResult
+}
+
+type Ancestry struct {
+	Ids []GotId
+}
+
+// The engine interface for whatever is going to store ancestor and descendant trees
+type AncestorListInterface interface {
+	AddItem(id GotId, under *GotId) (*Ancestry, error)
+	RemoveItem(id GotId) error
+	FetchImmediatelyUnder(id GotId) (*DescendantLookupResult, error)
+	FetchAncestorsOf(id GotId) (*AncestorLookupResult, error)
+	FetchAncestorsOfMany(id []GotId) (*AncestorManyLookupResult, error)
+	MoveItem(id GotId, under *GotId) (*MoveItemResult, error)
+}
+
+type LongFormStoreInterface interface {
+	UpsertItem(id int32, title string) error
+	LongFormFor(id int32) (*string, error)
+	LongFormForMany(ids []int32) (map[int32]string, error)
+	RemoveItemFromLongStore(id int32) error
+}
+
+type TitleStoreInterface interface {
+	UpsertItem(id int32, title string) error
+	TitleFor(id int32) (*string, error)
+
+	TitleForMany(ids []int32) (map[int32]string, error)
+	RemoveItem(id int32) error
+}
+
+// The interface for all aliasing functionality
+type AliasStoreInterface interface {
+	Lookup(alias string) (*GotId, error)
+	LookupAliasForGid(gid string) (*string, error)
+	LookupAliasForMany(gid []string) (map[string]*string, error)
+	Unalias(alias string) (*GotId, error)
+	Alias(id GotId, alias string) (bool, error)
+}
+
 /**
 VX:TODO initial state will require an update state call after creation, and if the update date is set,
 then we also need to ask the update date not to change
