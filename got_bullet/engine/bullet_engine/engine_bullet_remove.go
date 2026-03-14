@@ -75,7 +75,7 @@ func (e *EngineBullet) Delete(gid *engine.GotId) error {
 	}
 
 	// Delete longForm entry if it exists
-	err = e.LongFormStore.RemoveItemFromLongStore(gid.IntValue)
+	err = e.LongFormStore.RemoveAllItemsFromLongStore(gid.IntValue)
 	if err != nil {
 		return err
 	}

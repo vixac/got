@@ -20,16 +20,16 @@ func NewBulletLongFormStore(client bullet_interface.DepotClientInterface, namesp
 
 // VX:TODO this implementation is identical to title store. Its just a string id pair.
 // VX:TODO make this
-func (s *BulletLongFormStore) UpsertItem(id int32, title string) error {
+func (s *BulletLongFormStore) UpsertItem(id int32, block engine.LongFormBlock) error {
 	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
 	req := bullet_interface.DepotRequest{
 		Key:   namespacedId,
-		Value: title,
+		Value: block.Content,
 	}
 	return s.Depot.DepotInsertOne(req)
 }
 
-func (s *BulletLongFormStore) LongFormForMany(ids []int32) (map[int32]string, error) {
+func (s *BulletLongFormStore) LongFormForMany(ids []int32) (map[int32]engine.LongFormBlockResult, error) {
 
 	var int64Ids []int64
 	for _, v := range ids {
@@ -46,15 +46,21 @@ func (s *BulletLongFormStore) LongFormForMany(ids []int32) (map[int32]string, er
 	if resp == nil {
 		return nil, nil
 	}
-	int32Map := make(map[int32]string)
+	int32Map := make(map[int32]engine.LongFormBlockResult)
 	for k, v := range resp.Values {
 		id := bullet_stl.ParseNamespacedId(k)
-		int32Map[id.Id] = v
+		//this implemention of longform just uses a single block.
+		block := engine.LongFormBlock{
+			Content: v,
+		}
+		int32Map[id.Id] = engine.LongFormBlockResult{
+			Blocks: []engine.LongFormBlock{block},
+		}
 	}
 	return int32Map, nil
 }
 
-func (s *BulletLongFormStore) LongFormFor(id int32) (*string, error) {
+func (s *BulletLongFormStore) LongFormFor(id int32) (*engine.LongFormBlockResult, error) {
 	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
 	keys := []int64{namespacedId}
 	req := bullet_interface.DepotGetManyRequest{
@@ -69,12 +75,18 @@ func (s *BulletLongFormStore) LongFormFor(id int32) (*string, error) {
 	}
 
 	if title, ok := resp.Values[namespacedId]; ok {
-		return &title, nil
+		block := engine.LongFormBlock{
+			Content: title,
+		}
+		res := engine.LongFormBlockResult{
+			Blocks: []engine.LongFormBlock{block},
+		}
+		return &res, nil
 	}
 	return nil, nil
 }
 
-func (s *BulletLongFormStore) RemoveItemFromLongStore(id int32) error {
+func (s *BulletLongFormStore) RemoveAllItemsFromLongStore(id int32) error {
 	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
 	req := bullet_interface.DepotDeleteRequest{
 		Key: namespacedId,

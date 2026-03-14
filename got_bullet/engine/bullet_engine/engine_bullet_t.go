@@ -33,7 +33,12 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 		return err
 	}
 	if existing != nil {
-		note = *existing
+		//VX:TODO here's where we parse the blocks
+		allStrings := ""
+		for _, v := range existing.Blocks {
+			allStrings += v.Content + ":"
+		}
+		note = allStrings
 	}
 	// 2. Temp file
 	tmp, err := os.CreateTemp("", "got-note-*.txt")
@@ -76,7 +81,12 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 	}
 	datedString := datePrefix() + updatedString
 
-	err = e.LongFormStore.UpsertItem(gid.IntValue, datedString)
+	//VX:TODO pass in buck id
+	block := engine.LongFormBlock{
+		ParentID: gid.IntValue,
+		Content:  datedString,
+	}
+	err = e.LongFormStore.UpsertItem(gid.IntValue, block)
 	if err != nil {
 		return err
 	}
