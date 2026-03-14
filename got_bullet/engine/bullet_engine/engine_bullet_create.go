@@ -88,10 +88,11 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 
 	//if longform is present in the override, add that too.
 	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
-
-		err = e.LongFormStore.UpsertItem(newId, *request.OverrideSettings.LongForm)
-		if err != nil {
-			return nil, err
+		for _, b := range request.OverrideSettings.LongForm.Blocks {
+			err = e.LongFormStore.UpsertItem(newId, b)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
