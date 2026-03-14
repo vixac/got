@@ -1,4 +1,4 @@
-package bullet_engine
+package engine_util
 
 import (
 	"errors"
@@ -6,18 +6,6 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	"vixac.com/got/engine"
 )
-
-// The store that holds on to the meanings of the number goes, so when user
-// can use them async
-type NumberGoStoreInterface interface {
-	AssignNumberPairs(pairs []NumberGoPair) error
-	GidFor(number int) (*engine.GotId, error)
-}
-
-type NumberGoPair struct {
-	Number int    `json:"n"`
-	Gid    string `json:"g"`
-}
 
 // everything in one json body
 type NumberGoBlock struct {
@@ -30,7 +18,7 @@ type BulletNumberGoStore struct {
 	Depot   bullet_interface.DepotClientInterface
 }
 
-func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec Codec[NumberGoBlock], depotId int64) (NumberGoStoreInterface, error) {
+func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec Codec[NumberGoBlock], depotId int64) (engine.NumberGoStoreInterface, error) {
 	return &BulletNumberGoStore{
 		DepotId: depotId,
 		Codec:   codec,
@@ -38,7 +26,7 @@ func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec 
 	}, nil
 }
 
-func (n *BulletNumberGoStore) AssignNumberPairs(pairs []NumberGoPair) error {
+func (n *BulletNumberGoStore) AssignNumberPairs(pairs []engine.NumberGoPair) error {
 	pairMap := make(map[int]string)
 
 	for _, p := range pairs {

@@ -9,6 +9,7 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 const (
@@ -28,14 +29,14 @@ const (
 
 type EngineBullet struct {
 	Client        bullet_interface.BulletClientInterface
-	AncestorList  AncestorListInterface
-	TitleStore    TitleStoreInterface
-	GidLookup     GidLookupInterface
-	AliasStore    AliasStoreInterface
-	NumberGoStore NumberGoStoreInterface
-	SummaryStore  SummaryStoreInterface
-	LongFormStore LongFormStoreInterface
-	IgGenerator   IdGeneratorInterface
+	AncestorList  engine.AncestorListInterface
+	TitleStore    engine.TitleStoreInterface
+	GidLookup     engine.GidLookupInterface
+	AliasStore    engine.AliasStoreInterface
+	NumberGoStore engine.NumberGoStoreInterface
+	SummaryStore  engine.SummaryStoreInterface
+	LongFormStore engine.LongFormStoreInterface
+	IgGenerator   engine.IdGeneratorInterface
 
 	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
 
@@ -45,7 +46,7 @@ type EngineBullet struct {
 
 type IdAncestorPair struct {
 	Id       engine.GotId
-	Ancestry AncestorLookupResult
+	Ancestry engine.AncestorLookupResult
 }
 
 func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
@@ -173,12 +174,12 @@ func ToToken(s console.SpaceTime) console.Token {
 func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent *engine.GotItemDisplay) (*engine.GotFetchResult, error) {
 
 	var expandedSummaries []engine.GotItemDisplay
-	var pairs []NumberGoPair
+	var pairs []engine.NumberGoPair
 	//here we enrich the itemdisplays by adding the number go, now that we know the sort order.
 	for i, s := range summaries {
 
 		num := i + 1
-		pairs = append(pairs, NumberGoPair{
+		pairs = append(pairs, engine.NumberGoPair{
 			Number: num,
 			Gid:    s.GotId.AasciValue,
 		})
@@ -210,7 +211,7 @@ func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, erro
 	return nil, e.updateState(lookup, newState)
 }
 
-func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *AncestorLookupResult) error {
+func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *engine.AncestorLookupResult) error {
 	summaryId := engine.SummaryId(gid.IntValue)
 	ids := []engine.SummaryId{summaryId}
 	res, err := e.SummaryStore.Fetch(ids)
@@ -455,7 +456,7 @@ func (e *EngineBullet) Alias(lookup engine.GidLookup, alias string) (bool, error
 }
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor
-func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
+func (e *EngineBullet) ancestorPathFrom(ancestors *engine.AncestorLookupResult) (*engine.GotPath, error) {
 	if ancestors == nil {
 		return nil, nil
 	}
@@ -493,7 +494,7 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engin
 }
 
 // VX:TODO use this one, delete ancestorPathFrom
-func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
+func ancestorPathFor(ancestors *engine.AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
 	var items []engine.PathItem
 	for _, id := range ancestors.Ids {
 		var alias *string
@@ -522,28 +523,28 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	if err != nil {
 		return nil, err
 	}
-	codec := &JSONCodec[engine.Summary]{}
-	aggStore, err := NewBulletSummaryStore(codec, client, aggregateNamespace)
+	codec := &engine_util.JSONCodec[engine.Summary]{}
+	aggStore, err := engine_util.NewBulletSummaryStore(codec, client, aggregateNamespace)
 	if err != nil {
 		return nil, err
 	}
 
-	titleStore, err := NewBulletTitleStore(client, titleBucket)
+	titleStore, err := engine_util.NewBulletTitleStore(client, titleBucket)
 	if err != nil {
 		return nil, err
 	}
-	longFormStore, err := NewBulletLongFormStore(client, longFormBucket)
-	if err != nil {
-		return nil, err
-	}
-
-	numberGoCodec := &JSONCodec[NumberGoBlock]{}
-	numberGoStore, err := NewBulletNumberGoStore(client, numberGoCodec, numberGoDepotId)
+	longFormStore, err := engine_util.NewBulletLongFormStore(client, longFormBucket)
 	if err != nil {
 		return nil, err
 	}
 
-	aliasStore, err := NewBulletAliasStore(client, aliasBucket)
+	numberGoCodec := &engine_util.JSONCodec[engine_util.NumberGoBlock]{}
+	numberGoStore, err := engine_util.NewBulletNumberGoStore(client, numberGoCodec, numberGoDepotId)
+	if err != nil {
+		return nil, err
+	}
+
+	aliasStore, err := engine_util.NewBulletAliasStore(client, aliasBucket)
 	if err != nil {
 		return nil, err
 	}

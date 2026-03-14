@@ -15,7 +15,7 @@ changes in the aggstore.
 */
 
 type Aggregator struct {
-	summaryStore SummaryStoreInterface
+	summaryStore engine.SummaryStoreInterface
 }
 
 type AggregatorInterface interface {
@@ -26,7 +26,7 @@ type AggregatorInterface interface {
 	ItemEdited(e EditItemEvent) error
 }
 
-func NewAggregator(summaryStore SummaryStoreInterface) (*Aggregator, error) {
+func NewAggregator(summaryStore engine.SummaryStoreInterface) (*Aggregator, error) {
 	return &Aggregator{
 		summaryStore: summaryStore,
 	}, nil

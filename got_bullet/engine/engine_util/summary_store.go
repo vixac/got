@@ -1,4 +1,4 @@
-package bullet_engine
+package engine_util
 
 import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -16,13 +16,6 @@ func NewSummaryId(gotId engine.GotId) engine.SummaryId {
 	return engine.SummaryId(gotId.IntValue)
 }
 
-type SummaryStoreInterface interface {
-	UpsertSummary(id engine.SummaryId, agg engine.Summary) error
-	UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error
-	Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error)
-	Delete(ids []engine.SummaryId) error
-}
-
 // namespaces are like bucket Ids but they move separately so the fact that they're both int32 is coincidence. namespcae is a way to
 // use the int64 space of depot ids to be <namespace><id>. This is fine because 2,147,483,647 is the positive total of int32. Thats plenty for got. If we need to host spaces higher than that, we probably want to
 // break stuff up into spearated sections and use mirroring.
@@ -32,7 +25,7 @@ type BulletSummaryStore struct {
 	Namespace int32
 }
 
-func NewBulletSummaryStore(codec Codec[engine.Summary], client bullet_interface.DepotClientInterface, namespace int32) (SummaryStoreInterface, error) {
+func NewBulletSummaryStore(codec Codec[engine.Summary], client bullet_interface.DepotClientInterface, namespace int32) (engine.SummaryStoreInterface, error) {
 	return &BulletSummaryStore{
 		codec:     codec,
 		Client:    client,

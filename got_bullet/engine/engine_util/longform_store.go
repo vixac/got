@@ -1,22 +1,17 @@
-package bullet_engine
+package engine_util
 
 import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	"vixac.com/got/engine"
 )
 
-type LongFormStoreInterface interface {
-	UpsertItem(id int32, title string) error
-	LongFormFor(id int32) (*string, error)
-	LongFormForMany(ids []int32) (map[int32]string, error)
-	RemoveItemFromLongStore(id int32) error
-}
 type BulletLongFormStore struct {
 	Namespace int32
 	Depot     bullet_interface.DepotClientInterface
 }
 
-func NewBulletLongFormStore(client bullet_interface.DepotClientInterface, namespaceId int32) (LongFormStoreInterface, error) {
+func NewBulletLongFormStore(client bullet_interface.DepotClientInterface, namespaceId int32) (engine.LongFormStoreInterface, error) {
 	return &BulletLongFormStore{
 		Namespace: namespaceId,
 		Depot:     client,

@@ -9,19 +9,6 @@ import (
 	"vixac.com/got/engine"
 )
 
-type AncestorLookupResult struct {
-	Ids []engine.GotId
-}
-
-type AncestorManyLookupResult struct {
-	Ids map[engine.GotId]AncestorLookupResult
-}
-
-type DescendantLookupResult struct {
-	//each decendant gid mapped to their AncestorLookupResult
-	Ids map[string]AncestorLookupResult
-}
-
 // 0 is a bit like a null terminator character. Beacuse ancestor list is forward only
 // duplicate objects aren't a problem. We'll give this value to all nodes that are infact a leaf node.
 var (
@@ -31,21 +18,6 @@ var (
 		Value: "0",
 	}
 )
-
-type MoveItemResult struct {
-	OldAncestry *Ancestry
-	NewAncestry *Ancestry
-}
-
-// The engine interface for whatever is going to store ancestor and descendant trees
-type AncestorListInterface interface {
-	AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error)
-	RemoveItem(id engine.GotId) error
-	FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error)
-	FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error)
-	FetchAncestorsOfMany(id []engine.GotId) (*AncestorManyLookupResult, error)
-	MoveItem(id engine.GotId, under *engine.GotId) (*MoveItemResult, error)
-}
 
 // subject separator is used to divide the subject into a list of ancestors, eg a:b:c, and then the objcet separator
 // is used to separate the subject and object inside the mesh, leading to myList>a:b:c>object
@@ -71,11 +43,7 @@ func NewAncestorList(client bullet_interface.TrackClientInterface, listName stri
 	}, nil
 }
 
-type Ancestry struct {
-	Ids []engine.GotId
-}
-
-func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Ancestry, error) {
+func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*engine.Ancestry, error) {
 	if id.AasciValue == TheRootNode.Value {
 		return nil, errors.New("inserting the root node is not permitted")
 	}
@@ -92,7 +60,7 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 	//we insert this item to the root node.
 	var parent bullet_stl.ListSubject
 
-	var ancestry *Ancestry = nil
+	var ancestry *engine.Ancestry = nil
 	if under == nil {
 		parent = TheRootNode
 	} else {
@@ -122,7 +90,7 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*Anc
 			}
 			ancestorGotIdList = append(ancestorGotIdList, *gotId)
 		}
-		ancestry = &Ancestry{
+		ancestry = &engine.Ancestry{
 			Ids: ancestorGotIdList,
 		}
 
@@ -140,7 +108,7 @@ func (a *BulletAncestorList) RemoveItem(id engine.GotId) error {
 	object := bullet_stl.ListObject{Value: id.AasciValue}
 	return a.Mesh.RemoveObject(object)
 }
-func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*DescendantLookupResult, error) {
+func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*engine.DescendantLookupResult, error) {
 	//get the subject key for this id, and then use it as a prefix.
 
 	var ancestorKey = "" //this can be left blank for TheRootNote.
@@ -163,7 +131,7 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 	if everythingBelowAncestor == nil {
 		return nil, nil
 	}
-	ids := make(map[string]AncestorLookupResult)
+	ids := make(map[string]engine.AncestorLookupResult)
 	for _, pair := range everythingBelowAncestor.Pairs {
 		ancestorsIndividualIds := strings.Split(pair.Subject.Value, a.SubjectSeparator)
 		var gids []engine.GotId
@@ -177,18 +145,18 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*Descendant
 			}
 			gids = append(gids, *gid)
 		}
-		ids[pair.Object.Value] = AncestorLookupResult{
+		ids[pair.Object.Value] = engine.AncestorLookupResult{
 			Ids: gids,
 		}
 
 	}
 
-	return &DescendantLookupResult{
+	return &engine.DescendantLookupResult{
 		Ids: ids,
 	}, nil
 }
 
-func (a *BulletAncestorList) FetchAncestorsOfMany(ids []engine.GotId) (*AncestorManyLookupResult, error) {
+func (a *BulletAncestorList) FetchAncestorsOfMany(ids []engine.GotId) (*engine.AncestorManyLookupResult, error) {
 	var objects []bullet_stl.ListObject
 	for _, id := range ids {
 		objects = append(objects, bullet_stl.ListObject{Value: id.AasciValue})
@@ -198,12 +166,12 @@ func (a *BulletAncestorList) FetchAncestorsOfMany(ids []engine.GotId) (*Ancestor
 		return nil, err
 	}
 	if ancestors == nil {
-		return &AncestorManyLookupResult{
-			Ids: make(map[engine.GotId]AncestorLookupResult),
+		return &engine.AncestorManyLookupResult{
+			Ids: make(map[engine.GotId]engine.AncestorLookupResult),
 		}, nil
 	}
 
-	result := make(map[engine.GotId]AncestorLookupResult)
+	result := make(map[engine.GotId]engine.AncestorLookupResult)
 
 	for _, pair := range ancestors.Pairs {
 		// The Object.Value is the ID we queried for
@@ -225,17 +193,17 @@ func (a *BulletAncestorList) FetchAncestorsOfMany(ids []engine.GotId) (*Ancestor
 			ancestorIds = append(ancestorIds, *ancestorGotId)
 		}
 
-		result[*gotId] = AncestorLookupResult{
+		result[*gotId] = engine.AncestorLookupResult{
 			Ids: ancestorIds,
 		}
 	}
 
-	return &AncestorManyLookupResult{
+	return &engine.AncestorManyLookupResult{
 		Ids: result,
 	}, nil
 }
 
-func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupResult, error) {
+func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*engine.AncestorLookupResult, error) {
 
 	ancestors, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 	if err != nil || ancestors == nil {
@@ -257,14 +225,14 @@ func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*AncestorLookupR
 		ids = append(ids, *id)
 	}
 
-	return &AncestorLookupResult{
+	return &engine.AncestorLookupResult{
 		Ids: ids,
 	}, nil
 }
 
 // MoveItem moves a leaf node to a new parent. Returns an error if the node has children.
 // Returns the old and new ancestry for use by aggregators to update counts.
-func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*MoveItemResult, error) {
+func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*engine.MoveItemResult, error) {
 	if id.AasciValue == TheRootNode.Value {
 		return nil, errors.New("moving the root node is not permitted")
 	}
@@ -288,7 +256,7 @@ func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*Mo
 	}
 
 	// Build old ancestry (current ancestors + the item itself is NOT included, just its ancestors)
-	oldAncestry := &Ancestry{
+	oldAncestry := &engine.Ancestry{
 		Ids: currentAncestors.Ids,
 	}
 
@@ -307,12 +275,12 @@ func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*Mo
 	// If newAncestry is nil (added under root), create it with just the root
 	if newAncestry == nil {
 		rootId, _ := engine.NewGotId(TheRootNode.Value)
-		newAncestry = &Ancestry{
+		newAncestry = &engine.Ancestry{
 			Ids: []engine.GotId{*rootId},
 		}
 	}
 
-	return &MoveItemResult{
+	return &engine.MoveItemResult{
 		OldAncestry: oldAncestry,
 		NewAncestry: newAncestry,
 	}, nil

@@ -1,7 +1,9 @@
 package bullet_engine
 
+import "vixac.com/got/engine"
+
 // This is the better pattern and we should stick to these.
-var _ LongFormStoreInterface = (*EngineBullet)(nil)
+var _ engine.LongFormStoreInterface = (*EngineBullet)(nil)
 
 func (e *EngineBullet) UpsertItem(id int32, title string) error {
 	return e.LongFormStore.UpsertItem(id, title)

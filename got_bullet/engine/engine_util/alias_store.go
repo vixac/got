@@ -1,4 +1,4 @@
-package bullet_engine
+package engine_util
 
 import (
 	"errors"
@@ -8,20 +8,11 @@ import (
 	"vixac.com/got/engine"
 )
 
-// The interface for all aliasing functionality
-type AliasStoreInterface interface {
-	Lookup(alias string) (*engine.GotId, error)
-	LookupAliasForGid(gid string) (*string, error)
-	LookupAliasForMany(gid []string) (map[string]*string, error)
-	Unalias(alias string) (*engine.GotId, error)
-	Alias(id engine.GotId, alias string) (bool, error)
-}
-
 type BulletAliasStore struct {
 	TwoWay *bullet_stl.TwoWayListImpl
 }
 
-func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId int32) (AliasStoreInterface, error) {
+func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId int32) (engine.AliasStoreInterface, error) {
 	twoWay, err := bullet_stl.NewBulletTwoWayList(track, bucketId, "alias", ">", "<")
 	if err != nil {
 		return nil, err

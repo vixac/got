@@ -1,4 +1,4 @@
-package bullet_engine
+package engine_util
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 
 func buildTestListStore(t *testing.T, meshName string) *BulletListStore {
 	mesh, err := bullet_stl.NewBulletMesh(
-		BuildTestClient(),
+		engine.BuildTestClient(),
 		42,
 		meshName,
 		">",

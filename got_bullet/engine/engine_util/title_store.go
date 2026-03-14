@@ -1,23 +1,17 @@
-package bullet_engine
+package engine_util
 
 import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	"vixac.com/got/engine"
 )
 
-type TitleStoreInterface interface {
-	UpsertItem(id int32, title string) error
-	TitleFor(id int32) (*string, error)
-
-	TitleForMany(ids []int32) (map[int32]string, error)
-	RemoveItem(id int32) error
-}
 type BulletTitleStore struct {
 	Namespace int32
 	Depot     bullet_interface.DepotClientInterface
 }
 
-func NewBulletTitleStore(client bullet_interface.DepotClientInterface, namespaceId int32) (TitleStoreInterface, error) {
+func NewBulletTitleStore(client bullet_interface.DepotClientInterface, namespaceId int32) (engine.TitleStoreInterface, error) {
 	return &BulletTitleStore{
 		Depot:     client,
 		Namespace: namespaceId,
