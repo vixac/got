@@ -30,6 +30,7 @@ type GotEngine interface {
 	GotAliasInterface
 	GotCreateItemInterface
 	GotFetchInterface
+	RestoreInterface
 }
 
 type IdGeneratorInterface interface {
@@ -60,6 +61,11 @@ type AncestorLookupResult struct {
 
 type AncestorManyLookupResult struct {
 	Ids map[GotId]AncestorLookupResult
+}
+
+type RestoreInterface interface {
+	CreateStoreFile(filename string) error
+	RestoreFromFile(filename string) error
 }
 
 type SummaryStoreInterface interface {
