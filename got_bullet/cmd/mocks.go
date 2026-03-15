@@ -47,6 +47,13 @@ type MockEngine struct {
 	heading string
 }
 
+func (m *MockEngine) CreateStoreFile(filename string) error {
+	return m.errorToThrow
+}
+func (m *MockEngine) RestoreFromFile(filename string) error {
+	return m.errorToThrow
+}
+
 func (m *MockEngine) OpenThenTimestamp(lookup engine.GidLookup) error {
 	return errors.New("not impl")
 }
