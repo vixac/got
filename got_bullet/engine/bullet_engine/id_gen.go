@@ -45,6 +45,9 @@ func (i *IdGenerator) LastId() (int64, error) {
 		fmt.Printf("VX NEXT ID failed at get object. %s\n", err.Error())
 		return 0, err
 	}
+	if currentHighest == nil {
+		return 0, errors.New("no lastId found.")
+	}
 	valueInt, err := strconv.ParseInt(currentHighest.Value, 10, 32)
 	return valueInt, err
 

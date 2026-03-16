@@ -1,7 +1,10 @@
 package bullet_engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"sort"
 
 	"vixac.com/got/engine"
 	"vixac.com/got/engine/engine_util"
@@ -35,12 +38,22 @@ func (e *EngineBullet) CreateStoreFile() error {
 	*/
 	//fmt.Printf("VX: there are %d aliases \n", len(allAliases))
 
-	//VX:TODO finish. I need to do alias first.
+	//sorted for top level first.
+	sortedItemLList := allItems.Result
+	sort.Slice(sortedItemLList, func(i, j int) bool {
+		return sortedItemLList[i].Path.Depth() < sortedItemLList[j].Path.Depth()
+	})
 
 	var createItemRequests []engine.CreateBuckRequest
-	for _, item := range allItems.Result {
+	for _, item := range sortedItemLList {
 		//item.SummaryObj.Deadline
-		//lookup := engine.GidLookup{Input: item.DisplayGid}
+		var lookup *engine.GidLookup = nil
+		if item.Path != nil && item.Path.Depth() > 0 {
+			lastItemInPath := item.Path.Ancestry[item.Path.Depth()-1]
+			lookup = &engine.GidLookup{Input: lastItemInPath.Id}
+
+		}
+		//		lookup := engine.GidLookup{Input: item.DisplayGid}
 		var alias *string = nil
 		var noAlias = true
 		if item.Alias != "" {
@@ -81,7 +94,7 @@ func (e *EngineBullet) CreateStoreFile() error {
 		if item.SummaryObj != nil && item.SummaryObj.State != nil {
 			state = *item.SummaryObj.State
 		}
-		req := engine.NewCreateBuckRequest(nil, nil, item.Title, state, &overrides)
+		req := engine.NewCreateBuckRequest(lookup, nil, item.Title, state, &overrides)
 		createItemRequests = append(createItemRequests, req)
 	}
 	codec := &engine_util.JSONCodec[[]engine.CreateBuckRequest]{}
@@ -96,5 +109,21 @@ func (e *EngineBullet) CreateStoreFile() error {
 }
 
 func (e *EngineBullet) RestoreFromFile(filename string) error {
+
+	var res []engine.CreateBuckRequest
+	var data []byte
+	data, _ = ioutil.ReadFile(filename)
+
+	err := json.Unmarshal(data, &res)
+	if err != nil {
+		return err
+	}
+	for _, createReq := range res {
+		gotId, err := e.CreateBuck(createReq)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("VX: restored %s\n", gotId.AasciValue)
+	}
 	return nil
 }

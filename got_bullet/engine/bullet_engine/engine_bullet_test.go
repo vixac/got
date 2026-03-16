@@ -1,6 +1,7 @@
 package bullet_engine
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,9 +9,16 @@ import (
 )
 
 func TestCreateBuckWithOverrideSettings(t *testing.T) {
+
 	mock_client := BuildTestClient()
 	sut, err := NewEngineBullet(mock_client)
 	assert.NoError(t, err)
+
+	parentId, err := sut.CreateBuck(engine.CreateBuckRequest{
+		Heading: "parent Id",
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, parentId)
 
 	flags := []string{"flag1", "flag2"}
 
@@ -26,7 +34,7 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 		tag1,
 	}
 
-	var overrideId int32 = 1360
+	var overrideId int32 = 12360
 	var longForm string = "This is a long form text entry."
 	block := engine.LongFormBlock{
 		Content: longForm,
@@ -50,32 +58,40 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	}
 
 	buck1Id := overrideId
-	req1 := engine.NewCreateBuckRequest(nil, nil, "buck1", engine.Active, &override)
+
+	parentLookup := engine.GidLookup{
+		Input: parentId.AasciValue,
+	}
+
+	req1 := engine.NewCreateBuckRequest(&parentLookup, nil, "buck1", engine.Active, &override)
 	id, err := sut.CreateBuck(req1)
 	assert.NoError(t, err)
 	assert.Equal(t, id.IntValue, overrideId)
 
 	//fetch items below -1, which is buck1, (buck2 is 0 as it was added most recently)
 	items, err := sut.FetchItemsBelow(&engine.GidLookup{
-		Input: "",
+		Input: parentId.AasciValue,
 	}, false, []engine.GotState{engine.Active}, false)
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(items.Result), 1)
 
-	firstItem := items.Result[0]
-	assert.Equal(t, firstItem.GotId.IntValue, buck1Id)
+	theItem := items.Result[0]
+	assert.Equal(t, theItem.GotId.IntValue, buck1Id)
 
-	//VX:TODO we either inject now or we change the way this is displayed. assert.Equal(t, firstItem.Created, "58 days ago")
-	assert.Equal(t, firstItem.Updated, "2026-01-14")
-	assert.Equal(t, firstItem.Deadline, "---Now---")
+	//VX:TODO we either inject now or we change the way this is displayed. assert.Equal(t, theItem.Created, "58 days ago")
+	assert.Equal(t, theItem.Updated, "2026-01-14")
+	assert.Equal(t, theItem.Deadline, "---Now---")
 
-	item1Tags := firstItem.SummaryObj.Tags
-	item1Flags := firstItem.SummaryObj.Flags
+	item1Tags := theItem.SummaryObj.Tags
+	item1Flags := theItem.SummaryObj.Flags
+	assert.Equal(t, len(theItem.Path.Ancestry), 2)
+	fmt.Printf("VX: pathi s %+v\n", *theItem.Path)
+	assert.Equal(t, "0"+theItem.Path.Ancestry[1].Id, parentId.AasciValue)
 	assert.Equal(t, len(item1Tags), 1)
 	assert.Equal(t, len(item1Flags), 2)
 	assert.Equal(t, item1Tags[0].Literal.Display, "tag1")
-	assert.Equal(t, firstItem.Alias, "hi")
+	assert.Equal(t, theItem.Alias, "hi")
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
 

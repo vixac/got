@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -14,16 +15,21 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 	var parentGotId *engine.GotId = nil
 	override := request.OverrideSettings != nil
 	if request.GidLookupInput != nil { //last Id symbol
-		parent := engine.GidLookup{Input: *request.GidLookupInput}
-		fetchedParent, err := e.GidLookup.InputToGid(&parent)
+		var parentLookup *engine.GidLookup = nil
+		if *request.GidLookupInput != "0" { //ignore parent as0
+			parentLookup = &engine.GidLookup{Input: *request.GidLookupInput}
+			fetchedParent, err := e.GidLookup.InputToGid(parentLookup)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+			if fetchedParent == nil {
+				return nil, errors.New("could not find parent")
+			}
+			fmt.Printf("VX: parent lookup")
+			parentGotId = fetchedParent
 		}
-		if fetchedParent == nil {
-			return nil, errors.New("could not find parent")
-		}
-		parentGotId = fetchedParent
+
 	}
 
 	var newId int32
