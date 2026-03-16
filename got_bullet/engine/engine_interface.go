@@ -64,7 +64,7 @@ type AncestorManyLookupResult struct {
 }
 
 type RestoreInterface interface {
-	CreateStoreFile(filename string) error
+	CreateStoreFile() error
 	RestoreFromFile(filename string) error
 }
 

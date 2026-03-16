@@ -47,7 +47,7 @@ type MockEngine struct {
 	heading string
 }
 
-func (m *MockEngine) CreateStoreFile(filename string) error {
+func (m *MockEngine) CreateStoreFile() error {
 	return m.errorToThrow
 }
 func (m *MockEngine) RestoreFromFile(filename string) error {

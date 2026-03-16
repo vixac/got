@@ -11,12 +11,7 @@ func buildRestoreCommand(deps RootDependencies) *cobra.Command {
 		Use:   "create-restore",
 		Short: "builds a restore file",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) > 1 {
-				deps.Printer.Error(console.Message{Message: "pass in the file name"})
-				return
-			}
-			filename := args[0]
-			err := deps.Engine.CreateStoreFile(filename)
+			err := deps.Engine.CreateStoreFile()
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 			}
