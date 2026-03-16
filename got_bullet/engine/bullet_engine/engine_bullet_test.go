@@ -34,10 +34,13 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	longFormResult := engine.LongFormBlockResult{
 		Blocks: []engine.LongFormBlock{block},
 	}
+	alias := "hi"
 	override := engine.CreateOverrideSettings{
 		OverrideId:  &overrideId,
 		UpdatedDate: "2026-01-14T18:39:21.429465Z",
 		CreatedDate: "2026-01-13T18:39:21.429465Z",
+		Alias:       &alias,
+		//VX:Note test NoAlias flag
 		ScheduleDate: &engine.DateTime{
 			Special: "n",
 		},
@@ -72,6 +75,7 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, len(item1Tags), 1)
 	assert.Equal(t, len(item1Flags), 2)
 	assert.Equal(t, item1Tags[0].Literal.Display, "tag1")
+	assert.Equal(t, firstItem.Alias, "hi")
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
 

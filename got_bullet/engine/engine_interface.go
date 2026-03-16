@@ -146,6 +146,8 @@ type CreateOverrideSettings struct {
 	UpdatedDate  string               `json:"u,omitempty"`
 	CreatedDate  string               `json:"c,omitempty"`
 	ScheduleDate *DateTime            `json:"d,omitempty"`
+	Alias        *string              `json:"a,omitempty"`
+	NoAlias      bool                 `json:"no,omitempty"` //no override isnt the same as explicitly no alias at all
 	Tags         []Tag                `json:"t,omitempty"`
 	Flags        []string             `json:"f,omitempty"`
 	LongForm     *LongFormBlockResult `json:"l,omitempty"`
