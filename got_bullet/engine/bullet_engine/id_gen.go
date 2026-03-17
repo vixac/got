@@ -33,7 +33,29 @@ func NewIdBulletGenerator(client bullet_interface.BulletClientInterface, bucketI
 	}
 }
 
-// VX:TODO test
+func (i *IdGenerator) SetLastIdIfLower(newId int64) error {
+	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
+	if err != nil {
+		return err
+	}
+	latest := bullet_stl.ListSubject{Value: i.LatestSubject}
+	currentHighest, err := list.GetObject(latest)
+	if err != nil {
+		fmt.Printf("VX next Id failed at get object. %s\n", err.Error())
+		return err
+	}
+	//basecase, we just use this id.
+	if currentHighest == nil {
+		return i.setNextId(newId)
+	}
+	valueInt, err := strconv.ParseInt(currentHighest.Value, 10, 32)
+	if newId < valueInt {
+		return nil
+
+	}
+	return i.setNextId(newId)
+}
+
 func (i *IdGenerator) LastId() (int64, error) {
 	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
 	if err != nil {
@@ -53,6 +75,22 @@ func (i *IdGenerator) LastId() (int64, error) {
 
 }
 
+// saves the next id
+func (i IdGenerator) setNextId(next int64) error {
+	//VX:TODO save that list etc.
+	list, err := bullet_stl.NewBulletOneWayList(i.Client, i.BucketId, i.ListName, i.Separator)
+	if err != nil {
+		return err
+	}
+	latest := bullet_stl.ListSubject{Value: i.LatestSubject}
+	str := fmt.Sprint(next)
+	err = list.Upsert(latest, bullet_stl.ListObject{Value: str})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // VX:TODO test
 func (i *IdGenerator) NextId() (int64, error) {
 
@@ -69,8 +107,7 @@ func (i *IdGenerator) NextId() (int64, error) {
 
 	//base case, start at the beginning.
 	if currentHighest == nil {
-		str := fmt.Sprint(firstId)
-		err := list.Upsert(latest, bullet_stl.ListObject{Value: str})
+		err = i.setNextId(firstId)
 		if err != nil {
 			return 0, err
 		}
@@ -87,11 +124,7 @@ func (i *IdGenerator) NextId() (int64, error) {
 		if !engine.FitsInInt32(incrementedValue) {
 			return 0, errors.New("this id space has exhausted int32")
 		}
-		str := strconv.FormatInt(incrementedValue, 10)
-		err = list.Upsert(latest, bullet_stl.ListObject{Value: str})
-		if err != nil {
-			return 0, err
-		}
+		err = i.setNextId(incrementedValue)
 		return incrementedValue, nil
 	}
 }

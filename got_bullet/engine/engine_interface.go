@@ -34,8 +34,9 @@ type GotEngine interface {
 }
 
 type IdGeneratorInterface interface {
-	LastId() (int64, error) //fetches the last createdId
-	NextId() (int64, error) //creates a new id, stores it as the lastId, and returns it
+	SetLastIdIfLower(newId int64) error //if we're overriding the ids, the last Id may be replaced with this one.
+	LastId() (int64, error)             //fetches the last createdId
+	NextId() (int64, error)             //creates a new id, stores it as the lastId, and returns it
 }
 
 // The store that holds on to the meanings of the number goes, so when user

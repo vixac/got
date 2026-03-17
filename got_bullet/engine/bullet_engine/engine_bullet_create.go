@@ -31,7 +31,12 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 
 	var newId int32
 	if override && request.OverrideSettings.OverrideId != nil {
+		//we need the lastId to be kept up to date with the ids being thrown intot he system. we want the highest id to be set as the last Id.
 		newId = int32(*request.OverrideSettings.OverrideId)
+		err := e.IgGenerator.SetLastIdIfLower(int64(newId))
+		if err != nil {
+			return nil, err
+		}
 	} else {
 
 		newIdFromNext, err := e.IgGenerator.NextId()
