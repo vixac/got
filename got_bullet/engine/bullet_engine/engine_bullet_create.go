@@ -15,20 +15,17 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 	var parentGotId *engine.GotId = nil
 	override := request.OverrideSettings != nil
 	if request.GidLookupInput != nil { //last Id symbol
-		var parentLookup *engine.GidLookup = nil
-		if *request.GidLookupInput != "0" { //ignore parent as0
-			parentLookup = &engine.GidLookup{Input: *request.GidLookupInput}
-			fetchedParent, err := e.GidLookup.InputToGid(parentLookup)
+		var parentLookup *engine.GidLookup = &engine.GidLookup{Input: *request.GidLookupInput}
+		fetchedParent, err := e.GidLookup.InputToGid(parentLookup)
 
-			if err != nil {
-				return nil, err
-			}
-			if fetchedParent == nil {
-				return nil, errors.New("could not find parent")
-			}
-			fmt.Printf("VX: parent lookup")
-			parentGotId = fetchedParent
+		if err != nil {
+			return nil, err
 		}
+		if fetchedParent == nil {
+			return nil, errors.New("could not find parent")
+		}
+		fmt.Printf("VX: parent lookup")
+		parentGotId = fetchedParent
 
 	}
 

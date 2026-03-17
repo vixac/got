@@ -2,8 +2,10 @@ package engine
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	"vixac.com/got/console"
 )
@@ -95,9 +97,25 @@ func (d *DateTime) ToDate() (*console.RFC3339Time, error) {
 	return &date, nil
 }
 
+func trimLastRune(s string) string {
+	r := []rune(s)
+	return string(r[:len(r)-1])
+}
+func trimFirstRune(s string) string {
+	_, i := utf8.DecodeRuneInString(s)
+	return s[i:]
+}
 func NewTimeFromString(str string) (*console.RFC3339Time, error) {
-	const layout = "2006-01-02T15:04:05.999999Z"
-	res, err := time.Parse(layout, str)
+
+	var theStr = str
+	if len(str) < 2 {
+		return nil, errors.New("not a date.")
+	}
+	if str[0] == '"' && str[len(str)-1] == '"' {
+		theStr = trimLastRune(trimFirstRune(str))
+
+	}
+	res, err := time.Parse(time.RFC3339Nano, theStr)
 	if err != nil {
 		fmt.Printf("VX: parsing failed %+v\n", err)
 		return nil, err

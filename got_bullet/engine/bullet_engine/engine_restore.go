@@ -50,8 +50,9 @@ func (e *EngineBullet) CreateStoreFile() error {
 		var lookup *engine.GidLookup = nil
 		if item.Path != nil && item.Path.Depth() > 0 {
 			lastItemInPath := item.Path.Ancestry[item.Path.Depth()-1]
-			lookup = &engine.GidLookup{Input: lastItemInPath.Id}
-
+			if lastItemInPath.Id != "0" { //this id actually gets looked up so we don't want that.
+				lookup = &engine.GidLookup{Input: "0" + lastItemInPath.Id}
+			}
 		}
 		//		lookup := engine.GidLookup{Input: item.DisplayGid}
 		var alias *string = nil
@@ -80,6 +81,7 @@ func (e *EngineBullet) CreateStoreFile() error {
 		if item.SummaryObj != nil && item.SummaryObj.CreatedDate != nil {
 			createdDate = item.SummaryObj.CreatedDate.Date
 		}
+
 		overrides := engine.CreateOverrideSettings{
 			OverrideId:  &item.GotId.IntValue,
 			UpdatedDate: updated,
