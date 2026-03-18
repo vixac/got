@@ -101,7 +101,13 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 		if parentState == nil {
 			return errors.New("missing dev state. The parent should have had a state at the moment ")
 		}
-		parentSummary.State = nil //this is how we state that this is now a group.
+
+		//if we are restoring a complete node with children, it will appear in complete state
+		//we want to preserve this state as items are added.
+		if e.State != engine.Complete && parentSummary.State != nil && *parentSummary.State != engine.Complete {
+			parentSummary.State = nil //this is how we state that this is now a group.
+		}
+
 		parentId := enrichedEvent.ParentId()
 		upserts[*parentId] = parentSummary
 

@@ -71,7 +71,7 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*eng
 			return nil, err
 		}
 		if ancestorSubject == nil {
-			return nil, errors.New("every node bedies the root node should have ancestors")
+			return nil, errors.New("every node besides the root node should have ancestors")
 		}
 		if len(ancestorSubject.Pairs) != 1 {
 			return nil, errors.New("we expect 1 ancestor for every item")
