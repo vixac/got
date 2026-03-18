@@ -2,129 +2,102 @@ package engine_util
 
 import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
 )
-
-// VX:TODO https://chatgpt.com/s/t_69236b33d8748191a6dd3c8e67a46a5e
-
-// VX:TODO this should probbaly get gids or gotids or whatever.
-// / This is to make clear that Agg doesn't know about GotIds specifically, although no doubt intValue GotIds will be used 1-1 for Agg.
-// / Agg will just operate with int32 and namespaces which are also int32, and will use firbolg_clients MakeNamespacedId to create the int64 that depot needs.
 
 func NewSummaryId(gotId engine.GotId) engine.SummaryId {
 	return engine.SummaryId(gotId.IntValue)
 }
 
-// namespaces are like bucket Ids but they move separately so the fact that they're both int32 is coincidence. namespcae is a way to
-// use the int64 space of depot ids to be <namespace><id>. This is fine because 2,147,483,647 is the positive total of int32. Thats plenty for got. If we need to host spaces higher than that, we probably want to
-// break stuff up into spearated sections and use mirroring.
 type BulletSummaryStore struct {
-	codec     Codec[engine.Summary]
-	Client    bullet_interface.DepotClientInterface
-	Namespace int32
+	codec      Codec[engine.Summary]
+	Collection bullet_stl.Collection
 }
 
-func NewBulletSummaryStore(codec Codec[engine.Summary], client bullet_interface.DepotClientInterface, namespace int32) (engine.SummaryStoreInterface, error) {
+func NewBulletSummaryStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface, codec Codec[engine.Summary]) (engine.SummaryStoreInterface, error) {
+	coll := bullet_stl.NewBulletCollection(bucketId, track, depot)
 	return &BulletSummaryStore{
-		codec:     codec,
-		Client:    client,
-		Namespace: namespace,
+		codec:      codec,
+		Collection: coll,
 	}, nil
 }
 
-func (a *BulletSummaryStore) aggIdToNamespacedId(id engine.SummaryId) int64 {
-	return bullet_stl.MakeNamespacedId(a.Namespace, int32(id))
-}
-
-func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) engine.SummaryId {
-	namespaced := bullet_stl.ParseNamespacedId(spaced)
-	return engine.SummaryId(namespaced.Id)
-}
-
 func (a *BulletSummaryStore) UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error {
-	//VX:TODO convert to using Collection
-	/*
-		var reqs []bullet_interface.DepotRequest
-		for id, agg := range aggs {
-			json, err := a.codec.Encode(agg)
-			if err != nil {
-				return err
-			}
-			spaced := a.aggIdToNamespacedId(id)
-			reqs = append(reqs, bullet_interface.DepotRequest{
-				Key:   spaced,
-				Value: json,
-			})
-		}
-		return a.Client.DepotUpsertMany(reqs)
-	*/
-	return nil
-}
-
-// VX:TODO RM or call many if we want to keep it
-func (a *BulletSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summary) error {
-	/*
-		json, err := a.codec.Encode(agg)
+	var idStrings []string
+	for id := range aggs {
+		idStrings = append(idStrings, idToStr(int32(id)))
+	}
+	existing, err := a.Collection.ItemsForKeys(idStrings)
+	if err != nil {
+		return err
+	}
+	existingByKey := make(map[string]bullet_stl.CollectionId)
+	for collId := range existing {
+		existingByKey[collId.Key] = collId
+	}
+	for id, summary := range aggs {
+		payload, err := a.codec.Encode(summary)
 		if err != nil {
 			return err
 		}
-		spaced := a.aggIdToNamespacedId(id)
-		req := bullet_interface.DepotRequest{
-			Key:   spaced,
-			Value: json,
+		key := idToStr(int32(id))
+		if collId, ok := existingByKey[key]; ok {
+			err = a.Collection.EditPayload(collId, payload)
+		} else {
+			_, err = a.Collection.CreateItemUnder(key, payload)
 		}
-		return a.Client.DepotInsertOne(req)
-	*/
+		if err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (a *BulletSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summary) error {
+	return a.UpsertManySummaries(map[engine.SummaryId]engine.Summary{id: agg})
 }
 
 func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error) {
-	/*
-		var keys []int64
-		for _, id := range ids {
-			spaced := a.aggIdToNamespacedId(id)
-			keys = append(keys, spaced)
-		}
-		manyReq := bullet_interface.DepotGetManyRequest{
-			Keys: keys,
-		}
-		resp, err := a.Client.DepotGetMany(manyReq)
+	var idStrings []string
+	for _, id := range ids {
+		idStrings = append(idStrings, idToStr(int32(id)))
+	}
+	resp, err := a.Collection.ItemsForKeys(idStrings)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, nil
+	}
+	result := make(map[engine.SummaryId]engine.Summary)
+	for collId, payload := range resp {
+		id, err := strToId(collId.Key)
 		if err != nil {
 			return nil, err
 		}
-		if resp == nil {
-			return nil, nil
+		var summary engine.Summary
+		err = a.codec.Decode(payload, &summary)
+		if err != nil {
+			return nil, err
 		}
-
-		result := make(map[engine.SummaryId]engine.Summary)
-		for k, v := range resp.Values {
-			aggObj := &engine.Summary{}
-			err := a.codec.Decode(v, aggObj)
-			if err != nil {
-				return nil, err
-			}
-			aggId := a.namespacedIdToAgg(k)
-			result[aggId] = *aggObj
-		}
-		return result, nil
-	*/
-	return nil, nil
-
+		result[engine.SummaryId(id)] = summary
+	}
+	return result, nil
 }
+
 func (a *BulletSummaryStore) Delete(ids []engine.SummaryId) error {
-	/*
-		for _, id := range ids {
-			namespacedId := a.aggIdToNamespacedId(id)
-			req := bullet_interface.DepotDeleteRequest{
-				Key: namespacedId,
-			}
-			err := a.Client.DepotDeleteOne(req)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	*/
-	return nil
+	var idStrings []string
+	for _, id := range ids {
+		idStrings = append(idStrings, idToStr(int32(id)))
+	}
+	res, err := a.Collection.ItemsForKeys(idStrings)
+	if err != nil || res == nil {
+		return err
+	}
+	var collIds []bullet_stl.CollectionId
+	for k := range res {
+		collIds = append(collIds, k)
+	}
+	return a.Collection.DeleteItems(collIds)
 }

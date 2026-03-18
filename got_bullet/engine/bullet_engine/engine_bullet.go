@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	idGenBucket     int32 = 100
-	aliasBucket     int32 = 1001
-	nodeBucket      int32 = 1002
-	ancestorBucket  int32 = 1003
-	numberGoDepotId int64 = 2000
-	titleBucket     int32 = 0 //backwards compatability
-	longFormBucket  int32 = 1005
+	idGenBucket    int32 = 100
+	aliasBucket    int32 = 1001
+	nodeBucket     int32 = 1002
+	ancestorBucket int32 = 1003
+	numberGoBucket int32 = 1006
+	titleBucket    int32 = 0 //backwards compatability
+	longFormBucket int32 = 1005
 )
 
 const (
@@ -524,22 +524,20 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 	codec := &engine_util.JSONCodec[engine.Summary]{}
-	aggStore, err := engine_util.NewBulletSummaryStore(codec, client, aggregateNamespace)
+	aggStore, err := engine_util.NewBulletSummaryStore(aggregateNamespace, client, client, codec)
 	if err != nil {
 		return nil, err
 	}
 
-	titleStore, err := engine_util.NewBulletTitleStore(client, titleBucket)
-	if err != nil {
-		return nil, err
-	}
-	longFormStore, err := engine_util.NewBulletLongFormStore(client, longFormBucket)
+	titleStore := engine_util.NewBulletTitleStore(titleBucket, client, client)
+
+	longFormStore, err := engine_util.NewBulletLongFormStore(longFormBucket, client, client)
 	if err != nil {
 		return nil, err
 	}
 
 	numberGoCodec := &engine_util.JSONCodec[engine_util.NumberGoBlock]{}
-	numberGoStore, err := engine_util.NewBulletNumberGoStore(client, numberGoCodec, numberGoDepotId)
+	numberGoStore, err := engine_util.NewBulletNumberGoStore(numberGoBucket, client, client, numberGoCodec)
 	if err != nil {
 		return nil, err
 	}

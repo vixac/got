@@ -1,9 +1,14 @@
 package engine_util
 
 import (
+	"errors"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
 )
+
+const numberGoKey = "ng"
 
 // everything in one json body
 type NumberGoBlock struct {
@@ -11,75 +16,62 @@ type NumberGoBlock struct {
 }
 
 type BulletNumberGoStore struct {
-	Codec   Codec[NumberGoBlock]
-	DepotId int64
-	Depot   bullet_interface.DepotClientInterface
+	Codec      Codec[NumberGoBlock]
+	Collection bullet_stl.Collection
 }
 
-func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec Codec[NumberGoBlock], depotId int64) (engine.NumberGoStoreInterface, error) {
+func NewBulletNumberGoStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface, codec Codec[NumberGoBlock]) (engine.NumberGoStoreInterface, error) {
+	coll := bullet_stl.NewBulletCollection(bucketId, track, depot)
 	return &BulletNumberGoStore{
-		DepotId: depotId,
-		Codec:   codec,
-		Depot:   client,
+		Codec:      codec,
+		Collection: coll,
 	}, nil
 }
 
 func (n *BulletNumberGoStore) AssignNumberPairs(pairs []engine.NumberGoPair) error {
-	//VX:TODO convert to using Collection
-	return nil
-	/*
-		pairMap := make(map[int]string)
-
-		for _, p := range pairs {
-
-			pairMap[p.Number] = p.Gid
-		}
-		block := NumberGoBlock{
-			Pairs: pairMap,
-		}
-
-		json, err := n.Codec.Encode(block)
-		if err != nil {
-			return err
-		}
-		req := bullet_interface.DepotRequest{
-			Key:   n.DepotId,
-			Value: json,
-		}
-		return n.Depot.DepotUpsertMany([]bullet_interface.DepotRequest{req})
-	*/
+	pairMap := make(map[int]string)
+	for _, p := range pairs {
+		pairMap[p.Number] = p.Gid
+	}
+	payload, err := n.Codec.Encode(NumberGoBlock{Pairs: pairMap})
+	if err != nil {
+		return err
+	}
+	existing, err := n.Collection.AllItemsUnderPrefix(numberGoKey)
+	if err != nil {
+		return err
+	}
+	if len(existing) == 0 {
+		_, err = n.Collection.CreateItemUnder(numberGoKey, payload)
+		return err
+	}
+	var collId bullet_stl.CollectionId
+	for k := range existing {
+		collId = k
+	}
+	return n.Collection.EditPayload(collId, payload)
 }
 
 func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
-	//VX:TODO convert to using Collection
-	return nil, nil
-	/*
-		keys := []int64{n.DepotId}
-		manyReq := bullet_interface.DepotGetManyRequest{
-			Keys: keys,
-		}
-		res, err := n.Depot.DepotGetMany(manyReq)
-		if err != nil {
-			return nil, err
-		}
-		if res == nil {
-			return nil, nil
-		}
-
-		json, ok := res.Values[n.DepotId]
-		if !ok {
-			return nil, nil
-		}
-
-		var block NumberGoBlock
-		err = n.Codec.Decode(json, &block)
-		if err != nil {
-			return nil, err
-		}
-		value, ok := block.Pairs[number]
-		if !ok {
-			return nil, errors.New("missing number go id")
-		}
-		return engine.NewGotId(value)
-	*/
+	res, err := n.Collection.ItemsForKeys([]string{numberGoKey})
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, nil
+	}
+	var payload string
+	for _, v := range res {
+		payload = v
+	}
+	var block NumberGoBlock
+	err = n.Codec.Decode(payload, &block)
+	if err != nil {
+		return nil, err
+	}
+	value, ok := block.Pairs[number]
+	if !ok {
+		return nil, errors.New("missing number go id")
+	}
+	return engine.NewGotId(value)
 }
