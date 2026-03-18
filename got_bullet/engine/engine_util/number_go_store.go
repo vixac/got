@@ -1,8 +1,6 @@
 package engine_util
 
 import (
-	"errors"
-
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	"vixac.com/got/engine"
 )
@@ -27,54 +25,61 @@ func NewBulletNumberGoStore(client bullet_interface.DepotClientInterface, codec 
 }
 
 func (n *BulletNumberGoStore) AssignNumberPairs(pairs []engine.NumberGoPair) error {
-	pairMap := make(map[int]string)
+	//VX:TODO convert to using Collection
+	return nil
+	/*
+		pairMap := make(map[int]string)
 
-	for _, p := range pairs {
+		for _, p := range pairs {
 
-		pairMap[p.Number] = p.Gid
-	}
-	block := NumberGoBlock{
-		Pairs: pairMap,
-	}
+			pairMap[p.Number] = p.Gid
+		}
+		block := NumberGoBlock{
+			Pairs: pairMap,
+		}
 
-	json, err := n.Codec.Encode(block)
-	if err != nil {
-		return err
-	}
-	req := bullet_interface.DepotRequest{
-		Key:   n.DepotId,
-		Value: json,
-	}
-	return n.Depot.DepotUpsertMany([]bullet_interface.DepotRequest{req})
+		json, err := n.Codec.Encode(block)
+		if err != nil {
+			return err
+		}
+		req := bullet_interface.DepotRequest{
+			Key:   n.DepotId,
+			Value: json,
+		}
+		return n.Depot.DepotUpsertMany([]bullet_interface.DepotRequest{req})
+	*/
 }
 
 func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
+	//VX:TODO convert to using Collection
+	return nil, nil
+	/*
+		keys := []int64{n.DepotId}
+		manyReq := bullet_interface.DepotGetManyRequest{
+			Keys: keys,
+		}
+		res, err := n.Depot.DepotGetMany(manyReq)
+		if err != nil {
+			return nil, err
+		}
+		if res == nil {
+			return nil, nil
+		}
 
-	keys := []int64{n.DepotId}
-	manyReq := bullet_interface.DepotGetManyRequest{
-		Keys: keys,
-	}
-	res, err := n.Depot.DepotGetMany(manyReq)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil {
-		return nil, nil
-	}
+		json, ok := res.Values[n.DepotId]
+		if !ok {
+			return nil, nil
+		}
 
-	json, ok := res.Values[n.DepotId]
-	if !ok {
-		return nil, nil
-	}
-
-	var block NumberGoBlock
-	err = n.Codec.Decode(json, &block)
-	if err != nil {
-		return nil, err
-	}
-	value, ok := block.Pairs[number]
-	if !ok {
-		return nil, errors.New("missing number go id")
-	}
-	return engine.NewGotId(value)
+		var block NumberGoBlock
+		err = n.Codec.Decode(json, &block)
+		if err != nil {
+			return nil, err
+		}
+		value, ok := block.Pairs[number]
+		if !ok {
+			return nil, errors.New("missing number go id")
+		}
+		return engine.NewGotId(value)
+	*/
 }

@@ -1,83 +1,116 @@
 package engine_util
 
 import (
+	"errors"
+	"strconv"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
 )
 
 type BulletTitleStore struct {
-	Namespace int32
-	Depot     bullet_interface.DepotClientInterface
+	Collection bullet_stl.Collection
 }
 
-func NewBulletTitleStore(client bullet_interface.DepotClientInterface, namespaceId int32) (engine.TitleStoreInterface, error) {
+func NewBulletTitleStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface) engine.TitleStoreInterface {
+	coll := bullet_stl.NewBulletCollection(bucketId, track, depot)
 	return &BulletTitleStore{
-		Depot:     client,
-		Namespace: namespaceId,
-	}, nil
+		Collection: coll,
+	}
 }
 
+func idToStr(id int32) string { //I need to
+	return strconv.Itoa(int(id))
+}
+func strToId(key string) (int32, error) {
+	id, err := strconv.Atoi(key)
+	return int32(id), err
+}
 func (s *BulletTitleStore) UpsertItem(id int32, title string) error {
-	//VX:TODO warn this depot interface is global. Can't have title store using the infinite id space
-	//it behaves as though it has namespace 0 which is ok I guess.
-	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
-	req := bullet_interface.DepotRequest{
-		Key:   namespacedId,
-		Value: title,
+
+	//first we check if it exists:
+	idStr := idToStr(id)
+	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
+	if err != nil {
+		return err
 	}
-	return s.Depot.DepotInsertOne(req)
+
+	//create the item
+	if existing == nil || len(existing) == 0 {
+		_, err := s.Collection.CreateItemUnder(idStr, title)
+		return err
+	}
+	if len(existing) != 1 {
+		return errors.New("Upserting to a key that is not unique.")
+
+	}
+
+	var theCollId bullet_stl.CollectionId
+	for k, _ := range existing {
+		theCollId = k
+	}
+	//edit the item.
+	return s.Collection.EditPayload(theCollId, title)
 }
 
 func (s *BulletTitleStore) TitleForMany(ids []int32) (map[int32]string, error) {
-
-	var int64Ids []int64
-	for _, v := range ids {
-		namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, v)
-		int64Ids = append(int64Ids, namespacedId)
+	var idStrings []string
+	for _, id := range ids {
+		idStrings = append(idStrings, idToStr(id))
 	}
-	req := bullet_interface.DepotGetManyRequest{
-		Keys: int64Ids,
-	}
-	resp, err := s.Depot.DepotGetMany(req)
+	resp, err := s.Collection.ItemsForKeys(idStrings)
 	if err != nil {
 		return nil, err
 	}
 	if resp == nil {
 		return nil, nil
 	}
+
 	int32Map := make(map[int32]string)
-	for k, v := range resp.Values {
-		id := bullet_stl.ParseNamespacedId(k)
-		int32Map[id.Id] = v
+	for k, v := range resp {
+		intId, err := strToId(k.Key)
+		if err != nil {
+			return nil, err
+		}
+		int32Map[intId] = v
 	}
 	return int32Map, nil
 }
 
 func (s *BulletTitleStore) TitleFor(id int32) (*string, error) {
-	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
-	keys := []int64{namespacedId}
-	req := bullet_interface.DepotGetManyRequest{
-		Keys: keys,
-	}
-	resp, err := s.Depot.DepotGetMany(req)
-	if err != nil {
+	var many []int32
+	many = append(many, id)
+	res, err := s.TitleForMany(many)
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
-	if resp == nil {
-		return nil, nil
+	if len(res) != 1 {
+		return nil, errors.New("too many results")
 	}
-
-	if title, ok := resp.Values[namespacedId]; ok {
-		return &title, nil
+	keys := make([]int32, 0, len(res))
+	for k := range res {
+		keys = append(keys, k)
 	}
-	return nil, nil
+	result := res[id]
+	return &result, nil
 }
 
 func (s *BulletTitleStore) RemoveItem(id int32) error {
-	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
-	req := bullet_interface.DepotDeleteRequest{
-		Key: namespacedId,
+	var keys []string
+	keys = append(keys, idToStr(id))
+	res, err := s.Collection.ItemsForKeys(keys)
+	if err != nil || res == nil {
+		return err
 	}
-	return s.Depot.DepotDeleteOne(req)
+	if len(res) != 1 {
+		return errors.New("too many results")
+	}
+	collids := make([]bullet_stl.CollectionId, 0, len(res)) //there should be 1
+	for k := range res {
+		collids = append(collids, k)
+	}
+
+	return s.Collection.DeleteItems(collids)
+
 }

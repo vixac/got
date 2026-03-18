@@ -43,77 +43,88 @@ func (a *BulletSummaryStore) namespacedIdToAgg(spaced int64) engine.SummaryId {
 }
 
 func (a *BulletSummaryStore) UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error {
+	//VX:TODO convert to using Collection
+	/*
+		var reqs []bullet_interface.DepotRequest
+		for id, agg := range aggs {
+			json, err := a.codec.Encode(agg)
+			if err != nil {
+				return err
+			}
+			spaced := a.aggIdToNamespacedId(id)
+			reqs = append(reqs, bullet_interface.DepotRequest{
+				Key:   spaced,
+				Value: json,
+			})
+		}
+		return a.Client.DepotUpsertMany(reqs)
+	*/
+	return nil
+}
 
-	var reqs []bullet_interface.DepotRequest
-	for id, agg := range aggs {
+// VX:TODO RM or call many if we want to keep it
+func (a *BulletSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summary) error {
+	/*
 		json, err := a.codec.Encode(agg)
 		if err != nil {
 			return err
 		}
 		spaced := a.aggIdToNamespacedId(id)
-		reqs = append(reqs, bullet_interface.DepotRequest{
+		req := bullet_interface.DepotRequest{
 			Key:   spaced,
 			Value: json,
-		})
-	}
-	return a.Client.DepotUpsertMany(reqs)
-}
-
-// VX:TODO RM or call many if we want to keep it
-func (a *BulletSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summary) error {
-
-	json, err := a.codec.Encode(agg)
-	if err != nil {
-		return err
-	}
-	spaced := a.aggIdToNamespacedId(id)
-	req := bullet_interface.DepotRequest{
-		Key:   spaced,
-		Value: json,
-	}
-	return a.Client.DepotInsertOne(req)
+		}
+		return a.Client.DepotInsertOne(req)
+	*/
+	return nil
 }
 
 func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error) {
-	var keys []int64
-	for _, id := range ids {
-		spaced := a.aggIdToNamespacedId(id)
-		keys = append(keys, spaced)
-	}
-	manyReq := bullet_interface.DepotGetManyRequest{
-		Keys: keys,
-	}
-	resp, err := a.Client.DepotGetMany(manyReq)
-	if err != nil {
-		return nil, err
-	}
-	if resp == nil {
-		return nil, nil
-	}
-
-	result := make(map[engine.SummaryId]engine.Summary)
-	for k, v := range resp.Values {
-		aggObj := &engine.Summary{}
-		err := a.codec.Decode(v, aggObj)
+	/*
+		var keys []int64
+		for _, id := range ids {
+			spaced := a.aggIdToNamespacedId(id)
+			keys = append(keys, spaced)
+		}
+		manyReq := bullet_interface.DepotGetManyRequest{
+			Keys: keys,
+		}
+		resp, err := a.Client.DepotGetMany(manyReq)
 		if err != nil {
 			return nil, err
 		}
-		aggId := a.namespacedIdToAgg(k)
-		result[aggId] = *aggObj
-	}
-	return result, nil
+		if resp == nil {
+			return nil, nil
+		}
+
+		result := make(map[engine.SummaryId]engine.Summary)
+		for k, v := range resp.Values {
+			aggObj := &engine.Summary{}
+			err := a.codec.Decode(v, aggObj)
+			if err != nil {
+				return nil, err
+			}
+			aggId := a.namespacedIdToAgg(k)
+			result[aggId] = *aggObj
+		}
+		return result, nil
+	*/
+	return nil, nil
 
 }
 func (a *BulletSummaryStore) Delete(ids []engine.SummaryId) error {
-	for _, id := range ids {
-		namespacedId := a.aggIdToNamespacedId(id)
-		req := bullet_interface.DepotDeleteRequest{
-			Key: namespacedId,
+	/*
+		for _, id := range ids {
+			namespacedId := a.aggIdToNamespacedId(id)
+			req := bullet_interface.DepotDeleteRequest{
+				Key: namespacedId,
+			}
+			err := a.Client.DepotDeleteOne(req)
+			if err != nil {
+				return err
+			}
 		}
-		err := a.Client.DepotDeleteOne(req)
-		if err != nil {
-			return err
-		}
-	}
+		return nil
+	*/
 	return nil
 }
