@@ -1,95 +1,83 @@
 package engine_util
 
 import (
+	"errors"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
 )
 
 type BulletLongFormStore struct {
-	Namespace int32
-	Depot     bullet_interface.DepotClientInterface
+	Collection bullet_stl.Collection
 }
 
-func NewBulletLongFormStore(client bullet_interface.DepotClientInterface, namespaceId int32) (engine.LongFormStoreInterface, error) {
-	return &BulletLongFormStore{
-		Namespace: namespaceId,
-		Depot:     client,
-	}, nil
+func NewBulletLongFormStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface) (engine.LongFormStoreInterface, error) {
+	coll := bullet_stl.NewBulletCollection(bucketId, track, depot)
+	return &BulletLongFormStore{Collection: coll}, nil
 }
 
-// VX:TODO this implementation is identical to title store. Its just a string id pair.
-// VX:TODO make this
 func (s *BulletLongFormStore) UpsertItem(id int32, block engine.LongFormBlock) error {
-	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
-	req := bullet_interface.DepotRequest{
-		Key:   namespacedId,
-		Value: block.Content,
+	idStr := idToStr(id)
+	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
+	if err != nil {
+		return err
 	}
-	return s.Depot.DepotInsertOne(req)
+	if len(existing) == 0 {
+		_, err := s.Collection.CreateItemUnder(idStr, block.Content)
+		return err
+	}
+	if len(existing) != 1 {
+		return errors.New("upserting to a key that is not unique")
+	}
+	var theCollId bullet_stl.CollectionId
+	for k := range existing {
+		theCollId = k
+	}
+	return s.Collection.EditPayload(theCollId, block.Content)
 }
 
 func (s *BulletLongFormStore) LongFormForMany(ids []int32) (map[int32]engine.LongFormBlockResult, error) {
-
-	var int64Ids []int64
-	for _, v := range ids {
-		namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, v)
-		int64Ids = append(int64Ids, namespacedId)
+	var idStrings []string
+	for _, id := range ids {
+		idStrings = append(idStrings, idToStr(id))
 	}
-	req := bullet_interface.DepotGetManyRequest{
-		Keys: int64Ids,
-	}
-	resp, err := s.Depot.DepotGetMany(req)
+	resp, err := s.Collection.ItemsForKeys(idStrings)
 	if err != nil {
 		return nil, err
 	}
 	if resp == nil {
 		return nil, nil
 	}
-	int32Map := make(map[int32]engine.LongFormBlockResult)
-	for k, v := range resp.Values {
-		id := bullet_stl.ParseNamespacedId(k)
-		//this implemention of longform just uses a single block.
-		block := engine.LongFormBlock{
-			Content: v,
+	result := make(map[int32]engine.LongFormBlockResult)
+	for k, v := range resp {
+		id, err := strToId(k.Key)
+		if err != nil {
+			return nil, err
 		}
-		int32Map[id.Id] = engine.LongFormBlockResult{
-			Blocks: []engine.LongFormBlock{block},
-		}
+		block := engine.LongFormBlock{Content: v}
+		result[id] = engine.LongFormBlockResult{Blocks: []engine.LongFormBlock{block}}
 	}
-	return int32Map, nil
+	return result, nil
 }
 
 func (s *BulletLongFormStore) LongFormFor(id int32) (*engine.LongFormBlockResult, error) {
-	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
-	keys := []int64{namespacedId}
-	req := bullet_interface.DepotGetManyRequest{
-		Keys: keys,
-	}
-	resp, err := s.Depot.DepotGetMany(req)
-	if err != nil {
+	res, err := s.LongFormForMany([]int32{id})
+	if err != nil || len(res) == 0 {
 		return nil, err
 	}
-	if resp == nil {
-		return nil, nil
-	}
-
-	if title, ok := resp.Values[namespacedId]; ok {
-		block := engine.LongFormBlock{
-			Content: title,
-		}
-		res := engine.LongFormBlockResult{
-			Blocks: []engine.LongFormBlock{block},
-		}
-		return &res, nil
-	}
-	return nil, nil
+	r := res[id]
+	return &r, nil
 }
 
 func (s *BulletLongFormStore) RemoveAllItemsFromLongStore(id int32) error {
-	namespacedId := bullet_stl.MakeNamespacedId(s.Namespace, id)
-	req := bullet_interface.DepotDeleteRequest{
-		Key: namespacedId,
+	res, err := s.Collection.ItemsForKeys([]string{idToStr(id)})
+	if err != nil || res == nil {
+		return err
 	}
-	return s.Depot.DepotDeleteOne(req)
+	var collIds []bullet_stl.CollectionId
+	for k := range res {
+		collIds = append(collIds, k)
+	}
+	return s.Collection.DeleteItems(collIds)
 }
