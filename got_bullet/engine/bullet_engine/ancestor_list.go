@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -56,8 +55,6 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*eng
 
 	//can't insert an item that exists, and all items have an acnestor besides the root node.
 	if ancestorsOfNewItem != nil && len(ancestorsOfNewItem.Pairs) != 0 {
-		fmt.Printf("VX: ACNESTORS ARE %+v\n", *ancestorsOfNewItem)
-		fmt.Printf("VX new item id is %s\n", id.AasciValue)
 		return nil, errors.New("attempted to insert an existing id")
 	}
 	//we insert this item to the root node.
@@ -74,8 +71,6 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*eng
 			return nil, err
 		}
 		if ancestorSubject == nil {
-			fmt.Printf("VX: id is %s\n", id.AasciValue)
-			panic("VX:WTF which node is this.")
 			return nil, errors.New("every node besides the root node should have ancestors")
 		}
 		if len(ancestorSubject.Pairs) != 1 {

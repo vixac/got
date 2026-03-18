@@ -16,7 +16,6 @@ func (e *EngineBullet) CreateStoreFile() error {
 	if err != nil {
 		return err
 	}
-	//fmt.Printf("There are %d items \n", len(allItems.Result))
 	var everyId []int32
 	var everyAasciId []string
 	for _, display := range allItems.Result {
@@ -27,16 +26,6 @@ func (e *EngineBullet) CreateStoreFile() error {
 	if err != nil {
 		return err
 	}
-	//fmt.Printf("VX: there are %d longforms \n", len(everyLongForm))
-
-	//VX:TODO not needed.
-	/*
-		allAliases, err := e.LookupAliasForMany(everyAasciId)
-		if err != nil {
-			return err
-		}
-	*/
-	//fmt.Printf("VX: there are %d aliases \n", len(allAliases))
 
 	//sorted for top level first.
 	sortedItemLList := allItems.Result
@@ -46,7 +35,6 @@ func (e *EngineBullet) CreateStoreFile() error {
 
 	var createItemRequests []engine.CreateBuckRequest
 	for _, item := range sortedItemLList {
-		//item.SummaryObj.Deadline
 		var lookup *engine.GidLookup = nil
 		if item.Path != nil && item.Path.Depth() > 0 {
 			lastItemInPath := item.Path.Ancestry[item.Path.Depth()-1]
@@ -54,7 +42,6 @@ func (e *EngineBullet) CreateStoreFile() error {
 				lookup = &engine.GidLookup{Input: "0" + lastItemInPath.Id}
 			}
 		}
-		//		lookup := engine.GidLookup{Input: item.DisplayGid}
 		var alias *string = nil
 		var noAlias = true
 		if item.Alias != "" {
@@ -104,8 +91,8 @@ func (e *EngineBullet) CreateStoreFile() error {
 	if err != nil {
 		return err
 	}
+	//here we print the restore to std out (VX:TODO return to caller so it can use the deps.Printer)
 	fmt.Printf("%s\n", json)
-
 	return nil
 
 }
