@@ -99,6 +99,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		return nil, err
 	}
 
+	//VX:TODO the shape of blocks has changed. the longform database is wrong.
 	//if longform is present in the override, add that too.
 	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
 		for _, b := range request.OverrideSettings.LongForm.Blocks {
