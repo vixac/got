@@ -69,15 +69,23 @@ func (e *EngineBullet) CreateStoreFile() error {
 			createdDate = item.SummaryObj.CreatedDate.Date
 		}
 
+		//VX:TODO here we consolidate the "blocks" into a single string for the purposes of this batch longform json
+		var longFormStr = ""
+		if longFormPtr != nil {
+			for _, b := range longFormPtr.Blocks {
+				longFormStr += b.Content
+			}
+		}
+
 		overrides := engine.CreateOverrideSettings{
-			OverrideId:  &item.GotId.IntValue,
-			UpdatedDate: updated,
-			CreatedDate: createdDate, //item.SummaryObj.CreatedDate.Date,
-			Alias:       alias,
-			NoAlias:     noAlias,
-			Tags:        item.SummaryObj.Tags,
-			Flags:       flags,
-			LongForm:    longFormPtr,
+			OverrideId:          &item.GotId.IntValue,
+			UpdatedDate:         updated,
+			CreatedDate:         createdDate, //item.SummaryObj.CreatedDate.Date,
+			Alias:               alias,
+			NoAlias:             noAlias,
+			Tags:                item.SummaryObj.Tags,
+			Flags:               flags,
+			LongFormBlockOfText: longFormStr,
 		}
 		var state engine.GotState = engine.Active
 		if item.SummaryObj != nil && item.SummaryObj.State != nil {
