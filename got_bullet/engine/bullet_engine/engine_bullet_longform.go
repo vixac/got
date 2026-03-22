@@ -1,21 +1,39 @@
 package bullet_engine
 
-import "vixac.com/got/engine"
+import (
+	"fmt"
 
-// This is the better pattern and we should stick to these.
-var _ engine.LongFormStoreInterface = (*EngineBullet)(nil)
+	"vixac.com/got/engine"
+)
 
-func (e *EngineBullet) UpsertItem(id int32, block engine.LongFormBlock) error {
-	return e.LongFormStore.UpsertItem(id, block)
+func (e *EngineBullet) JotNote(lookup engine.GidLookup, note string) (engine.LongFormKey, error) {
+
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return engine.LongFormKey{}, err
+	}
+
+	id, err := e.LongFormStore.AppendNote(*gid, note)
+	return *id, err
 }
-func (e *EngineBullet) LongFormFor(id int32) (*engine.LongFormBlockResult, error) {
-	return e.LongFormStore.LongFormFor(id)
+
+func (e *EngineBullet) NotesFor(lookup engine.GidLookup) (*engine.LongFormBlockResult, error) {
+	fmt.Printf("VX: Lookup is %s\n", lookup.Input)
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return nil, err
+	}
+	return e.LongFormStore.LongFormNotesFor(*gid)
 }
 
-func (e *EngineBullet) LongFormForMany(ids []int32) (map[int32]engine.LongFormBlockResult, error) {
+/*
+
+
+func (e *EngineBullet) LongFormForMany(ids []engine.GotId) (map[engine.GotId]engine.LongFormBlockResult, error) {
 	return e.LongFormStore.LongFormForMany(ids)
 }
 
-func (e *EngineBullet) RemoveAllItemsFromLongStore(id int32) error {
-	return e.LongFormStore.RemoveAllItemsFromLongStore(id)
+func (e *EngineBullet) RemoveAllItemsFromLongStoreUnder(id engine.GotId) error {
+	return e.LongFormStore.RemoveAllItemsFromLongStoreUnder(id)
 }
+*/

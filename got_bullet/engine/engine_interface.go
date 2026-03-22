@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"strings"
+	"time"
 	"unicode"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -23,7 +24,6 @@ type GotEngine interface {
 	ToggleCollapse(lookup GidLookup, collapsed bool) error
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
-	OpenThenTimestamp(lookup GidLookup) error
 	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
 	TagItem(lookup GidLookup, tag TagLookup) error
 
@@ -31,6 +31,13 @@ type GotEngine interface {
 	GotCreateItemInterface
 	GotFetchInterface
 	RestoreInterface
+	NoteInterface
+}
+
+// VX:TODO finish this.
+type NoteInterface interface {
+	JotNote(lookup GidLookup, note string) (LongFormKey, error)
+	NotesFor(lookup GidLookup) (*LongFormBlockResult, error)
 }
 
 type IdGeneratorInterface interface {
@@ -102,22 +109,23 @@ type AncestorListInterface interface {
 type LongFormBlockResult struct {
 	Blocks []LongFormBlock
 }
-type LongFormId struct {
-	String string
-}
+
 type LongFormBlock struct {
-	Id       LongFormId
-	ParentID int32
-	Content  string
-	Created  DateTime
-	Edited   DateTime
+	Id      LongFormKey
+	Content string
+	Edited  time.Time
+}
+
+func (l *LongFormBlock) Created() time.Time {
+	return l.Id.CreatedTime
 }
 
 type LongFormStoreInterface interface {
-	UpsertItem(id int32, block LongFormBlock) error
-	LongFormFor(id int32) (*LongFormBlockResult, error)
-	LongFormForMany(ids []int32) (map[int32]LongFormBlockResult, error)
-	RemoveAllItemsFromLongStore(id int32) error
+	AppendNote(id GotId, content string) (*LongFormKey, error)
+	InsertBlock(block LongFormBlock) error
+	LongFormNotesFor(id GotId) (*LongFormBlockResult, error)
+	LongFormForMany(ids []GotId) (map[GotId]LongFormBlockResult, error)
+	RemoveAllItemsFromLongStoreUnder(id GotId) error
 }
 
 type TitleStoreInterface interface {
@@ -325,7 +333,7 @@ type GotItemDisplay struct {
 }
 
 func (i *GotItemDisplay) IsCollapsed() bool {
-	return i.SummaryObj.Flags != nil && i.SummaryObj.Flags["collapsed"] == true
+	return i.SummaryObj != nil && i.SummaryObj.Flags != nil && i.SummaryObj.Flags["collapsed"] == true
 }
 
 func (i *GotItemDisplay) IsNote() bool {
@@ -432,6 +440,16 @@ func (p *GotPath) Depth() int {
 type GotId struct {
 	AasciValue string
 	IntValue   int32
+}
+
+func NewGotIdFromInt(intValue int32) (*GotId, error) {
+	strVal, err := bullet_stl.BulletIdIntToAasci(int64(intValue))
+	if err != nil {
+		return nil, err
+	}
+	gotId := NewCompleteId(strVal, intValue)
+	return &gotId, nil
+
 }
 
 func NewCompleteId(aasci string, intValue int32) GotId {

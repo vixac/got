@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
-	"vixac.com/got/engine"
 )
 
 func buildTCommand(deps RootDependencies) *cobra.Command {
@@ -15,15 +16,16 @@ func buildTCommand(deps RootDependencies) *cobra.Command {
 				deps.Printer.Error(console.Message{Message: "Expected at least one lookup as input"})
 				return
 			}
+			fmt.Printf("VX: open then timesptamp is paused..")
+			//			lookup := engine.GidLookup{Input: args[0]}
 
-			lookup := engine.GidLookup{Input: args[0]}
-
-			err := deps.Engine.OpenThenTimestamp(lookup)
-			if err != nil {
-				deps.Printer.Print(console.Message{Message: "error: " + err.Error()})
-			} else {
-				deps.Printer.Print(console.Message{Message: "<>"})
-			}
+			/*	err := deps.Engine.OpenThenTimestamp(lookup)
+				if err != nil {
+					deps.Printer.Print(console.Message{Message: "error: " + err.Error()})
+				} else {
+					deps.Printer.Print(console.Message{Message: "<>"})
+				}
+			*/
 
 			//msg := "Success: " + args[0] + " is marked complete."
 			//deps.Printer.Print(console.Message{Message: msg})

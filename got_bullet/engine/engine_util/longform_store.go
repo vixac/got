@@ -2,9 +2,13 @@ package engine_util
 
 import (
 	"errors"
+	"fmt"
+	"sort"
+	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
+	bullet_id "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
 )
 
@@ -17,66 +21,149 @@ func NewBulletLongFormStore(bucketId int32, track bullet_interface.TrackClientIn
 	return &BulletLongFormStore{Collection: coll}, nil
 }
 
-func (s *BulletLongFormStore) UpsertItem(id int32, block engine.LongFormBlock) error {
-	idStr := idToStr(id)
-	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
-	if err != nil {
-		return err
-	}
-	if len(existing) == 0 {
-		_, err := s.Collection.CreateItemUnder(idStr, block.Content)
-		return err
-	}
-	if len(existing) != 1 {
-		return errors.New("upserting to a key that is not unique")
-	}
-	var theCollId bullet_stl.CollectionId
-	for k := range existing {
-		theCollId = k
-	}
-	return s.Collection.EditPayload(theCollId, block.Content)
-}
-
-func (s *BulletLongFormStore) LongFormForMany(ids []int32) (map[int32]engine.LongFormBlockResult, error) {
-	var idStrings []string
-	for _, id := range ids {
-		idStrings = append(idStrings, idToStr(id))
-	}
-	resp, err := s.Collection.ItemsForKeys(idStrings)
-	if err != nil {
-		return nil, err
-	}
-	if resp == nil {
+func highestIdInside(collection map[bullet_stl.CollectionId]bullet_stl.CollectionItem) (*bullet_id.BulletId, error) {
+	if len(collection) == 0 {
 		return nil, nil
 	}
-	result := make(map[int32]engine.LongFormBlockResult)
-	for k, v := range resp {
-		id, err := strToId(k.Key)
+	var highestIntValue int64 = 0
+	for k, _ := range collection {
+
+		longFormKey, err := engine.NewLongFormKeyFromString(k.Key)
 		if err != nil {
 			return nil, err
 		}
-		block := engine.LongFormBlock{Content: v}
-		result[id] = engine.LongFormBlockResult{Blocks: []engine.LongFormBlock{block}}
+		if longFormKey.NoteId.IntValue > highestIntValue {
+			highestIntValue = longFormKey.NoteId.IntValue
+		}
+	}
+	return bullet_id.NewBulletIdFromInt(highestIntValue)
+}
+
+func (s *BulletLongFormStore) InsertBlock(block engine.LongFormBlock) error {
+	id := block.Id.ToString()
+	_, err := s.Collection.CreateItemUnder(id, block.Content, &block.Edited)
+	return err
+}
+
+func (s *BulletLongFormStore) AppendNote(id engine.GotId, content string) (*engine.LongFormKey, error) {
+	existing, err := s.Collection.AllItemsUnderPrefix(id.AasciValue)
+	if err != nil {
+		return nil, err
+	}
+
+	highestExistingId, err := highestIdInside(existing)
+	if err != nil {
+		return nil, err
+	}
+	if highestExistingId == nil { //this is the first note for this gotid
+		first := engine.FirstNoteId()
+		highestExistingId = &first
+	}
+
+	now := time.Now()
+
+	newLongFormId := engine.LongFormKey{
+		NoteId:      highestExistingId.Next(),
+		GotId:       id,
+		CreatedTime: now,
+	}
+
+	newLongFormNoteStringId := newLongFormId.ToString()
+	collId, err := s.Collection.CreateItemUnder(newLongFormNoteStringId, content, &now)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("VX: Note created under colelction Id %s \n", collId.Key)
+	return &newLongFormId, nil
+}
+
+func collectionToLongFormMap(collection map[bullet_stl.CollectionId]bullet_stl.CollectionItem) (map[engine.GotId]engine.LongFormBlockResult, error) {
+	idsToBlocks := make(map[engine.GotId][]engine.LongFormBlock)
+	for k, v := range collection {
+		longformId, err := engine.NewLongFormKeyFromString(k.Key)
+		if err != nil || longformId == nil {
+			return nil, err
+		}
+		newBlock := engine.LongFormBlock{
+			Id:      *longformId,
+			Content: v.Payload,
+			Edited:  v.Updated,
+		}
+		gotId := longformId.GotId
+		existing, ok := idsToBlocks[gotId]
+		if !ok {
+			idsToBlocks[gotId] = []engine.LongFormBlock{newBlock}
+		} else {
+			idsToBlocks[gotId] = append(existing, newBlock)
+		}
+	}
+
+	result := make(map[engine.GotId]engine.LongFormBlockResult)
+	for k, v := range idsToBlocks {
+		sort.Slice(v, func(i, j int) bool {
+			ti := v[i].Id.CreatedTime
+			tj := v[j].Id.CreatedTime
+			if ti.Equal(tj) {
+				return v[i].Id.NoteId.IntValue < v[j].Id.NoteId.IntValue
+			}
+			return ti.Before(tj)
+		})
+		result[k] = engine.LongFormBlockResult{
+			Blocks: v,
+		}
 	}
 	return result, nil
 }
 
-func (s *BulletLongFormStore) LongFormFor(id int32) (*engine.LongFormBlockResult, error) {
-	res, err := s.LongFormForMany([]int32{id})
+func (s *BulletLongFormStore) LongFormForMany(ids []engine.GotId) (map[engine.GotId]engine.LongFormBlockResult, error) {
+	var idStrings []string
+	for _, id := range ids {
+		idStrings = append(idStrings, id.AasciValue)
+	}
+	items, err := s.Collection.AllItemsUnderPrefixes(idStrings)
+	if err != nil {
+		return nil, err
+	}
+	return collectionToLongFormMap(items)
+}
+
+// VX:TODO this could take a nil and then we could smoosh the results or something for ranged lookup
+func (s *BulletLongFormStore) LongFormNotesFor(id engine.GotId) (*engine.LongFormBlockResult, error) {
+	fmt.Printf("VX: id is %s\n", id.AasciValue)
+	res, err := s.Collection.AllItemsUnderPrefix(id.AasciValue)
 	if err != nil || len(res) == 0 {
 		return nil, err
 	}
-	r := res[id]
-	return &r, nil
+
+	idMap, err := collectionToLongFormMap(res)
+	if err != nil {
+		return nil, err
+	}
+	//no notes for this id
+	if len(idMap) == 0 {
+		return nil, nil
+	}
+	if len(idMap) != 1 {
+		return nil, errors.New("Too many gotIds in response for notes for id")
+	}
+
+	blockResult, ok := idMap[id]
+	if !ok {
+		return nil, errors.New("wrong id returned")
+	}
+	return &blockResult, nil
 }
 
-func (s *BulletLongFormStore) RemoveAllItemsFromLongStore(id int32) error {
-	res, err := s.Collection.ItemsForKeys([]string{idToStr(id)})
-	if err != nil || res == nil {
+func (s *BulletLongFormStore) RemoveAllItemsFromLongStoreUnder(id engine.GotId) error {
+
+	items, err := s.Collection.AllItemsUnderPrefix(id.AasciValue)
+	if err != nil {
 		return err
 	}
+
 	var collIds []bullet_stl.CollectionId
-	for k := range res {
+	for k := range items {
 		collIds = append(collIds, k)
 	}
 	return s.Collection.DeleteItems(collIds)

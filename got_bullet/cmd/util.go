@@ -126,6 +126,45 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.Tab
 	return finalSections, nil
 }
 
+func renderNotesFor(lookup engine.GidLookup, deps RootDependencies) {
+	notes, err := deps.Engine.NotesFor(lookup)
+	if err != nil {
+		deps.Printer.Error(console.Message{Message: err.Error()})
+		return
+	}
+	var displays []engine.GotItemDisplay
+	for _, block := range notes.Blocks {
+		display := engine.GotItemDisplay{
+			GotId:         block.Id.GotId,
+			DisplayGid:    block.Id.ToString(),
+			Title:         block.Content,
+			Path:          nil, //VX:TODO rm created?
+			Alias:         "",
+			SummaryObj:    nil,
+			HasTNote:      false,
+			Deadline:      "",
+			DeadlineToken: console.TokenBrand{},
+			Created:       block.Created().String(),
+			Updated:       block.Edited.String(),
+		}
+		displays = append(displays, display)
+	}
+	section := bullet_engine.TableSection{
+		Name:  "Notes",
+		Items: displays,
+	}
+
+	table, err := bullet_engine.NewTable(&bullet_engine.GotTableSections{
+		Sections: []bullet_engine.TableSection{section},
+	}, bullet_engine.TableRenderOptions{})
+	if err != nil {
+		deps.Printer.Error(console.Message{Message: err.Error()})
+		return
+	}
+	table.Render(deps.Printer, &console.GotTheme{})
+
+}
+
 func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bullet_engine.TableRenderOptions, deps RootDependencies) {
 	res, err := deps.Engine.FetchItemsBelow(lookup, options.SortByPath, states, options.HideUnderCollapsed)
 	if err != nil {

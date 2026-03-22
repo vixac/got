@@ -263,25 +263,30 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				itemRow.LongForm = console.NewTableCellFromStr(engine.TNoteChar+" ", console.TokenGroup{})
 			}
 
-			itemRow.State = stateToCell(item.SummaryObj.State)
+			if item.SummaryObj != nil {
+				itemRow.State = stateToCell(item.SummaryObj.State)
+			}
+
 			tagStr := ""
 			//tags
-			if item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
+			if item.SummaryObj != nil && item.SummaryObj.Tags != nil && len(item.SummaryObj.Tags) == 0 {
 				//VX:TODO invert the if
 			} else {
-
-				for i, t := range item.SummaryObj.Tags {
-					if i == 0 {
-						tagStr = " ("
-					} else {
-						tagStr += ","
+				if item.SummaryObj != nil {
+					for i, t := range item.SummaryObj.Tags {
+						if i == 0 {
+							tagStr = " ("
+						} else {
+							tagStr += ","
+						}
+						tagStr += t.Literal.Display
 					}
-					tagStr += t.Literal.Display
+					if tagStr != "" {
+						tagStr += ")"
+					}
+					tagStr += " "
 				}
-				if tagStr != "" {
-					tagStr += ")"
-				}
-				tagStr += " "
+
 			}
 			tagSnippet := console.NewSnippet(tagStr, console.TokenAlert{})
 
@@ -290,7 +295,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 			var titlePrefix = ""
 			if item.IsNote() {
 				titleToken = console.TokenNote{}
-			} else if item.SummaryObj.Counts != nil {
+			} else if item.SummaryObj != nil && item.SummaryObj.Counts != nil {
 				titleToken = console.TokenGroup{}
 			} else {
 				titlePrefix = "  "

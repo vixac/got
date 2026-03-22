@@ -35,7 +35,37 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	}
 
 	var overrideId int32 = 12360
+	buck1IdGot, err := engine.NewGotIdFromInt(overrideId)
+	assert.NoError(t, err)
 	var longForm string = "This is a long form text entry."
+
+	//VX:TODO this comes back once we've finished batch restore.
+	/*
+
+		millis := "1774179116040"
+		createdDate, err := engine.EpochMillisStringToDate(millis)
+		assert.NoError(t, err)
+
+		editMillis := "177417911601"
+		editDate, err := engine.EpochMillisStringToDate(editMillis)
+		assert.NoError(t, err)
+		bulletId, err := bullet_stl.NewBulletIdFromInt(1000)
+		assert.NoError(t, err)
+
+		longformId := engine.LongFormKey{
+			GotId:       *buck1IdGot,
+			NoteId:      *bulletId,
+			CreatedTime: *createdDate,
+		}
+		block := engine.LongFormBlock{
+			Id:      longformId,
+			Content: longForm,
+			Edited:  *editDate,
+		}
+		longFormResult := engine.LongFormBlockResult{
+			Blocks: []engine.LongFormBlock{block},
+		}
+	*/
 	//VX:TODO this gets put back once we are no longer doing batch longform restore.
 	//block := engine.LongFormBlock{
 	//		Content: longForm,
@@ -97,10 +127,10 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
 
-	longformRes, err := sut.LongFormStore.LongFormForMany([]int32{buck1Id})
+	longformRes, err := sut.LongFormStore.LongFormForMany([]engine.GotId{*buck1IdGot})
 	assert.Equal(t, len(longformRes), 1)
-	assert.Equal(t, len(longformRes[buck1Id].Blocks), 1)
-	assert.Equal(t, longformRes[buck1Id].Blocks[0].Content, "This is a long form text entry.")
+	assert.Equal(t, len(longformRes[*buck1IdGot].Blocks), 1)
+	assert.Equal(t, longformRes[*buck1IdGot].Blocks[0].Content, "This is a long form text entry.")
 
 }
 
