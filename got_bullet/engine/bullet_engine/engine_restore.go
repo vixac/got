@@ -16,10 +16,10 @@ func (e *EngineBullet) CreateStoreFile() error {
 	if err != nil {
 		return err
 	}
-	var everyId []int32
+	var everyId []engine.GotId
 	var everyAasciId []string
 	for _, display := range allItems.Result {
-		everyId = append(everyId, display.GotId.IntValue)
+		everyId = append(everyId, display.GotId)
 		everyAasciId = append(everyAasciId, display.GotId.AasciValue)
 	}
 	everyLongForm, err := e.LongFormStore.LongFormForMany(everyId)
@@ -55,7 +55,7 @@ func (e *EngineBullet) CreateStoreFile() error {
 		}
 
 		var longFormPtr *engine.LongFormBlockResult = nil
-		longForm, ok := everyLongForm[item.GotId.IntValue]
+		longForm, ok := everyLongForm[item.GotId]
 		if ok {
 			longFormPtr = &longForm
 		}

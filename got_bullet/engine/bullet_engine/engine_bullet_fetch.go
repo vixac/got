@@ -67,6 +67,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 
 	//VX:TODO so there's no ancestor path available for the parent. its a bug basically. Because aren't fetching the PARENT when we call FetchImmediatelyUnder. In theory we could return the parent perhaps? Not sure.
 	var intIds []int32
+	var gotIds []engine.GotId
 	ancestorPaths := make(map[int32]engine.GotPath)
 	if all != nil {
 		for id, ancestorLookup := range allIds {
@@ -76,6 +77,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 				return nil, err
 			}
 			intIds = append(intIds, int32(intId))
+
+			gotIds = append(gotIds, engine.NewCompleteId(id, int32(intId)))
 
 			path := ancestorPathFor(&ancestorLookup, aliasMap)
 
@@ -118,7 +121,8 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	//just needed to see if we present the note emoji. Unfortunately we're loading
 	//the actual notes on here.
 	//VX:TODO we just need to know if theres a note, not load the content.
-	longForms, err := e.LongFormForMany(intIds)
+
+	longForms, err := e.LongFormStore.LongFormForMany(gotIds)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +133,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	var itemDisplays []engine.GotItemDisplay
 	for k, v := range titles {
 
-		stringId, err := bullet_stl.BulletIdIntToaasci(int64(k)) //VX:TODO can we just look this up from above?
+		stringId, err := bullet_stl.BulletIdIntToAasci(int64(k)) //VX:TODO can we just look this up from above?
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +162,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		//VX:Note we want to have completes
 		//not even appear in the search, because thats more scalable.
 
-		_, hasLongForm := longForms[k]
+		_, hasLongForm := longForms[*gotId]
 
 		//this is the parent, so we populate parentItemDisplay and then continnue.
 		if k == parentGid.IntValue { //we will render parents separtely

@@ -1,6 +1,9 @@
 package engine_util
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
@@ -26,7 +29,8 @@ func NewBulletSummaryStore(bucketId int32, track bullet_interface.TrackClientInt
 func (a *BulletSummaryStore) UpsertManySummaries(aggs map[engine.SummaryId]engine.Summary) error {
 	var idStrings []string
 	for id := range aggs {
-		idStrings = append(idStrings, idToStr(int32(id)))
+		idStr := strconv.Itoa(int(id))
+		idStrings = append(idStrings, idStr)
 	}
 	existing, err := a.Collection.ItemsForKeys(idStrings)
 	if err != nil {
@@ -36,16 +40,17 @@ func (a *BulletSummaryStore) UpsertManySummaries(aggs map[engine.SummaryId]engin
 	for collId := range existing {
 		existingByKey[collId.Key] = collId
 	}
+	now := time.Now()
 	for id, summary := range aggs {
 		payload, err := a.codec.Encode(summary)
 		if err != nil {
 			return err
 		}
-		key := idToStr(int32(id))
+		key := strconv.Itoa(int(id))
 		if collId, ok := existingByKey[key]; ok {
-			err = a.Collection.EditPayload(collId, payload)
+			err = a.Collection.EditPayload(collId, payload, &now)
 		} else {
-			_, err = a.Collection.CreateItemUnder(key, payload)
+			_, err = a.Collection.CreateItemUnder(key, payload, &now)
 		}
 		if err != nil {
 			return err
@@ -61,7 +66,8 @@ func (a *BulletSummaryStore) UpsertSummary(id engine.SummaryId, agg engine.Summa
 func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId]engine.Summary, error) {
 	var idStrings []string
 	for _, id := range ids {
-		idStrings = append(idStrings, idToStr(int32(id)))
+		idStr := strconv.Itoa(int(id))
+		idStrings = append(idStrings, idStr)
 	}
 	resp, err := a.Collection.ItemsForKeys(idStrings)
 	if err != nil {
@@ -70,6 +76,7 @@ func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId
 	if resp == nil {
 		return nil, nil
 	}
+
 	result := make(map[engine.SummaryId]engine.Summary)
 	for collId, payload := range resp {
 		id, err := strToId(collId.Key)
@@ -77,7 +84,8 @@ func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId
 			return nil, err
 		}
 		var summary engine.Summary
-		err = a.codec.Decode(payload, &summary)
+
+		err = a.codec.Decode(payload.Payload, &summary)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +97,8 @@ func (a *BulletSummaryStore) Fetch(ids []engine.SummaryId) (map[engine.SummaryId
 func (a *BulletSummaryStore) Delete(ids []engine.SummaryId) error {
 	var idStrings []string
 	for _, id := range ids {
-		idStrings = append(idStrings, idToStr(int32(id)))
+		idStr := strconv.Itoa(int(id))
+		idStrings = append(idStrings, idStr)
 	}
 	res, err := a.Collection.ItemsForKeys(idStrings)
 	if err != nil || res == nil {

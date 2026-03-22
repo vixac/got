@@ -29,7 +29,7 @@ func (b *BulletGidLookup) ReturnLastId(offset int) (*engine.GotId, error) {
 	if lastId == 0 {
 		return nil, errors.New("Invalid last id.")
 	}
-	str, err := bullet_stl.BulletIdIntToaasci(lastId + int64(offset))
+	str, err := bullet_stl.BulletIdIntToAasci(lastId + int64(offset))
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"strings"
+	"time"
 	"unicode"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -102,22 +103,22 @@ type AncestorListInterface interface {
 type LongFormBlockResult struct {
 	Blocks []LongFormBlock
 }
-type LongFormId struct {
-	String string
-}
+
 type LongFormBlock struct {
-	Id       LongFormId
-	ParentID int32
-	Content  string
-	Created  DateTime
-	Edited   DateTime
+	Id      LongFormKey
+	Content string
+	Edited  DateTime
+}
+
+func (l *LongFormBlock) Created() time.Time {
+	return l.Id.CreatedTime
 }
 
 type LongFormStoreInterface interface {
-	UpsertItem(id int32, block LongFormBlock) error
-	LongFormFor(id int32) (*LongFormBlockResult, error)
-	LongFormForMany(ids []int32) (map[int32]LongFormBlockResult, error)
-	RemoveAllItemsFromLongStore(id int32) error
+	AppendNote(id GotId, block LongFormBlock) error
+	LongFormNotesFor(id GotId) (*LongFormBlockResult, error)
+	LongFormForMany(ids []GotId) (map[GotId]LongFormBlockResult, error)
+	RemoveAllItemsFromLongStoreUnder(id GotId) error
 }
 
 type TitleStoreInterface interface {
@@ -431,6 +432,16 @@ func (p *GotPath) Depth() int {
 type GotId struct {
 	AasciValue string
 	IntValue   int32
+}
+
+func NewGotIdFromInt(intValue int32) (*GotId, error) {
+	strVal, err := bullet_stl.BulletIdIntToAasci(int64(intValue))
+	if err != nil {
+		return nil, err
+	}
+	gotId := NewCompleteId(strVal, intValue)
+	return &gotId, nil
+
 }
 
 func NewCompleteId(aasci string, intValue int32) GotId {

@@ -2,6 +2,7 @@ package engine_util
 
 import (
 	"errors"
+	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
@@ -41,15 +42,16 @@ func (n *BulletNumberGoStore) AssignNumberPairs(pairs []engine.NumberGoPair) err
 	if err != nil {
 		return err
 	}
+	now := time.Now()
 	if len(existing) == 0 {
-		_, err = n.Collection.CreateItemUnder(numberGoKey, payload)
+		_, err = n.Collection.CreateItemUnder(numberGoKey, payload, &now)
 		return err
 	}
 	var collId bullet_stl.CollectionId
 	for k := range existing {
 		collId = k
 	}
-	return n.Collection.EditPayload(collId, payload)
+	return n.Collection.EditPayload(collId, payload, &now)
 }
 
 func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
@@ -62,7 +64,7 @@ func (n *BulletNumberGoStore) GidFor(number int) (*engine.GotId, error) {
 	}
 	var payload string
 	for _, v := range res {
-		payload = v
+		payload = v.Payload
 	}
 	var block NumberGoBlock
 	err = n.Codec.Decode(payload, &block)

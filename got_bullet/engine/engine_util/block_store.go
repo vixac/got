@@ -1,12 +1,7 @@
 package engine_util
 
-import (
-	"strconv"
-
-	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	"vixac.com/got/engine"
-)
-
+//VX:TODO this is perhaps replaced by the collections implemtnation.
+/*
 type BlockStore struct {
 	Namespace int32
 	Depot     bullet_interface.DepotClientInterface
@@ -26,7 +21,7 @@ func NewBlockStore(Namespace int32, treeId string, grove bullet_interface.GroveC
 }
 
 // checks a parent node exists and if it doesnt, create it at the top before returning thus ensuringParentExists.
-func (b *BlockStore) ensureParentexists(id int32) error {
+func (b *BlockStore) ensureParenteExists(id int32) error {
 	//ask grove if the parent exists and create it if it doesnt.
 	nodeId := bullet_interface.NodeID(id)
 	req := bullet_interface.GroveExistsRequest{
@@ -55,9 +50,9 @@ func (b *BlockStore) ensureParentexists(id int32) error {
 
 // VX:TODO rm the id from this.
 // wtf is child position. the epoch i guess.
-func (b *BlockStore) UpsertItem(id int32, block engine.LongFormBlock) error {
+func (b *BlockStore) AppendNote(id engine.GotId, block engine.LongFormBlock) error {
 
-	err := b.ensureParentexists(block.ParentID)
+	err := b.ensureParenteExists(block.ParentID)
 	if err != nil {
 		return err
 	}
@@ -97,12 +92,7 @@ func (b *BlockStore) LongFormFor(id int32) (*engine.LongFormBlockResult, error) 
 	if err != nil {
 		return nil, err
 	}
-	/*
-		var blocks []engine.LongFormBlock
-		for _, c := range res.Children {
-
-		}
-	*/
+		//VX:TOO bollocks we need the track component.
 	return nil, nil
 }
 func (b *BlockStore) LongFormForMany(ids []int32) (map[int32]engine.LongFormBlockResult, error) {
@@ -112,3 +102,4 @@ func (b *BlockStore) RemoveAllItemsFromLongStore(id int32) error {
 	return nil
 
 }
+*/

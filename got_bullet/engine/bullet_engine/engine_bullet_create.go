@@ -49,7 +49,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		newId = int32(newIdFromNext)
 	}
 
-	stringId, err := bullet_stl.BulletIdIntToaasci(int64(newId))
+	stringId, err := bullet_stl.BulletIdIntToAasci(int64(newId))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 	//if longform is present in the override, add that too.
 	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
 		for _, b := range request.OverrideSettings.LongForm.Blocks {
-			err = e.LongFormStore.UpsertItem(newId, b)
+			err = e.LongFormStore.AppendNote(gotId, b)
 			if err != nil {
 				return nil, err
 			}

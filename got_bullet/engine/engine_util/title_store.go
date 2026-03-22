@@ -3,6 +3,7 @@ package engine_util
 import (
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
@@ -20,9 +21,10 @@ func NewBulletTitleStore(bucketId int32, track bullet_interface.TrackClientInter
 	}
 }
 
-func idToStr(id int32) string { //I need to
-	return strconv.Itoa(int(id))
+func idToStr(id engine.GotId) string { //I need to
+	return id.AasciValue //strconv.Itoa(int(id.IntValue))
 }
+
 func strToId(key string) (int32, error) {
 	id, err := strconv.Atoi(key)
 	return int32(id), err
@@ -30,15 +32,16 @@ func strToId(key string) (int32, error) {
 func (s *BulletTitleStore) UpsertItem(id int32, title string) error {
 
 	//first we check if it exists:
-	idStr := idToStr(id)
+	idStr := strconv.Itoa(int(id))
 	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
 	if err != nil {
 		return err
 	}
 
 	//create the item
+	now := time.Now()
 	if existing == nil || len(existing) == 0 {
-		_, err := s.Collection.CreateItemUnder(idStr, title)
+		_, err := s.Collection.CreateItemUnder(idStr, title, &now)
 		return err
 	}
 	if len(existing) != 1 {
@@ -51,13 +54,14 @@ func (s *BulletTitleStore) UpsertItem(id int32, title string) error {
 		theCollId = k
 	}
 	//edit the item.
-	return s.Collection.EditPayload(theCollId, title)
+	return s.Collection.EditPayload(theCollId, title, &now)
 }
 
 func (s *BulletTitleStore) TitleForMany(ids []int32) (map[int32]string, error) {
 	var idStrings []string
 	for _, id := range ids {
-		idStrings = append(idStrings, idToStr(id))
+		idStr := strconv.Itoa(int(id))
+		idStrings = append(idStrings, idStr)
 	}
 	resp, err := s.Collection.ItemsForKeys(idStrings)
 	if err != nil {
@@ -73,7 +77,7 @@ func (s *BulletTitleStore) TitleForMany(ids []int32) (map[int32]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		int32Map[intId] = v
+		int32Map[intId] = v.Payload
 	}
 	return int32Map, nil
 }
@@ -98,7 +102,8 @@ func (s *BulletTitleStore) TitleFor(id int32) (*string, error) {
 
 func (s *BulletTitleStore) RemoveItem(id int32) error {
 	var keys []string
-	keys = append(keys, idToStr(id))
+	idStr := strconv.Itoa(int(id))
+	keys = append(keys, idStr)
 	res, err := s.Collection.ItemsForKeys(keys)
 	if err != nil || res == nil {
 		return err

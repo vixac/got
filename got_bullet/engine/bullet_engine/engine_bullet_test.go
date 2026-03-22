@@ -95,10 +95,13 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
 
-	longformRes, err := sut.LongFormStore.LongFormForMany([]int32{buck1Id})
+	buck1IdGot, err := engine.NewGotIdFromInt(buck1Id)
+	assert.NoError(t, err)
+
+	longformRes, err := sut.LongFormStore.LongFormForMany([]engine.GotId{*buck1IdGot})
 	assert.Equal(t, len(longformRes), 1)
-	assert.Equal(t, len(longformRes[buck1Id].Blocks), 1)
-	assert.Equal(t, longformRes[buck1Id].Blocks[0].Content, "This is a long form text entry.")
+	assert.Equal(t, len(longformRes[*buck1IdGot].Blocks), 1)
+	assert.Equal(t, longformRes[*buck1IdGot].Blocks[0].Content, "This is a long form text entry.")
 
 }
 
