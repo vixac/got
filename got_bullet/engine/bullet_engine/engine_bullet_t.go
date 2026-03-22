@@ -5,85 +5,40 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
 	"vixac.com/got/engine"
 )
 
+const line = "  ---------------------------------------------------\n"
+
 func commentOut(text string) string {
 	var result = ""
-
 	var currentLine = ""
 	for _, r := range text {
 		if r == '\n' {
 			result += "# " + currentLine + "\n"
+			currentLine = ""
 		} else {
 			currentLine += string(r)
 		}
 	}
+	if currentLine != "" {
+		result += "# " + currentLine
+	}
 	return result
 }
-func ignoreCommentedOut(text string) string {
-	var updatedString = ""
-	var lines []string = strings.Split(string(text), "\n")
-	for _, line := range lines {
 
-		if len(line) > 0 && line[0] != '#' {
-			updatedString += updatedString
+func ignoreCommentedOut(text string) string {
+	var kept []string
+	for _, line := range strings.Split(text, "\n") {
+		if len(line) == 0 || line[0] != '#' {
+			kept = append(kept, line)
 		}
 	}
-	return updatedString
-}
-
-// opens the editor with the provided initial text, and returns edits from the user.
-// commentedout text is ignored from the return if commentedOut mode is enabled.
-func openEditor(initialText string, commentedOut bool) (string, error) {
-	tmp, err := os.CreateTemp("", "got-note-*.txt")
-	if err != nil {
-		return "", err
-	}
-	defer os.Remove(tmp.Name())
-
-	var note = ""
-	if commentedOut {
-		note = commentOut(initialText)
-	} else {
-		note = initialText
-	}
-
-	// 3. Write existing content
-	if _, err := tmp.WriteString(note); err != nil {
-		return "", err
-	}
-	tmp.Close()
-
-	// 4. Launch editor
-	editor := os.Getenv("EDITOR")
-	if editor == "" {
-		editor = "vim"
-	}
-
-	cmd := exec.Command(editor, tmp.Name())
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return "", err
-	}
-
-	// 5. Read edited content
-	updated, err := os.ReadFile(tmp.Name())
-	if err != nil {
-		return "", err
-	}
-
-	if !commentedOut {
-		return string(updated), nil
-	}
-	noComments := ignoreCommentedOut(string(updated))
-	return noComments, nil
+	return strings.Join(kept, "\n")
 }
 
 // VX:TODO rewrite to support commented out stuff etc.
@@ -110,16 +65,19 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 	if err != nil {
 		return err
 	}
+
 	if existing != nil {
 		allStrings := ""
-		for _, v := range existing.Blocks {
-			allStrings += "---------\n"
-			allStrings += v.Id.ToString() + " : " + v.Edited.GoString() + "\n"
-			allStrings += v.Content + "\n\n"
+		for _, v := range slices.Backward(existing.Blocks) {
+
+			allStrings += line
+			allStrings += "  " + datePrefix(v.Edited) + "  " + v.Id.ToString() + "\n"
+			allStrings += line
+			allStrings += "\n  " + v.Content + "\n\n"
 		}
 		note = allStrings
 	}
-	commentedOutNotes := commentOut(note)
+	commentedOutNotes := "\n\n" + commentOut(note)
 	// 2. Temp file
 	tmp, err := os.CreateTemp("", "got-note-*.txt")
 	if err != nil {
@@ -157,10 +115,14 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 	// 6. Save back to DB
 	updatedString := string(updated)
 	withRemovedComments := ignoreCommentedOut(updatedString)
-	if withRemovedComments == "" {
+
+	whiteSpaceCheck := strings.ReplaceAll(withRemovedComments, "\n", "")
+	whiteSpaceCheck = strings.ReplaceAll(whiteSpaceCheck, " ", "")
+	if whiteSpaceCheck == "" {
 		fmt.Printf("VX: No comments made.")
 		return nil
 	}
+	fmt.Printf("VX: the entire comment was '%s'\n", withRemovedComments)
 
 	newId, err := e.LongFormStore.AppendNote(*gid, withRemovedComments)
 	if err != nil {
@@ -174,12 +136,7 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 }
 
 // VX:TODO not used.
-func datePrefix() string {
-	line := "\n\n----------------------------\n"
-
-	now := time.Now().UTC()
-
-	formatted := now.Format("Mon 2 Jan 2006 15:04:05 MST")
-	return line + formatted + line + "\n"
-
+func datePrefix(date time.Time) string {
+	formatted := date.Format("Mon 2 Jan 2006 15:04:05 MST")
+	return formatted
 }

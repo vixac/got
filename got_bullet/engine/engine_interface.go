@@ -38,6 +38,7 @@ type GotEngine interface {
 type NoteInterface interface {
 	JotNote(lookup GidLookup, note string) (LongFormKey, error)
 	NotesFor(lookup GidLookup) (*LongFormBlockResult, error)
+	OpenThenTimestamp(lookup GidLookup) error
 }
 
 type IdGeneratorInterface interface {
