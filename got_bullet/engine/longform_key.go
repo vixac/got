@@ -34,7 +34,7 @@ func (k *LongFormKey) Next(time time.Time) LongFormKey {
 }
 
 func FirstNoteId() bullet_stl.BulletId {
-	id, _ := bullet_stl.NewBulletIdFromInt(1000)
+	id, _ := bullet_stl.NewBulletIdFromInt(828)
 	return *id
 }
 

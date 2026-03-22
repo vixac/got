@@ -10,8 +10,8 @@ import (
 func TestLongFormKey(t *testing.T) {
 
 	firstNoteId := engine.FirstNoteId()
-	assert.Equal(t, firstNoteId.IntValue, int64(1000))
-	assert.Equal(t, firstNoteId.AasciValue, "rs")
+	assert.Equal(t, firstNoteId.IntValue, int64(828))
+	assert.Equal(t, firstNoteId.AasciValue, "n0")
 
 	gotId, err := engine.NewGotIdFromInt(10)
 	assert.NoError(t, err)
@@ -27,12 +27,12 @@ func TestLongFormKey(t *testing.T) {
 		CreatedTime: *date,
 	}
 	str := longFormKey.ToString()
-	assert.Equal(t, str, "a:rs:1774179116040")
+	assert.Equal(t, str, "a:n0:1774179116040")
 
 	longFormIdRebuilt, err := engine.NewLongFormKeyFromString(str)
 	assert.NoError(t, err)
 	assert.Equal(t, longFormIdRebuilt.GotId.AasciValue, "a")
-	assert.Equal(t, longFormIdRebuilt.NoteId.AasciValue, "rs")
+	assert.Equal(t, longFormIdRebuilt.NoteId.AasciValue, "n0")
 	assert.Equal(t, engine.TimeToMillisString(longFormIdRebuilt.CreatedTime), millis)
 
 	nextMillis := "1774179116041"
@@ -40,7 +40,7 @@ func TestLongFormKey(t *testing.T) {
 	assert.NoError(t, err)
 	nextKey := longFormKey.Next(*nextTime)
 	assert.Equal(t, nextKey.GotId.AasciValue, "a")
-	assert.Equal(t, nextKey.NoteId.AasciValue, "rt") //this was incremented
+	assert.Equal(t, nextKey.NoteId.AasciValue, "n1") //this was incremented
 	assert.Equal(t, engine.TimeToMillisString(nextKey.CreatedTime), nextMillis)
 
 }

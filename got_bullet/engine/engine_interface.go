@@ -332,7 +332,7 @@ type GotItemDisplay struct {
 }
 
 func (i *GotItemDisplay) IsCollapsed() bool {
-	return i.SummaryObj.Flags != nil && i.SummaryObj.Flags["collapsed"] == true
+	return i.SummaryObj != nil && i.SummaryObj.Flags != nil && i.SummaryObj.Flags["collapsed"] == true
 }
 
 func (i *GotItemDisplay) IsNote() bool {
