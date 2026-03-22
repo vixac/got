@@ -21,6 +21,9 @@ func NewBulletLongFormStore(bucketId int32, track bullet_interface.TrackClientIn
 }
 
 func highestIdInside(collection map[bullet_stl.CollectionId]bullet_stl.CollectionItem) (*bullet_id.BulletId, error) {
+	if len(collection) == 0 {
+		return nil, nil
+	}
 	var highestIntValue int64 = 0
 	for k, _ := range collection {
 
@@ -49,9 +52,6 @@ func (s *BulletLongFormStore) AppendNote(id engine.GotId, block engine.LongFormB
 	if highestExistingId == nil { //this is the first note for this gotid
 		first := engine.FirstNoteId()
 		highestExistingId = &first
-		if err != nil {
-			return err
-		}
 	}
 
 	now := time.Now()
