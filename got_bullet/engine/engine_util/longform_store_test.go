@@ -1,7 +1,6 @@
 package engine_util
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,14 +18,6 @@ func makeBlock(content string) engine.LongFormBlock {
 	return engine.LongFormBlock{Content: content}
 }
 
-func sortedBlocks(blocks []engine.LongFormBlock) []engine.LongFormBlock {
-	sorted := make([]engine.LongFormBlock, len(blocks))
-	copy(sorted, blocks)
-	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].Id.NoteId.IntValue < sorted[j].Id.NoteId.IntValue
-	})
-	return sorted
-}
 
 func TestLongFormStore_NoNotes(t *testing.T) {
 	store := buildTestLongFormStore(t)
@@ -75,11 +66,12 @@ func TestLongFormStore_NoteIdIncrementsForSameGotId(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, 3, len(result.Blocks))
 
-	sorted := sortedBlocks(result.Blocks)
+	// Blocks are returned ordered by creation time (earliest first)
+	blocks := result.Blocks
 	firstNoteId := engine.FirstNoteId()
 
 	// NoteIds should start at FirstNoteId+1 and increment by 1 each time
-	for i, block := range sorted {
+	for i, block := range blocks {
 		expected := firstNoteId.IntValue + int64(i+1)
 		assert.Equal(t, expected, block.Id.NoteId.IntValue, "block %d should have NoteId %d", i, expected)
 	}
@@ -107,15 +99,14 @@ func TestLongFormStore_NoteIdsAreIndependentPerGotId(t *testing.T) {
 	assert.NotNil(t, result2)
 	assert.Equal(t, 1, len(result2.Blocks))
 
-	// Each gotId's sequence starts independently from FirstNoteId
+	// Each gotId's sequence starts independently from FirstNoteId;
+	// blocks are ordered by creation time so index 0 is the earliest.
 	firstNoteId := engine.FirstNoteId()
 
-	sorted1 := sortedBlocks(result1.Blocks)
-	assert.Equal(t, firstNoteId.IntValue+1, sorted1[0].Id.NoteId.IntValue)
-	assert.Equal(t, firstNoteId.IntValue+2, sorted1[1].Id.NoteId.IntValue)
+	assert.Equal(t, firstNoteId.IntValue+1, result1.Blocks[0].Id.NoteId.IntValue)
+	assert.Equal(t, firstNoteId.IntValue+2, result1.Blocks[1].Id.NoteId.IntValue)
 
-	sorted2 := sortedBlocks(result2.Blocks)
-	assert.Equal(t, firstNoteId.IntValue+1, sorted2[0].Id.NoteId.IntValue)
+	assert.Equal(t, firstNoteId.IntValue+1, result2.Blocks[0].Id.NoteId.IntValue)
 }
 
 func TestLongFormStore_GotIdIsPreservedInBlock(t *testing.T) {
@@ -190,6 +181,34 @@ func TestLongFormStore_RemoveAllItems(t *testing.T) {
 	assert.Nil(t, result)
 }
 
+func TestLongFormStore_BlocksOrderedByCreationTime(t *testing.T) {
+	store := buildTestLongFormStore(t)
+
+	gotId, err := engine.NewGotIdFromInt(120)
+	assert.NoError(t, err)
+
+	assert.NoError(t, store.AppendNote(*gotId, makeBlock("first")))
+	assert.NoError(t, store.AppendNote(*gotId, makeBlock("second")))
+	assert.NoError(t, store.AppendNote(*gotId, makeBlock("third")))
+
+	result, err := store.LongFormNotesFor(*gotId)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 3, len(result.Blocks))
+
+	// Each block's creation time must be <= the next block's creation time
+	for i := 0; i < len(result.Blocks)-1; i++ {
+		earlier := result.Blocks[i].Id.CreatedTime
+		later := result.Blocks[i+1].Id.CreatedTime
+		assert.False(t, earlier.After(later), "block %d created at %v should not be after block %d created at %v", i, earlier, i+1, later)
+	}
+
+	// Contents should appear in append order (earliest creation time first)
+	assert.Equal(t, "first", result.Blocks[0].Content)
+	assert.Equal(t, "second", result.Blocks[1].Content)
+	assert.Equal(t, "third", result.Blocks[2].Content)
+}
+
 func TestLongFormStore_AppendAfterRemoveRestartSequence(t *testing.T) {
 	store := buildTestLongFormStore(t)
 
@@ -206,7 +225,8 @@ func TestLongFormStore_AppendAfterRemoveRestartSequence(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, 1, len(result.Blocks))
 
-	// After removal and re-append, NoteId sequence restarts from FirstNoteId+1
+	// After removal and re-append, NoteId sequence restarts from FirstNoteId+1.
+	// Only one block exists so ordering is trivially correct.
 	firstNoteId := engine.FirstNoteId()
 	assert.Equal(t, firstNoteId.IntValue+1, result.Blocks[0].Id.NoteId.IntValue)
 }

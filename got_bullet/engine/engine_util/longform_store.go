@@ -3,6 +3,7 @@ package engine_util
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -72,20 +73,6 @@ func (s *BulletLongFormStore) AppendNote(id engine.GotId, block engine.LongFormB
 	return nil
 }
 
-/*
-// VX:TODO RM?
-
-	func getTheOnlyKeyOrError(result map[bullet_stl.CollectionId]bullet_stl.CollectionItem) (*bullet_stl.CollectionId, error) {
-		if len(result) != 1 {
-			return nil, errors.New("upserting to a key that is not unique")
-		}
-		var collId *bullet_stl.CollectionId = nil
-		for k := range result {
-			collId = &k
-		}
-		return collId, nil
-	}
-*/
 func collectionToLongFormMap(collection map[bullet_stl.CollectionId]bullet_stl.CollectionItem) (map[engine.GotId]engine.LongFormBlockResult, error) {
 	idsToBlocks := make(map[engine.GotId][]engine.LongFormBlock)
 	for k, v := range collection {
@@ -113,11 +100,18 @@ func collectionToLongFormMap(collection map[bullet_stl.CollectionId]bullet_stl.C
 
 	result := make(map[engine.GotId]engine.LongFormBlockResult)
 	for k, v := range idsToBlocks {
+		sort.Slice(v, func(i, j int) bool {
+			ti := v[i].Id.CreatedTime
+			tj := v[j].Id.CreatedTime
+			if ti.Equal(tj) {
+				return v[i].Id.NoteId.IntValue < v[j].Id.NoteId.IntValue
+			}
+			return ti.Before(tj)
+		})
 		result[k] = engine.LongFormBlockResult{
 			Blocks: v,
 		}
 	}
-	fmt.Printf("VX:TODO sort the arrays by edited time or created time")
 	return result, nil
 }
 
@@ -157,29 +151,6 @@ func (s *BulletLongFormStore) LongFormNotesFor(id engine.GotId) (*engine.LongFor
 		return nil, errors.New("wrong id returned")
 	}
 	return &blockResult, nil
-	/*
-		var blocks []engine.LongFormBlock
-		fmt.Printf("VX:WARN: collections dont return created and updated times so longform doesnt have it.")
-		for collId, value := range res {
-			edited, err := engine.NewDateTime(value.Updated)
-			if err != nil {
-				return nil, err
-			}
-			block := engine.LongFormBlock{
-				Id: engine.LongFormId{
-					String: collId.Key,
-				},
-				ParentID: id,
-				Content:  value.Payload,
-				Created:  engine.DateTime{}, //VX:TODO
-				Edited:   edited,
-			}
-			blocks = append(blocks, block)
-		}
-		blockResult := engine.LongFormBlockResult{
-			Blocks: blocks,
-		}
-	*/
 }
 
 func (s *BulletLongFormStore) RemoveAllItemsFromLongStoreUnder(id engine.GotId) error {
