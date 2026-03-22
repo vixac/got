@@ -46,8 +46,7 @@ func (s *BulletLongFormStore) InsertBlock(block engine.LongFormBlock) error {
 }
 
 func (s *BulletLongFormStore) AppendNote(id engine.GotId, content string) (*engine.LongFormKey, error) {
-	idStr := idToStr(id)
-	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
+	existing, err := s.Collection.AllItemsUnderPrefix(id.AasciValue)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +119,7 @@ func collectionToLongFormMap(collection map[bullet_stl.CollectionId]bullet_stl.C
 func (s *BulletLongFormStore) LongFormForMany(ids []engine.GotId) (map[engine.GotId]engine.LongFormBlockResult, error) {
 	var idStrings []string
 	for _, id := range ids {
-		idStrings = append(idStrings, idToStr(id))
+		idStrings = append(idStrings, id.AasciValue)
 	}
 	items, err := s.Collection.AllItemsUnderPrefixes(idStrings)
 	if err != nil {
@@ -129,9 +128,10 @@ func (s *BulletLongFormStore) LongFormForMany(ids []engine.GotId) (map[engine.Go
 	return collectionToLongFormMap(items)
 }
 
+// VX:TODO this could take a nil and then we could smoosh the results or something for ranged lookup
 func (s *BulletLongFormStore) LongFormNotesFor(id engine.GotId) (*engine.LongFormBlockResult, error) {
-	idStr := idToStr(id)
-	res, err := s.Collection.AllItemsUnderPrefix(idStr)
+	fmt.Printf("VX: id is %s\n", id.AasciValue)
+	res, err := s.Collection.AllItemsUnderPrefix(id.AasciValue)
 	if err != nil || len(res) == 0 {
 		return nil, err
 	}

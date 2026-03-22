@@ -1,6 +1,10 @@
 package bullet_engine
 
-import "vixac.com/got/engine"
+import (
+	"fmt"
+
+	"vixac.com/got/engine"
+)
 
 func (e *EngineBullet) JotNote(lookup engine.GidLookup, note string) (engine.LongFormKey, error) {
 
@@ -13,10 +17,17 @@ func (e *EngineBullet) JotNote(lookup engine.GidLookup, note string) (engine.Lon
 	return *id, err
 }
 
-/*
-func (e *EngineBullet) LongFormNotesFor(id engine.GotId) (*engine.LongFormBlockResult, error) {
-	return e.LongFormStore.LongFormNotesFor(id)
+func (e *EngineBullet) NotesFor(lookup engine.GidLookup) (*engine.LongFormBlockResult, error) {
+	fmt.Printf("VX: Lookup is %s\n", lookup.Input)
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return nil, err
+	}
+	return e.LongFormStore.LongFormNotesFor(*gid)
 }
+
+/*
+
 
 func (e *EngineBullet) LongFormForMany(ids []engine.GotId) (map[engine.GotId]engine.LongFormBlockResult, error) {
 	return e.LongFormStore.LongFormForMany(ids)

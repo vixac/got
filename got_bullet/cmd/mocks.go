@@ -130,6 +130,9 @@ func (m *MockEngine) JotNote(lookup engine.GidLookup, note string) (engine.LongF
 	return engine.LongFormKey{}, m.errorToThrow
 }
 
+func (m *MockEngine) NotesFor(lookup engine.GidLookup) (*engine.LongFormBlockResult, error) {
+	return nil, m.errorToThrow
+}
 func (m *MockEngine) CreateBuck(request engine.CreateBuckRequest) (*engine.GotId, error) {
 	m.createParent = request.GidLookupInput
 	if request.OverrideSettings != nil {

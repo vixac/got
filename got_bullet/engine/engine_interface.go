@@ -37,6 +37,7 @@ type GotEngine interface {
 // VX:TODO finish this.
 type NoteInterface interface {
 	JotNote(lookup GidLookup, note string) (LongFormKey, error)
+	NotesFor(lookup GidLookup) (*LongFormBlockResult, error)
 }
 
 type IdGeneratorInterface interface {
