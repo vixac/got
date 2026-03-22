@@ -70,13 +70,12 @@ func (e *EngineBullet) CreateStoreFile() (string, error) {
 		}
 
 		var longFormRestoreBlocks []engine.LongFormRestoreBlock
-		for _, b := range longFormPtr.Blocks {
-			restoreBlock := engine.LongFormRestoreBlock{
-				KeyString:  b.Id.ToString(),
-				Content:    b.Content,
-				EditMillis: engine.TimeToMillisString(b.Edited),
+		if longFormPtr != nil {
+			for _, b := range longFormPtr.Blocks {
+				restoreBlock := engine.NewRestoreBlock(b)
+
+				longFormRestoreBlocks = append(longFormRestoreBlocks, restoreBlock)
 			}
-			longFormRestoreBlocks = append(longFormRestoreBlocks, restoreBlock)
 		}
 
 		overrides := engine.CreateOverrideSettings{
