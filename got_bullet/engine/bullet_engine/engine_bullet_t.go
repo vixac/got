@@ -41,7 +41,6 @@ func ignoreCommentedOut(text string) string {
 	return strings.Join(kept, "\n")
 }
 
-// VX:TODO rewrite to support commented out stuff etc.
 func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 
 	gid, err := e.GidLookup.InputToGid(&lookup)
@@ -135,7 +134,6 @@ func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 	return nil
 }
 
-// VX:TODO not used.
 func datePrefix(date time.Time) string {
 	formatted := date.Format("Mon 2 Jan 2006 15:04:05 MST")
 	return formatted
