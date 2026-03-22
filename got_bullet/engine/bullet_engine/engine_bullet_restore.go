@@ -10,11 +10,11 @@ import (
 	"vixac.com/got/engine/engine_util"
 )
 
-func (e *EngineBullet) CreateStoreFile() error {
+func (e *EngineBullet) CreateStoreFile() (string, error) {
 
 	allItems, err := e.FetchItemsBelow(nil, true, []engine.GotState{engine.Active, engine.Complete}, false)
 	if err != nil {
-		return err
+		return "", err
 	}
 	var everyId []engine.GotId
 	var everyAasciId []string
@@ -24,7 +24,7 @@ func (e *EngineBullet) CreateStoreFile() error {
 	}
 	everyLongForm, err := e.LongFormStore.LongFormForMany(everyId)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	//sorted for top level first.
@@ -69,23 +69,25 @@ func (e *EngineBullet) CreateStoreFile() error {
 			createdDate = item.SummaryObj.CreatedDate.Date
 		}
 
-		//VX:TODO here we consolidate the "blocks" into a single string for the purposes of this batch longform json
-		var longFormStr = ""
-		if longFormPtr != nil {
-			for _, b := range longFormPtr.Blocks {
-				longFormStr += b.Content
+		var longFormRestoreBlocks []engine.LongFormRestoreBlock
+		for _, b := range longFormPtr.Blocks {
+			restoreBlock := engine.LongFormRestoreBlock{
+				KeyString:  b.Id.ToString(),
+				Content:    b.Content,
+				EditMillis: engine.TimeToMillisString(b.Edited),
 			}
+			longFormRestoreBlocks = append(longFormRestoreBlocks, restoreBlock)
 		}
 
 		overrides := engine.CreateOverrideSettings{
-			OverrideId:          &item.GotId.IntValue,
-			UpdatedDate:         updated,
-			CreatedDate:         createdDate, //item.SummaryObj.CreatedDate.Date,
-			Alias:               alias,
-			NoAlias:             noAlias,
-			Tags:                item.SummaryObj.Tags,
-			Flags:               flags,
-			LongFormBlockOfText: longFormStr,
+			OverrideId:  &item.GotId.IntValue,
+			UpdatedDate: updated,
+			CreatedDate: createdDate,
+			Alias:       alias,
+			NoAlias:     noAlias,
+			Tags:        item.SummaryObj.Tags,
+			Flags:       flags,
+			LongForm:    longFormRestoreBlocks,
 		}
 		var state engine.GotState = engine.Active
 		if item.SummaryObj != nil && item.SummaryObj.State != nil {
@@ -97,11 +99,11 @@ func (e *EngineBullet) CreateStoreFile() error {
 	codec := &engine_util.JSONCodec[[]engine.CreateBuckRequest]{}
 	json, err := codec.Encode(createItemRequests)
 	if err != nil {
-		return err
+		return "", err
 	}
 	//here we print the restore to std out (VX:TODO return to caller so it can use the deps.Printer)
-	fmt.Printf("%s\n", json)
-	return nil
+	//fmt.Printf("%s\n", json)
+	return json, nil
 
 }
 

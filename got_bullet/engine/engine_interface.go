@@ -72,7 +72,7 @@ type AncestorManyLookupResult struct {
 }
 
 type RestoreInterface interface {
-	CreateStoreFile() error
+	CreateStoreFile() (string, error)
 	RestoreFromFile(filename string) error
 }
 
@@ -151,16 +151,29 @@ then we also need to ask the update date not to change
 */
 // Contains the values for fields that would normally be populated by the engine
 type CreateOverrideSettings struct {
-	OverrideId   *int32    `json:"g,omitempty"`
-	UpdatedDate  string    `json:"u,omitempty"`
-	CreatedDate  string    `json:"c,omitempty"`
-	ScheduleDate *DateTime `json:"d,omitempty"`
-	Alias        *string   `json:"a,omitempty"`
-	NoAlias      bool      `json:"no,omitempty"` //no override isnt the same as explicitly no alias at all
-	Tags         []Tag     `json:"t,omitempty"`
-	Flags        []string  `json:"f,omitempty"`
-	//LongForm     *LongFormBlockResult `json:"l,omitempty"`
-	LongFormBlockOfText string `json:"longFormBlockOfText,omitempty"`
+	OverrideId   *int32                 `json:"g,omitempty"`
+	UpdatedDate  string                 `json:"u,omitempty"`
+	CreatedDate  string                 `json:"c,omitempty"`
+	ScheduleDate *DateTime              `json:"d,omitempty"`
+	Alias        *string                `json:"a,omitempty"`
+	NoAlias      bool                   `json:"no,omitempty"` //no override isnt the same as explicitly no alias at all
+	Tags         []Tag                  `json:"t,omitempty"`
+	Flags        []string               `json:"f,omitempty"`
+	LongForm     []LongFormRestoreBlock `json:"l,omitempty"`
+}
+type LongFormRestoreBlock struct {
+	KeyString  string `json:"k,omitempty"`
+	Content    string `json:"c,omitempty"`
+	EditMillis string `json:"m,omitempty"`
+}
+
+func NewRestoreBlock(block LongFormBlock) LongFormRestoreBlock {
+	restoreBlock := LongFormRestoreBlock{
+		KeyString:  block.Id.ToString(),
+		Content:    block.Content,
+		EditMillis: TimeToMillisString(block.Edited),
+	}
+	return restoreBlock
 }
 
 type CreateBuckRequest struct {
