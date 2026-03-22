@@ -100,13 +100,24 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 	}
 
 	//if longform is present in the override, add that too.
-	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
-		for _, b := range request.OverrideSettings.LongForm.Blocks {
-			err = e.LongFormStore.UpsertItem(newId, b)
-			if err != nil {
-				return nil, err
-			}
+	if request.OverrideSettings != nil && request.OverrideSettings.LongFormBlockOfText != "" {
+
+		//This is how we look for the content only, and add is as a single block.
+		badIdeaBlock := engine.LongFormBlock{
+			Content: request.OverrideSettings.LongFormBlockOfText,
 		}
+		err = e.LongFormStore.UpsertItem(gotId.IntValue, badIdeaBlock)
+		if err != nil {
+			return nil, err
+		}
+
+		/*
+			for _, b := range request.OverrideSettings.LongForm.Blocks {
+				err = e.LongFormStore.UpsertItem(newId, b)
+				if err != nil {
+					return nil, err
+				}
+			}*/
 	}
 
 	var summaryIds []engine.SummaryId

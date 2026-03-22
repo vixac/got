@@ -36,12 +36,13 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 
 	var overrideId int32 = 12360
 	var longForm string = "This is a long form text entry."
-	block := engine.LongFormBlock{
-		Content: longForm,
-	}
-	longFormResult := engine.LongFormBlockResult{
-		Blocks: []engine.LongFormBlock{block},
-	}
+	//VX:TODO this gets put back once we are no longer doing batch longform restore.
+	//block := engine.LongFormBlock{
+	//		Content: longForm,
+	//}
+	//longFormResult := engine.LongFormBlockResult{
+	//		Blocks: []engine.LongFormBlock{block},
+	//	}
 	alias := "hi"
 	override := engine.CreateOverrideSettings{
 		OverrideId:  &overrideId,
@@ -52,9 +53,10 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 		ScheduleDate: &engine.DateTime{
 			Special: "n",
 		},
-		Tags:     tags,
-		Flags:    flags,
-		LongForm: &longFormResult,
+		Tags:                tags,
+		Flags:               flags,
+		LongFormBlockOfText: longForm,
+		//LongForm: &longFormResult,
 	}
 
 	buck1Id := overrideId
