@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
 )
 
@@ -35,9 +36,29 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	}
 
 	var overrideId int32 = 12360
+	buck1IdGot, err := engine.NewGotIdFromInt(overrideId)
+	assert.NoError(t, err)
 	var longForm string = "This is a long form text entry."
+
+	millis := "1774179116040"
+	createdDate, err := engine.EpochMillisStringToDate(millis)
+	assert.NoError(t, err)
+
+	editMillis := "177417911601"
+	editDate, err := engine.EpochMillisStringToDate(editMillis)
+	assert.NoError(t, err)
+	bulletId, err := bullet_stl.NewBulletIdFromInt(1000)
+	assert.NoError(t, err)
+
+	longformId := engine.LongFormKey{
+		GotId:       *buck1IdGot,
+		NoteId:      *bulletId,
+		CreatedTime: *createdDate,
+	}
 	block := engine.LongFormBlock{
+		Id:      longformId,
 		Content: longForm,
+		Edited:  *editDate,
 	}
 	longFormResult := engine.LongFormBlockResult{
 		Blocks: []engine.LongFormBlock{block},
@@ -94,9 +115,6 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, theItem.Alias, "hi")
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
-
-	buck1IdGot, err := engine.NewGotIdFromInt(buck1Id)
-	assert.NoError(t, err)
 
 	longformRes, err := sut.LongFormStore.LongFormForMany([]engine.GotId{*buck1IdGot})
 	assert.Equal(t, len(longformRes), 1)

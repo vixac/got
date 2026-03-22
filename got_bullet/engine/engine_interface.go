@@ -112,7 +112,7 @@ type LongFormBlockResult struct {
 type LongFormBlock struct {
 	Id      LongFormKey
 	Content string
-	Edited  DateTime
+	Edited  time.Time
 }
 
 func (l *LongFormBlock) Created() time.Time {
@@ -121,6 +121,7 @@ func (l *LongFormBlock) Created() time.Time {
 
 type LongFormStoreInterface interface {
 	AppendNote(id GotId, content string) (*LongFormKey, error)
+	InsertBlock(block LongFormBlock) error
 	LongFormNotesFor(id GotId) (*LongFormBlockResult, error)
 	LongFormForMany(ids []GotId) (map[GotId]LongFormBlockResult, error)
 	RemoveAllItemsFromLongStoreUnder(id GotId) error

@@ -39,6 +39,12 @@ func highestIdInside(collection map[bullet_stl.CollectionId]bullet_stl.Collectio
 	return bullet_id.NewBulletIdFromInt(highestIntValue)
 }
 
+func (s *BulletLongFormStore) InsertBlock(block engine.LongFormBlock) error {
+	id := block.Id.ToString()
+	_, err := s.Collection.CreateItemUnder(id, block.Content, &block.Edited)
+	return err
+}
+
 func (s *BulletLongFormStore) AppendNote(id engine.GotId, content string) (*engine.LongFormKey, error) {
 	idStr := idToStr(id)
 	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
@@ -80,14 +86,10 @@ func collectionToLongFormMap(collection map[bullet_stl.CollectionId]bullet_stl.C
 		if err != nil || longformId == nil {
 			return nil, err
 		}
-		edited, err := engine.NewDateTime(v.Updated)
-		if err != nil {
-			return nil, err
-		}
 		newBlock := engine.LongFormBlock{
 			Id:      *longformId,
 			Content: v.Payload,
-			Edited:  edited,
+			Edited:  v.Updated,
 		}
 		gotId := longformId.GotId
 		existing, ok := idsToBlocks[gotId]
