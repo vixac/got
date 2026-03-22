@@ -14,11 +14,6 @@ func buildTestLongFormStore(t *testing.T) *BulletLongFormStore {
 	return &BulletLongFormStore{Collection: coll}
 }
 
-func makeBlock(content string) engine.LongFormBlock {
-	return engine.LongFormBlock{Content: content}
-}
-
-
 func TestLongFormStore_NoNotes(t *testing.T) {
 	store := buildTestLongFormStore(t)
 
@@ -36,7 +31,7 @@ func TestLongFormStore_AppendFirstNote(t *testing.T) {
 	gotId, err := engine.NewGotIdFromInt(10)
 	assert.NoError(t, err)
 
-	err = store.AppendNote(*gotId, makeBlock("first block"))
+	_, err = store.AppendNote(*gotId, "first block")
 	assert.NoError(t, err)
 
 	result, err := store.LongFormNotesFor(*gotId)
@@ -57,9 +52,12 @@ func TestLongFormStore_NoteIdIncrementsForSameGotId(t *testing.T) {
 	gotId, err := engine.NewGotIdFromInt(20)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("block 1")))
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("block 2")))
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("block 3")))
+	_, err = store.AppendNote(*gotId, "block 1")
+	assert.NoError(t, err)
+	_, err = store.AppendNote(*gotId, "block 2")
+	assert.NoError(t, err)
+	_, err = store.AppendNote(*gotId, "block 3")
+	assert.NoError(t, err)
 
 	result, err := store.LongFormNotesFor(*gotId)
 	assert.NoError(t, err)
@@ -85,9 +83,12 @@ func TestLongFormStore_NoteIdsAreIndependentPerGotId(t *testing.T) {
 	gotId2, err := engine.NewGotIdFromInt(40)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId1, makeBlock("id1 block 1")))
-	assert.NoError(t, store.AppendNote(*gotId1, makeBlock("id1 block 2")))
-	assert.NoError(t, store.AppendNote(*gotId2, makeBlock("id2 block 1")))
+	_, err = store.AppendNote(*gotId1, "id1 block 1")
+	assert.NoError(t, err)
+	_, err = store.AppendNote(*gotId1, "id1 block 2")
+	assert.NoError(t, err)
+	_, err = store.AppendNote(*gotId2, "id1 block 3")
+	assert.NoError(t, err)
 
 	result1, err := store.LongFormNotesFor(*gotId1)
 	assert.NoError(t, err)
@@ -115,7 +116,8 @@ func TestLongFormStore_GotIdIsPreservedInBlock(t *testing.T) {
 	gotId, err := engine.NewGotIdFromInt(50)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("content")))
+	_, err = store.AppendNote(*gotId, "content")
+	assert.NoError(t, err)
 
 	result, err := store.LongFormNotesFor(*gotId)
 	assert.NoError(t, err)
@@ -132,9 +134,12 @@ func TestLongFormStore_LongFormForMany(t *testing.T) {
 	gotId2, err := engine.NewGotIdFromInt(70)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId1, makeBlock("id1 content")))
-	assert.NoError(t, store.AppendNote(*gotId1, makeBlock("id1 content 2")))
-	assert.NoError(t, store.AppendNote(*gotId2, makeBlock("id2 content")))
+	_, err = store.AppendNote(*gotId1, "id1 content")
+	assert.NoError(t, err)
+	_, err = store.AppendNote(*gotId1, "id1 content 2")
+	assert.NoError(t, err)
+	_, err = store.AppendNote(*gotId2, "id2 content")
+	assert.NoError(t, err)
 
 	results, err := store.LongFormForMany([]engine.GotId{*gotId1, *gotId2})
 	assert.NoError(t, err)
@@ -151,7 +156,8 @@ func TestLongFormStore_LongFormForMany_MissingIdNotInResult(t *testing.T) {
 	gotId2, err := engine.NewGotIdFromInt(90)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId1, makeBlock("only id1 has notes")))
+	_, err = store.AppendNote(*gotId1, "only id1 has notes")
+	assert.NoError(t, err)
 
 	results, err := store.LongFormForMany([]engine.GotId{*gotId1, *gotId2})
 	assert.NoError(t, err)
@@ -165,8 +171,8 @@ func TestLongFormStore_RemoveAllItems(t *testing.T) {
 	gotId, err := engine.NewGotIdFromInt(100)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("to be removed")))
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("also removed")))
+	_, err = store.AppendNote(*gotId, "to be removed")
+	_, err = store.AppendNote(*gotId, "also removed")
 
 	result, err := store.LongFormNotesFor(*gotId)
 	assert.NoError(t, err)
@@ -187,9 +193,9 @@ func TestLongFormStore_BlocksOrderedByCreationTime(t *testing.T) {
 	gotId, err := engine.NewGotIdFromInt(120)
 	assert.NoError(t, err)
 
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("first")))
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("second")))
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("third")))
+	_, err = store.AppendNote(*gotId, "first")
+	_, err = store.AppendNote(*gotId, "second")
+	_, err = store.AppendNote(*gotId, "third")
 
 	result, err := store.LongFormNotesFor(*gotId)
 	assert.NoError(t, err)
@@ -214,11 +220,12 @@ func TestLongFormStore_AppendAfterRemoveRestartSequence(t *testing.T) {
 
 	gotId, err := engine.NewGotIdFromInt(110)
 	assert.NoError(t, err)
-
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("original")))
+	_, err = store.AppendNote(*gotId, "original")
+	assert.NoError(t, err)
 	assert.NoError(t, store.RemoveAllItemsFromLongStoreUnder(*gotId))
 
-	assert.NoError(t, store.AppendNote(*gotId, makeBlock("after removal")))
+	_, err = store.AppendNote(*gotId, "after removal")
+	assert.NoError(t, err)
 
 	result, err := store.LongFormNotesFor(*gotId)
 	assert.NoError(t, err)

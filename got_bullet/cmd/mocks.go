@@ -126,6 +126,10 @@ func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (
 	return m.nodeIdToReturn, m.errorToThrow
 }
 
+func (m *MockEngine) JotNote(lookup engine.GidLookup, note string) (engine.LongFormKey, error) {
+	return engine.LongFormKey{}, m.errorToThrow
+}
+
 func (m *MockEngine) CreateBuck(request engine.CreateBuckRequest) (*engine.GotId, error) {
 	m.createParent = request.GidLookupInput
 	if request.OverrideSettings != nil {

@@ -2,6 +2,7 @@ package bullet_engine
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -99,10 +100,12 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		return nil, err
 	}
 
+	fmt.Printf("VX: WARN: block restoration is currently not working. We need to add AppendBlock to support restoring content with the same timesetamps and ids.")
 	//if longform is present in the override, add that too.
 	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
 		for _, b := range request.OverrideSettings.LongForm.Blocks {
-			err = e.LongFormStore.AppendNote(gotId, b)
+
+			_, err = e.LongFormStore.AppendNote(gotId, b.Content) //VX:TODO we should be appending block here.s
 			if err != nil {
 				return nil, err
 			}

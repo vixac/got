@@ -39,16 +39,16 @@ func highestIdInside(collection map[bullet_stl.CollectionId]bullet_stl.Collectio
 	return bullet_id.NewBulletIdFromInt(highestIntValue)
 }
 
-func (s *BulletLongFormStore) AppendNote(id engine.GotId, block engine.LongFormBlock) error {
+func (s *BulletLongFormStore) AppendNote(id engine.GotId, content string) (*engine.LongFormKey, error) {
 	idStr := idToStr(id)
 	existing, err := s.Collection.AllItemsUnderPrefix(idStr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	highestExistingId, err := highestIdInside(existing)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if highestExistingId == nil { //this is the first note for this gotid
 		first := engine.FirstNoteId()
@@ -64,13 +64,13 @@ func (s *BulletLongFormStore) AppendNote(id engine.GotId, block engine.LongFormB
 	}
 
 	newLongFormNoteStringId := newLongFormId.ToString()
-	collId, err := s.Collection.CreateItemUnder(newLongFormNoteStringId, block.Content, &now)
+	collId, err := s.Collection.CreateItemUnder(newLongFormNoteStringId, content, &now)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fmt.Printf("VX: Note created under colelction Id %s \n", collId.Key)
-	return nil
+	return &newLongFormId, nil
 }
 
 func collectionToLongFormMap(collection map[bullet_stl.CollectionId]bullet_stl.CollectionItem) (map[engine.GotId]engine.LongFormBlockResult, error) {

@@ -24,7 +24,6 @@ type GotEngine interface {
 	ToggleCollapse(lookup GidLookup, collapsed bool) error
 
 	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
-	OpenThenTimestamp(lookup GidLookup) error
 	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
 	TagItem(lookup GidLookup, tag TagLookup) error
 
@@ -32,6 +31,12 @@ type GotEngine interface {
 	GotCreateItemInterface
 	GotFetchInterface
 	RestoreInterface
+	NoteInterface
+}
+
+// VX:TODO finish this.
+type NoteInterface interface {
+	JotNote(lookup GidLookup, note string) (LongFormKey, error)
 }
 
 type IdGeneratorInterface interface {
@@ -115,7 +120,7 @@ func (l *LongFormBlock) Created() time.Time {
 }
 
 type LongFormStoreInterface interface {
-	AppendNote(id GotId, block LongFormBlock) error
+	AppendNote(id GotId, content string) (*LongFormKey, error)
 	LongFormNotesFor(id GotId) (*LongFormBlockResult, error)
 	LongFormForMany(ids []GotId) (map[GotId]LongFormBlockResult, error)
 	RemoveAllItemsFromLongStoreUnder(id GotId) error
