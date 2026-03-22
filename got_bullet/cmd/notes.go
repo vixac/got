@@ -23,32 +23,6 @@ func buildNotesCommand(deps RootDependencies) *cobra.Command {
 				}
 			}
 			renderNotesFor(*lookup, deps)
-			/*
-				//VX:TODO only real ids for now.
-				//VX:TODO to the printer
-				res, err := deps.Engine.NotesFor(*lookup)
-				if err != nil {
-					deps.Printer.Error(console.Message{Message: err.Error()})
-					return
-				}
-				if res == nil {
-					deps.Printer.Print(console.Message{Message: "There were no notes."})
-					return
-				}
-				for _, v := range res.Blocks {
-					fmt.Printf("VX: its a block: '%s'\n", v.Content)
-				}
-
-				states := []engine.GotState{engine.Active, engine.Note}
-				options := bullet_engine.TableRenderOptions{
-					FlatPaths:          false,
-					ShowCreatedColumn:  true,
-					ShowUpdatedColumn:  true,
-					SortByPath:         true,
-					HideUnderCollapsed: true,
-				}
-				renderTable(lookup, states, options, deps)
-			*/
 		},
 	}
 	return jobsCmd

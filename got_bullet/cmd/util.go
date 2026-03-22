@@ -132,6 +132,10 @@ func renderNotesFor(lookup engine.GidLookup, deps RootDependencies) {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return
 	}
+	if notes == nil {
+		deps.Printer.Error(console.Message{Message: "No notes to render."})
+		return
+	}
 	var displays []engine.GotItemDisplay
 	for _, block := range notes.Blocks {
 		display := engine.GotItemDisplay{

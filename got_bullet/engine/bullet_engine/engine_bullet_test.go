@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
 )
 
@@ -40,39 +41,29 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	var longForm string = "This is a long form text entry."
 
 	//VX:TODO this comes back once we've finished batch restore.
-	/*
 
-		millis := "1774179116040"
-		createdDate, err := engine.EpochMillisStringToDate(millis)
-		assert.NoError(t, err)
+	millis := "1774179116040"
+	createdDate, err := engine.EpochMillisStringToDate(millis)
+	assert.NoError(t, err)
 
-		editMillis := "177417911601"
-		editDate, err := engine.EpochMillisStringToDate(editMillis)
-		assert.NoError(t, err)
-		bulletId, err := bullet_stl.NewBulletIdFromInt(1000)
-		assert.NoError(t, err)
+	editMillis := "177417911601"
+	editDate, err := engine.EpochMillisStringToDate(editMillis)
+	assert.NoError(t, err)
+	bulletId, err := bullet_stl.NewBulletIdFromInt(1000)
+	assert.NoError(t, err)
 
-		longformId := engine.LongFormKey{
-			GotId:       *buck1IdGot,
-			NoteId:      *bulletId,
-			CreatedTime: *createdDate,
-		}
-		block := engine.LongFormBlock{
-			Id:      longformId,
-			Content: longForm,
-			Edited:  *editDate,
-		}
-		longFormResult := engine.LongFormBlockResult{
-			Blocks: []engine.LongFormBlock{block},
-		}
-	*/
-	//VX:TODO this gets put back once we are no longer doing batch longform restore.
-	//block := engine.LongFormBlock{
-	//		Content: longForm,
-	//}
-	//longFormResult := engine.LongFormBlockResult{
-	//		Blocks: []engine.LongFormBlock{block},
-	//	}
+	longformId := engine.LongFormKey{
+		GotId:       *buck1IdGot,
+		NoteId:      *bulletId,
+		CreatedTime: *createdDate,
+	}
+	block := engine.LongFormBlock{
+		Id:      longformId,
+		Content: longForm,
+		Edited:  *editDate,
+	}
+	restoreBlock := engine.NewRestoreBlock(block)
+
 	alias := "hi"
 	override := engine.CreateOverrideSettings{
 		OverrideId:  &overrideId,
@@ -83,10 +74,9 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 		ScheduleDate: &engine.DateTime{
 			Special: "n",
 		},
-		Tags:                tags,
-		Flags:               flags,
-		LongFormBlockOfText: longForm,
-		//LongForm: &longFormResult,
+		Tags:     tags,
+		Flags:    flags,
+		LongForm: []engine.LongFormRestoreBlock{restoreBlock},
 	}
 
 	buck1Id := overrideId

@@ -2,7 +2,6 @@ package bullet_engine
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -100,32 +99,27 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		return nil, err
 	}
 
-	//VX:TODO the shape of blocks has changed. the longform database is wrong.
-	//if longform is present in the override, add that too.
-	/*
-		if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil {
-			for _, b := range request.OverrideSettings.LongForm.Blocks {
+	if request.OverrideSettings != nil && request.OverrideSettings.LongForm != nil && len(request.OverrideSettings.LongForm) != 0 {
 
-				err = e.LongFormStore.InsertBlock(b)
-				if err != nil {
-					return nil, err
-				}
-	*/
-	if request.OverrideSettings != nil && request.OverrideSettings.LongFormBlockOfText != "" {
-
-		longformId, err := e.LongFormStore.AppendNote(gotId, request.OverrideSettings.LongFormBlockOfText)
-		fmt.Printf("VX: we took a longform batch note and gave it a key: %s\n", longformId.ToString())
-		if err != nil {
-			return nil, err
+		for _, restoreBlock := range request.OverrideSettings.LongForm {
+			blockId, err := engine.NewLongFormKeyFromString(restoreBlock.KeyString)
+			if err != nil {
+				return nil, err
+			}
+			editTime, err := engine.EpochMillisStringToDate(restoreBlock.EditMillis)
+			if err != nil {
+				return nil, err
+			}
+			block := engine.LongFormBlock{
+				Id:      *blockId,
+				Content: restoreBlock.Content,
+				Edited:  *editTime,
+			}
+			err = e.LongFormStore.InsertBlock(block)
+			if err != nil {
+				return nil, err
+			}
 		}
-
-		/*
-			for _, b := range request.OverrideSettings.LongForm.Blocks {
-				err = e.LongFormStore.UpsertItem(newId, b)
-				if err != nil {
-					return nil, err
-				}
-			}*/
 	}
 
 	var summaryIds []engine.SummaryId
