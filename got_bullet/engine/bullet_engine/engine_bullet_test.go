@@ -64,13 +64,6 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	}
 	restoreBlock := engine.NewRestoreBlock(block)
 
-	//VX:TODO this gets put back once we are no longer doing batch longform restore.
-	//block := engine.LongFormBlock{
-	//		Content: longForm,
-	//}
-	//longFormResult := engine.LongFormBlockResult{
-	//		Blocks: []engine.LongFormBlock{block},
-	//	}
 	alias := "hi"
 	override := engine.CreateOverrideSettings{
 		OverrideId:  &overrideId,

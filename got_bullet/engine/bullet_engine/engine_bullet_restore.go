@@ -100,8 +100,6 @@ func (e *EngineBullet) CreateStoreFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//here we print the restore to std out (VX:TODO return to caller so it can use the deps.Printer)
-	//fmt.Printf("%s\n", json)
 	return json, nil
 
 }
