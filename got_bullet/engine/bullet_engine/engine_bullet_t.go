@@ -1,6 +1,7 @@
 package bullet_engine
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -88,97 +89,91 @@ func openEditor(initialText string, commentedOut bool) (string, error) {
 // VX:TODO rewrite to support commented out stuff etc.
 func (e *EngineBullet) OpenThenTimestamp(lookup engine.GidLookup) error {
 
-	/*
-		gid, err := e.GidLookup.InputToGid(&lookup)
-		if err != nil || gid == nil {
-			return err
-		}
-		summaryId := engine.SummaryId(gid.IntValue)
-		exists, err := e.SummaryStore.Fetch([]engine.SummaryId{summaryId})
-		if err != nil {
-			return err
-		}
-		if exists != nil {
-			_, ok := exists[summaryId]
-			if !ok {
-				return errors.New("This gid does not exist.")
-			}
-		}
-
-		var note = ""
-		existing, err := e.LongFormStore.LongFormNotesFor(*gid)
-		if err != nil {
-			return err
-		}
-		if existing != nil {
-			//VX:TODO here's where we parse the blocks
-			allStrings := ""
-			for _, v := range existing.Blocks {
-				allStrings += v.Content + ":"
-			}
-			note = allStrings
-		}
-		// 2. Temp file
-		tmp, err := os.CreateTemp("", "got-note-*.txt")
-		if err != nil {
-			return err
-		}
-		defer os.Remove(tmp.Name())
-
-		// 3. Write existing content
-		if _, err := tmp.WriteString(note); err != nil {
-			return err
-		}
-		tmp.Close()
-
-		// 4. Launch editor
-		editor := os.Getenv("EDITOR")
-		if editor == "" {
-			editor = "vim"
-		}
-
-		cmd := exec.Command(editor, tmp.Name())
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-
-		// 5. Read edited content
-		updated, err := os.ReadFile(tmp.Name())
-		if err != nil {
-			return err
-		}
-
-		// 6. Save back to DB
-		updatedString := string(updated)
-		if updatedString == note { //no changes, don't save
-			return nil
-		}
-		datedString := datePrefix() + updatedString
-
-		//VX:TODO pass in buck id
-		//VX:TODO
-		block := engine.LongFormBlock{
-			ParentID: gid.IntValue,
-			Content:  datedString,
-		}
-		err = e.LongFormStore.AppendNote(*gid, block)
-		err = e.LongFormStore.UpsertItem(gid.IntValue, block)
-		if err != nil {
-			return err
-		}
-
-		//we send the edit event so the update time gets changed
-		e.publishEditEvent(EditItemEvent{Id: engine.SummaryId(gid.IntValue)})
+	gid, err := e.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
 		return err
-	*/
-	fmt.Printf("VX: openthentimestamp is paused for now")
+	}
+	summaryId := engine.SummaryId(gid.IntValue)
+	exists, err := e.SummaryStore.Fetch([]engine.SummaryId{summaryId})
+	if err != nil {
+		return err
+	}
+	if exists != nil {
+		_, ok := exists[summaryId]
+		if !ok {
+			return errors.New("This gid does not exist.")
+		}
+	}
+
+	var note = ""
+	existing, err := e.LongFormStore.LongFormNotesFor(*gid)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		allStrings := ""
+		for _, v := range existing.Blocks {
+			allStrings += "---------\n"
+			allStrings += v.Id.ToString() + " : " + v.Edited.GoString() + "\n"
+			allStrings += v.Content + "\n\n"
+		}
+		note = allStrings
+	}
+	commentedOutNotes := commentOut(note)
+	// 2. Temp file
+	tmp, err := os.CreateTemp("", "got-note-*.txt")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+
+	// 3. Write existing content
+	if _, err := tmp.WriteString(commentedOutNotes); err != nil {
+		return err
+	}
+	tmp.Close()
+
+	// 4. Launch editor
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+
+	cmd := exec.Command(editor, tmp.Name())
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// 5. Read edited content
+	updated, err := os.ReadFile(tmp.Name())
+	if err != nil {
+		return err
+	}
+
+	// 6. Save back to DB
+	updatedString := string(updated)
+	withRemovedComments := ignoreCommentedOut(updatedString)
+	if withRemovedComments == "" {
+		fmt.Printf("VX: No comments made.")
+		return nil
+	}
+
+	newId, err := e.LongFormStore.AppendNote(*gid, withRemovedComments)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("VX: New note: %s\n", newId.ToString())
+
+	//we send the edit event so the update time gets changed
+	e.publishEditEvent(EditItemEvent{Id: engine.SummaryId(gid.IntValue)})
 	return nil
 }
 
+// VX:TODO not used.
 func datePrefix() string {
 	line := "\n\n----------------------------\n"
 
