@@ -1,2 +1,4 @@
 got-bolt.db
+got-sqlite*
+backups/
 test_db.sh

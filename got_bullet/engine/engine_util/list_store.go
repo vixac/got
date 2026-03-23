@@ -32,6 +32,7 @@ type ListInterface interface {
 	//VX:TODO I think i need to add fetchAllLists. Is that a SEPARATE list? i think it has to be.
 }
 
+// VX:TODO this should use collection if we're keeping it. Or put it in FC itself.
 type BulletListStore struct {
 	SubjectSeparator string
 	Client           bullet_interface.TrackClientInterface
