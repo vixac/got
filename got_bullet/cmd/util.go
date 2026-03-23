@@ -136,20 +136,72 @@ func renderNotesFor(lookup *engine.GidLookup, recurse bool, deps RootDependencie
 		deps.Printer.Error(console.Message{Message: "No notes to render."})
 		return
 	}
+
+	maxTitleLen := 90
 	var displays []engine.GotItemDisplay
+
+	var allFetchedGotIds = make(map[engine.GotId]bool)
 	for _, block := range notes.Blocks {
+		id := block.Id.GotId
+		allFetchedGotIds[id] = true
+	}
+	var idStrings []string
+	for k, _ := range allFetchedGotIds {
+		idStrings = append(idStrings, k.AasciValue)
+	}
+
+	aliases, err := deps.Engine.LookupAliasForMany(idStrings)
+
+	now := time.Now()
+	for _, block := range notes.Blocks {
+		var truncatedContent = ""
+		blockTitleLen := len(block.Content)
+		loopLen := maxTitleLen
+		var showDotDotDot = false
+		if blockTitleLen < maxTitleLen {
+			loopLen = blockTitleLen
+		}
+
+		for j := 0; j < loopLen; j++ {
+			char := block.Content[j]
+			if char == '\n' {
+				showDotDotDot = true
+				continue
+			}
+			truncatedContent += string(block.Content[j])
+		}
+		if blockTitleLen > maxTitleLen || showDotDotDot {
+			truncatedContent += " ..."
+		}
+
+		var theAlias = ""
+		alias, ok := aliases[block.Id.GotId.AasciValue]
+		if ok {
+			theAlias = *alias
+		}
+
+		pathItem := engine.PathItem{
+			Id:    block.Id.ToString(),
+			Alias: nil,
+		}
+		relativeEditedDate, _ := console.HumanizeDate(block.Edited, now)
+		if err != nil {
+			deps.Printer.Error(console.Message{Message: err.Error()})
+			return
+		}
+		//VX:TODO review the rendering of this. It's currently way off.
 		display := engine.GotItemDisplay{
 			GotId:         block.Id.GotId,
 			DisplayGid:    block.Id.ToString(),
-			Title:         block.Content,
-			Path:          nil, //VX:TODO rm created?
-			Alias:         "",
+			Title:         truncatedContent,
+			Path:          &engine.GotPath{Ancestry: []engine.PathItem{pathItem}}, //janky. not ancestry. not a path.
+			Alias:         theAlias,
 			SummaryObj:    nil,
 			HasTNote:      false,
 			Deadline:      "",
 			DeadlineToken: console.TokenBrand{},
 			Created:       block.Created().String(),
-			Updated:       block.Edited.String(),
+			Updated:       relativeEditedDate,
 		}
 		displays = append(displays, display)
 	}
@@ -160,7 +212,11 @@ func renderNotesFor(lookup *engine.GidLookup, recurse bool, deps RootDependencie
 
 	table, err := bullet_engine.NewTable(&bullet_engine.GotTableSections{
 		Sections: []bullet_engine.TableSection{section},
-	}, bullet_engine.TableRenderOptions{})
+	}, bullet_engine.TableRenderOptions{
+		FlatPaths:         true,
+		HideNumberGo:      true,
+		ShowUpdatedColumn: true,
+	})
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return

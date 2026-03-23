@@ -18,6 +18,7 @@ type TableRenderOptions struct {
 	SortByPath         bool
 	GroupByTimeFrame   bool
 	HideUnderCollapsed bool
+	HideNumberGo       bool
 }
 
 func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
@@ -161,10 +162,14 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 		}
 		for _, item := range section.Items {
 			itemRow := NewGotRow()
-			numSnippets := []console.Snippet{
-				console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
+
+			if !options.HideNumberGo {
+				numSnippets := []console.Snippet{
+					console.NewSnippet("#"+strconv.Itoa(item.NumberGo)+mediumPadding, console.TokenNote{}),
+				}
+				itemRow.ItemNumber = console.NewTableCell(numSnippets)
 			}
-			itemRow.ItemNumber = console.NewTableCell(numSnippets)
+
 			if options.ShowCreatedColumn {
 				itemRow.Created = console.NewTableCellFromStr(item.Created+" ", console.TokenGroup{})
 			}
