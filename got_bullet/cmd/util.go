@@ -126,8 +126,8 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.Tab
 	return finalSections, nil
 }
 
-func renderNotesFor(lookup engine.GidLookup, deps RootDependencies) {
-	notes, err := deps.Engine.NotesFor(lookup)
+func renderNotesFor(lookup *engine.GidLookup, recurse bool, deps RootDependencies) {
+	notes, err := deps.Engine.NotesFor(lookup, recurse)
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return

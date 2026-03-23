@@ -22,7 +22,8 @@ func buildNotesCommand(deps RootDependencies) *cobra.Command {
 					Input: args[0],
 				}
 			}
-			renderNotesFor(*lookup, deps)
+			//VX:TODO recurse flag
+			renderNotesFor(lookup, false, deps)
 		},
 	}
 	return jobsCmd
