@@ -1,7 +1,6 @@
 package bullet_engine
 
 import (
-	"fmt"
 	"sort"
 
 	"vixac.com/got/engine"
@@ -23,6 +22,7 @@ func (e *EngineBullet) NotesForMany(lookup *engine.GidLookup) (*engine.LongFormB
 	if err != nil {
 		return nil, err
 	}
+
 	var gotIds []engine.GotId
 	for _, v := range items.Result {
 		gotIds = append(gotIds, v.GotId)
@@ -51,8 +51,6 @@ func (e *EngineBullet) NotesFor(lookup *engine.GidLookup, recurse bool) (*engine
 	if lookup == nil || recurse {
 		return e.NotesForMany(lookup)
 	}
-	fmt.Printf("VX: Lookup is %s\n", lookup.Input)
-	//VX:TODO handle nil lookup
 	gid, err := e.GidLookup.InputToGid(lookup)
 	if err != nil {
 		return nil, err
@@ -60,15 +58,3 @@ func (e *EngineBullet) NotesFor(lookup *engine.GidLookup, recurse bool) (*engine
 
 	return e.LongFormStore.LongFormNotesFor(*gid)
 }
-
-/*
-
-
-func (e *EngineBullet) LongFormForMany(ids []engine.GotId) (map[engine.GotId]engine.LongFormBlockResult, error) {
-	return e.LongFormStore.LongFormForMany(ids)
-}
-
-func (e *EngineBullet) RemoveAllItemsFromLongStoreUnder(id engine.GotId) error {
-	return e.LongFormStore.RemoveAllItemsFromLongStoreUnder(id)
-}
-*/
