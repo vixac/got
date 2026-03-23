@@ -49,8 +49,7 @@ func (e *EngineBullet) NotesForMany(lookup *engine.GidLookup) (*engine.LongFormB
 
 func (e *EngineBullet) NotesFor(lookup *engine.GidLookup, recurse bool) (*engine.LongFormBlockResult, error) {
 	if lookup == nil || recurse {
-		fmt.Printf("VX: TODO HANDLE NIL LOOKUP")
-		return e.NotesForMany(nil)
+		return e.NotesForMany(lookup)
 	}
 	fmt.Printf("VX: Lookup is %s\n", lookup.Input)
 	//VX:TODO handle nil lookup

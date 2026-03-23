@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
@@ -8,7 +10,9 @@ import (
 
 func buildNotesCommand(deps RootDependencies) *cobra.Command {
 
-	var jobsCmd = &cobra.Command{
+	var r = false
+	var recurse *bool = &r
+	var cmd = &cobra.Command{
 		Use:   "notes",
 		Short: "fetch notes under gid",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -22,10 +26,15 @@ func buildNotesCommand(deps RootDependencies) *cobra.Command {
 					Input: args[0],
 				}
 			}
-			//VX:TODO recurse flag
-			renderNotesFor(lookup, false, deps)
+			if *recurse == true {
+				//VX:TODO fix recursion.
+				fmt.Printf("VX: Apologies, recurse option is not ready. It request FetchItemsBelow to also return the parent node. Otherwise recurse doesnt include the node you just looked up.")
+				return
+			}
+			renderNotesFor(lookup, *recurse, deps)
 		},
 	}
-	return jobsCmd
+	cmd.Flags().BoolVarP(recurse, "recurse", "r", false, "Fetch all notes for nodes under this one too.")
+	return cmd
 
 }
