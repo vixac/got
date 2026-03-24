@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 /*
@@ -24,7 +25,7 @@ func EnrichSummaries(ancestry []engine.SummaryId, summaries map[engine.SummaryId
 	var enriched []EnrichedSummary
 
 	for _, summaryId := range ancestry {
-		if summaryId == engine.SummaryId(TheRootNoteInt32) {
+		if summaryId == engine.SummaryId(engine_util.TheRootNoteInt32) {
 			continue
 		}
 		summary, ok := summaries[summaryId]

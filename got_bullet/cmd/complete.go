@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
-	"vixac.com/got/engine/bullet_engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 // VX:TODO test
@@ -32,7 +32,7 @@ func buildCompleteCommand(deps RootDependencies) *cobra.Command {
 			}
 
 			states := []engine.GotState{engine.Complete}
-			options := bullet_engine.TableRenderOptions{
+			options := engine_util.TableRenderOptions{
 				FlatPaths:          true,
 				ShowCreatedColumn:  true,
 				ShowUpdatedColumn:  true,

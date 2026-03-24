@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 func buildTestAncestorList(t *testing.T, meshName string) *BulletAncestorList {
@@ -41,7 +42,7 @@ func TestAncestorList_AddItemAtRoot(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, 1, len(res.Ids))
-	assert.Equal(t, TheRootNode.Value, res.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, res.Ids[0].AasciValue)
 }
 
 func TestAncestorList_AddItemUnderParent(t *testing.T) {
@@ -59,7 +60,7 @@ func TestAncestorList_AddItemUnderParent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, ancestry)
 	assert.Equal(t, 2, len(ancestry.Ids))
-	assert.Equal(t, TheRootNode.Value, ancestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, ancestry.Ids[0].AasciValue)
 	assert.Equal(t, "alice", ancestry.Ids[1].AasciValue)
 
 	// Fetch ancestors of bob
@@ -67,7 +68,7 @@ func TestAncestorList_AddItemUnderParent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, 2, len(res.Ids))
-	assert.Equal(t, TheRootNode.Value, res.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, res.Ids[0].AasciValue)
 	assert.Equal(t, "alice", res.Ids[1].AasciValue)
 }
 
@@ -88,7 +89,7 @@ func TestAncestorList_AddItemDeepHierarchy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, 3, len(res.Ids))
-	assert.Equal(t, TheRootNode.Value, res.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, res.Ids[0].AasciValue)
 	assert.Equal(t, "alice", res.Ids[1].AasciValue)
 	assert.Equal(t, "bob", res.Ids[2].AasciValue)
 }
@@ -110,7 +111,7 @@ func TestAncestorList_AddDuplicateItem_Error(t *testing.T) {
 func TestAncestorList_AddRootNode_Error(t *testing.T) {
 	list := buildTestAncestorList(t, "ancestor_add_root_node")
 
-	rootId, _ := engine.NewGotId(TheRootNode.Value)
+	rootId, _ := engine.NewGotId(engine_util.TheRootNode.Value)
 
 	_, err := list.AddItem(*rootId, nil)
 	assert.Error(t, err)
@@ -143,7 +144,7 @@ func TestAncestorList_FetchAncestorsOfMany_SingleItem(t *testing.T) {
 	bobAncestors, ok := res.Ids[*bob]
 	assert.True(t, ok)
 	assert.Equal(t, 2, len(bobAncestors.Ids))
-	assert.Equal(t, TheRootNode.Value, bobAncestors.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, bobAncestors.Ids[0].AasciValue)
 	assert.Equal(t, "alice", bobAncestors.Ids[1].AasciValue)
 }
 
@@ -168,14 +169,14 @@ func TestAncestorList_FetchAncestorsOfMany_MultipleItems(t *testing.T) {
 	bobAncestors, ok := res.Ids[*bob]
 	assert.True(t, ok)
 	assert.Equal(t, 2, len(bobAncestors.Ids))
-	assert.Equal(t, TheRootNode.Value, bobAncestors.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, bobAncestors.Ids[0].AasciValue)
 	assert.Equal(t, "alice", bobAncestors.Ids[1].AasciValue)
 
 	// Check charlie's ancestors
 	charlieAncestors, ok := res.Ids[*charlie]
 	assert.True(t, ok)
 	assert.Equal(t, 2, len(charlieAncestors.Ids))
-	assert.Equal(t, TheRootNode.Value, charlieAncestors.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, charlieAncestors.Ids[0].AasciValue)
 	assert.Equal(t, "alice", charlieAncestors.Ids[1].AasciValue)
 }
 
@@ -200,13 +201,13 @@ func TestAncestorList_FetchAncestorsOfMany_DifferentDepths(t *testing.T) {
 	aliceAncestors, ok := res.Ids[*alice]
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(aliceAncestors.Ids))
-	assert.Equal(t, TheRootNode.Value, aliceAncestors.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, aliceAncestors.Ids[0].AasciValue)
 
 	// Check charlie's ancestors (root -> alice -> bob)
 	charlieAncestors, ok := res.Ids[*charlie]
 	assert.True(t, ok)
 	assert.Equal(t, 3, len(charlieAncestors.Ids))
-	assert.Equal(t, TheRootNode.Value, charlieAncestors.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, charlieAncestors.Ids[0].AasciValue)
 	assert.Equal(t, "alice", charlieAncestors.Ids[1].AasciValue)
 	assert.Equal(t, "bob", charlieAncestors.Ids[2].AasciValue)
 }
@@ -220,7 +221,7 @@ func TestAncestorList_FetchImmediatelyUnder_Root(t *testing.T) {
 	list.AddItem(*alice, nil)
 	list.AddItem(*bob, nil)
 
-	rootId, _ := engine.NewGotId(TheRootNode.Value)
+	rootId, _ := engine.NewGotId(engine_util.TheRootNode.Value)
 	res, err := list.FetchImmediatelyUnder(*rootId)
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
@@ -325,13 +326,13 @@ func TestAncestorList_MoveItem_LeafToDifferentParent(t *testing.T) {
 	// Verify old ancestry
 	assert.NotNil(t, result.OldAncestry)
 	assert.Equal(t, 2, len(result.OldAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.OldAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.OldAncestry.Ids[0].AasciValue)
 	assert.Equal(t, "alice", result.OldAncestry.Ids[1].AasciValue)
 
 	// Verify new ancestry
 	assert.NotNil(t, result.NewAncestry)
 	assert.Equal(t, 2, len(result.NewAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
 	assert.Equal(t, "bob", result.NewAncestry.Ids[1].AasciValue)
 
 	// Verify charlie is now under bob
@@ -379,13 +380,13 @@ func TestAncestorList_MoveItem_LeafToRoot(t *testing.T) {
 
 	// Verify new ancestry (just root)
 	assert.Equal(t, 1, len(result.NewAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
 
 	// Verify bob is now directly under root
 	ancestors, err = list.FetchAncestorsOf(*bob)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(ancestors.Ids))
-	assert.Equal(t, TheRootNode.Value, ancestors.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, ancestors.Ids[0].AasciValue)
 }
 
 func TestAncestorList_MoveItem_FromRootToParent(t *testing.T) {
@@ -405,11 +406,11 @@ func TestAncestorList_MoveItem_FromRootToParent(t *testing.T) {
 
 	// Verify old ancestry (just root)
 	assert.Equal(t, 1, len(result.OldAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.OldAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.OldAncestry.Ids[0].AasciValue)
 
 	// Verify new ancestry
 	assert.Equal(t, 2, len(result.NewAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
 	assert.Equal(t, "alice", result.NewAncestry.Ids[1].AasciValue)
 
 	// Verify bob is now under alice
@@ -457,7 +458,7 @@ func TestAncestorList_MoveItem_RootNode_Error(t *testing.T) {
 	list := buildTestAncestorList(t, "ancestor_move_root")
 
 	alice, _ := engine.NewGotId("alice")
-	rootId, _ := engine.NewGotId(TheRootNode.Value)
+	rootId, _ := engine.NewGotId(engine_util.TheRootNode.Value)
 
 	list.AddItem(*alice, nil)
 
@@ -494,13 +495,13 @@ func TestAncestorList_MoveItem_DeepHierarchy(t *testing.T) {
 
 	// Verify old ancestry
 	assert.Equal(t, 3, len(result.OldAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.OldAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.OldAncestry.Ids[0].AasciValue)
 	assert.Equal(t, "alice", result.OldAncestry.Ids[1].AasciValue)
 	assert.Equal(t, "bob", result.OldAncestry.Ids[2].AasciValue)
 
 	// Verify new ancestry
 	assert.Equal(t, 2, len(result.NewAncestry.Ids))
-	assert.Equal(t, TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
+	assert.Equal(t, engine_util.TheRootNode.Value, result.NewAncestry.Ids[0].AasciValue)
 	assert.Equal(t, "dave", result.NewAncestry.Ids[1].AasciValue)
 
 	// Verify charlie is now under dave

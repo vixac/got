@@ -1,4 +1,4 @@
-package bullet_engine
+package engine_util
 
 import (
 	"errors"

@@ -7,16 +7,7 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
-)
-
-// 0 is a bit like a null terminator character. Beacuse ancestor list is forward only
-// duplicate objects aren't a problem. We'll give this value to all nodes that are infact a leaf node.
-var (
-	TheRootNoteInt32 int32 = 0
-	//if no parent is provided, then the root ancestor is provided.
-	TheRootNode = bullet_stl.ListSubject{
-		Value: "0",
-	}
+	"vixac.com/got/engine/engine_util"
 )
 
 // subject separator is used to divide the subject into a list of ancestors, eg a:b:c, and then the objcet separator
@@ -44,7 +35,7 @@ func NewAncestorList(client bullet_interface.TrackClientInterface, listName stri
 }
 
 func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*engine.Ancestry, error) {
-	if id.AasciValue == TheRootNode.Value {
+	if id.AasciValue == engine_util.TheRootNode.Value {
 		return nil, errors.New("inserting the root node is not permitted")
 	}
 
@@ -62,7 +53,7 @@ func (a *BulletAncestorList) AddItem(id engine.GotId, under *engine.GotId) (*eng
 
 	var ancestry *engine.Ancestry = nil
 	if under == nil {
-		parent = TheRootNode
+		parent = engine_util.TheRootNode
 	} else {
 		//now we construct the ancestor prefix
 		//its confusing because "allPAirsForObject just returns a single pair, but the subject of which is a:b:c string so it does contain all the ancestors.
@@ -112,7 +103,7 @@ func (a *BulletAncestorList) FetchImmediatelyUnder(id engine.GotId) (*engine.Des
 	//get the subject key for this id, and then use it as a prefix.
 
 	var ancestorKey = "" //this can be left blank for TheRootNote.
-	if id.AasciValue != TheRootNode.Value {
+	if id.AasciValue != engine_util.TheRootNode.Value {
 		ancestorPairs, err := a.Mesh.AllPairsForObject(bullet_stl.ListObject{Value: id.AasciValue})
 		if err != nil {
 			return nil, err
@@ -233,7 +224,7 @@ func (a *BulletAncestorList) FetchAncestorsOf(id engine.GotId) (*engine.Ancestor
 // MoveItem moves a leaf node to a new parent. Returns an error if the node has children.
 // Returns the old and new ancestry for use by aggregators to update counts.
 func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*engine.MoveItemResult, error) {
-	if id.AasciValue == TheRootNode.Value {
+	if id.AasciValue == engine_util.TheRootNode.Value {
 		return nil, errors.New("moving the root node is not permitted")
 	}
 
@@ -274,7 +265,7 @@ func (a *BulletAncestorList) MoveItem(id engine.GotId, under *engine.GotId) (*en
 
 	// If newAncestry is nil (added under root), create it with just the root
 	if newAncestry == nil {
-		rootId, _ := engine.NewGotId(TheRootNode.Value)
+		rootId, _ := engine.NewGotId(engine_util.TheRootNode.Value)
 		newAncestry = &engine.Ancestry{
 			Ids: []engine.GotId{*rootId},
 		}

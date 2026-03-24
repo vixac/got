@@ -6,7 +6,7 @@ import (
 
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
-	"vixac.com/got/engine/bullet_engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 func LastMidnightUTC() time.Time {
@@ -20,8 +20,8 @@ func LastMidnightUTC() time.Time {
 	)
 }
 
-func setionsByTimeframe(res *engine.GotFetchResult) ([]bullet_engine.TableSection, error) {
-	var sections []bullet_engine.TableSection
+func setionsByTimeframe(res *engine.GotFetchResult) ([]engine_util.TableSection, error) {
+	var sections []engine_util.TableSection
 	midnight := LastMidnightUTC()
 	todayTime := midnight.Unix()
 	yesterday := midnight.AddDate(0, 0, -1).Unix()
@@ -51,22 +51,22 @@ func setionsByTimeframe(res *engine.GotFetchResult) ([]bullet_engine.TableSectio
 		}
 	}
 	if len(theRestItems) > 0 {
-		sections = append(sections, bullet_engine.TableSection{Name: "", Items: theRestItems})
+		sections = append(sections, engine_util.TableSection{Name: "", Items: theRestItems})
 	}
 	if len(lastWeekItems) > 0 {
-		sections = append(sections, bullet_engine.TableSection{Name: " Last Week ", Items: lastWeekItems})
+		sections = append(sections, engine_util.TableSection{Name: " Last Week ", Items: lastWeekItems})
 	}
 	if len(yesterdayItems) > 0 {
-		sections = append(sections, bullet_engine.TableSection{Name: " Yesterday ", Items: yesterdayItems})
+		sections = append(sections, engine_util.TableSection{Name: " Yesterday ", Items: yesterdayItems})
 	}
 	if len(todayItems) > 0 {
-		sections = append(sections, bullet_engine.TableSection{Name: " Today ", Items: todayItems})
+		sections = append(sections, engine_util.TableSection{Name: " Today ", Items: todayItems})
 	}
 	return sections, nil
 }
 
 // creates a section for each of the top level siblings.
-func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.TableSection, error) {
+func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]engine_util.TableSection, error) {
 	const MaxUint = ^uint(0)
 	var minDepth int = int(MaxUint >> 1)
 	var maxDepth int = 0
@@ -79,10 +79,10 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.Tab
 			maxDepth = depth
 		}
 	}
-	var sections []bullet_engine.TableSection
+	var sections []engine_util.TableSection
 	//this is a flat response, so don't break it up into sections
 	if minDepth == maxDepth {
-		sections = append(sections, bullet_engine.TableSection{Name: "", Items: res.Result})
+		sections = append(sections, engine_util.TableSection{Name: "", Items: res.Result})
 		return sections, nil
 
 	}
@@ -92,14 +92,14 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.Tab
 	for _, r := range res.Result {
 		if r.Path.Depth() == minDepth && len(currentSection) > 0 {
 			//flush the current section and start a new one
-			sections = append(sections, bullet_engine.TableSection{Name: "", Items: currentSection})
+			sections = append(sections, engine_util.TableSection{Name: "", Items: currentSection})
 			currentSection = []engine.GotItemDisplay{}
 		}
 
 		currentSection = append(currentSection, r)
 	}
 	if len(currentSection) > 0 {
-		sections = append(sections, bullet_engine.TableSection{Name: "", Items: currentSection})
+		sections = append(sections, engine_util.TableSection{Name: "", Items: currentSection})
 	}
 
 	//if theres a sequence of sections with only 1 item, we group them. This should act as though all leaf nodes are put into a single section.
@@ -114,13 +114,13 @@ func sectionsByTopLevelSiblings(res *engine.GotFetchResult) ([]bullet_engine.Tab
 	}
 
 	//here we create a new sections array and put the leaf nodes at the top. This is not performant.
-	var finalSections []bullet_engine.TableSection
+	var finalSections []engine_util.TableSection
 
 	if len(leafSection) > 0 {
-		finalSections = append(finalSections, bullet_engine.TableSection{Name: "", Items: leafSection})
+		finalSections = append(finalSections, engine_util.TableSection{Name: "", Items: leafSection})
 	}
 	for _, s := range squashedSections {
-		finalSections = append(finalSections, bullet_engine.TableSection{Name: "", Items: s})
+		finalSections = append(finalSections, engine_util.TableSection{Name: "", Items: s})
 	}
 
 	return finalSections, nil
@@ -205,14 +205,14 @@ func renderNotesFor(lookup *engine.GidLookup, recurse bool, deps RootDependencie
 		}
 		displays = append(displays, display)
 	}
-	section := bullet_engine.TableSection{
+	section := engine_util.TableSection{
 		Name:  "Notes",
 		Items: displays,
 	}
 
-	table, err := bullet_engine.NewTable(&bullet_engine.GotTableSections{
-		Sections: []bullet_engine.TableSection{section},
-	}, bullet_engine.TableRenderOptions{
+	table, err := engine_util.NewTable(&engine_util.GotTableSections{
+		Sections: []engine_util.TableSection{section},
+	}, engine_util.TableRenderOptions{
 		FlatPaths:         true,
 		HideNumberGo:      true,
 		ShowUpdatedColumn: true,
@@ -225,7 +225,7 @@ func renderNotesFor(lookup *engine.GidLookup, recurse bool, deps RootDependencie
 
 }
 
-func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bullet_engine.TableRenderOptions, deps RootDependencies) {
+func renderTable(lookup *engine.GidLookup, states []engine.GotState, options engine_util.TableRenderOptions, deps RootDependencies) {
 	res, err := deps.Engine.FetchItemsBelow(lookup, options.SortByPath, states, options.HideUnderCollapsed)
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
@@ -236,7 +236,7 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		return
 	}
 
-	var sections []bullet_engine.TableSection
+	var sections []engine_util.TableSection
 	if options.GroupByTimeFrame {
 		timeFrameSections, err := setionsByTimeframe(res)
 		if err != nil {
@@ -252,11 +252,11 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options bul
 		}
 		sections = siblingSections
 		if res.Parent != nil {
-			sections = append(sections, bullet_engine.TableSection{Name: "", Items: []engine.GotItemDisplay{*res.Parent}})
+			sections = append(sections, engine_util.TableSection{Name: "", Items: []engine.GotItemDisplay{*res.Parent}})
 		}
 	}
 
-	table, err := bullet_engine.NewTable(&bullet_engine.GotTableSections{
+	table, err := engine_util.NewTable(&engine_util.GotTableSections{
 		Sections: sections,
 	}, options)
 	if err != nil {

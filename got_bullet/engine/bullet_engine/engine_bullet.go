@@ -166,7 +166,6 @@ func ToToken(s console.SpaceTime) console.Token {
 		return console.TokenBrand{}
 	default:
 		return console.TokenWarning{}
-
 	}
 }
 
@@ -546,9 +545,9 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 	if err != nil {
 		return nil, err
 	}
-	idGenerator := NewIdBulletGenerator(client, idGenBucket, "next-id-list", "", "latest")
+	idGenerator := engine_util.NewIdBulletGenerator(client, idGenBucket, "next-id-list", "", "latest")
 
-	gidLookup, err := NewBulletGidLookup(aliasStore, numberGoStore, idGenerator)
+	gidLookup, err := engine_util.NewBulletGidLookup(aliasStore, numberGoStore, idGenerator)
 	if err != nil {
 		return nil, err
 	}
