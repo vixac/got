@@ -130,7 +130,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 
 	var newState engine.GotState = request.InitialState
 
-	e.publishAddEvent(AddItemEvent{
+	e.publishAddEvent(engine.AddItemEvent{
 		Id:               engine.SummaryId(newId),
 		State:            newState,
 		Ancestry:         summaryIds,

@@ -20,11 +20,11 @@ type Aggregator struct {
 }
 
 type AggregatorInterface interface {
-	ItemAdded(e AddItemEvent) error
-	ItemStateChanged(e StateChangeEvent) error
-	ItemDeleted(e ItemDeletedEvent) error
-	ItemMoved(e ItemMovedEvent) error
-	ItemEdited(e EditItemEvent) error
+	ItemAdded(e engine.AddItemEvent) error
+	ItemStateChanged(e engine.StateChangeEvent) error
+	ItemDeleted(e engine.ItemDeletedEvent) error
+	ItemMoved(e engine.ItemMovedEvent) error
+	ItemEdited(e engine.EditItemEvent) error
 }
 
 func NewAggregator(summaryStore engine.SummaryStoreInterface) (*Aggregator, error) {
@@ -33,14 +33,14 @@ func NewAggregator(summaryStore engine.SummaryStoreInterface) (*Aggregator, erro
 	}, nil
 }
 
-func (a *Aggregator) ItemAdded(e AddItemEvent) error {
+func (a *Aggregator) ItemAdded(e engine.AddItemEvent) error {
 
 	ancestorAggs, err := a.summaryStore.Fetch(e.Ancestry)
 	if err != nil {
 		return err
 	}
 
-	enrichedEvent, err := EnrichSummaries(e.Ancestry, ancestorAggs)
+	enrichedEvent, err := engine_util.EnrichSummaries(e.Ancestry, ancestorAggs)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (a *Aggregator) ItemAdded(e AddItemEvent) error {
 	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
-func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
+func (a *Aggregator) ItemStateChanged(e engine.StateChangeEvent) error {
 
 	idsIncludingThis := e.Ancestry
 	idsIncludingThis = append(idsIncludingThis, e.Id) //the last item is *THIS*, it's on the end which is wierd.
@@ -250,9 +250,9 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
-func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
+func (a *Aggregator) ItemDeleted(e engine.ItemDeletedEvent) error {
 	//we convert it to a statechanged event with no new state
-	return a.ItemStateChanged(StateChangeEvent{
+	return a.ItemStateChanged(engine.StateChangeEvent{
 		Id:       e.Id,
 		Ancestry: e.Ancestry,
 		OldState: e.State,
@@ -261,7 +261,7 @@ func (a *Aggregator) ItemDeleted(e ItemDeletedEvent) error {
 
 }
 
-func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
+func (a *Aggregator) ItemMoved(e engine.ItemMovedEvent) error {
 	// Fetch the moved item's summary to get its state
 	movedItemSummary, err := a.summaryStore.Fetch([]engine.SummaryId{e.Id})
 	if err != nil {
@@ -340,7 +340,7 @@ func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
 	return a.summaryStore.UpsertManySummaries(upserts)
 }
 
-func (a *Aggregator) ItemEdited(e EditItemEvent) error {
+func (a *Aggregator) ItemEdited(e engine.EditItemEvent) error {
 	nowTime, err := engine.NewDateTime(time.Now())
 	if err != nil {
 		return err

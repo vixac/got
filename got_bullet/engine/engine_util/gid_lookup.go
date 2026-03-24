@@ -2,7 +2,6 @@ package engine_util
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
@@ -48,7 +47,6 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	- An alias. if it starts with an alphanumeric, its an alias
 	*/
 
-	fmt.Printf("VX: Looking up input '%s'\n", lookup.Input)
 	//this is short hand for the last Id created
 	if lookup.Input == "0" {
 		return b.ReturnLastId(0)

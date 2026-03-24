@@ -1,8 +1,4 @@
-package bullet_engine
-
-import (
-	"vixac.com/got/engine"
-)
+package engine
 
 // VX:TODO can we rename Agg entirely to state. and consider the aggregation to be an extension of state.
 type ItemEventType int
@@ -14,32 +10,32 @@ const (
 )
 
 type AddItemEvent struct {
-	Id               engine.SummaryId
-	State            engine.GotState
-	Ancestry         []engine.SummaryId
-	Deadline         *engine.DateTime
-	OverrideSettings *engine.CreateOverrideSettings
+	Id               SummaryId
+	State            GotState
+	Ancestry         []SummaryId
+	Deadline         *DateTime
+	OverrideSettings *CreateOverrideSettings
 }
 type StateChangeEvent struct {
-	Id       engine.SummaryId
-	OldState engine.GotState
-	NewState *engine.GotState //here we pass nil if the item was removed.
-	Ancestry []engine.SummaryId
+	Id       SummaryId
+	OldState GotState
+	NewState *GotState //here we pass nil if the item was removed.
+	Ancestry []SummaryId
 }
 
 type ItemDeletedEvent struct {
-	Id       engine.SummaryId
-	State    engine.GotState
-	Ancestry []engine.SummaryId
+	Id       SummaryId
+	State    GotState
+	Ancestry []SummaryId
 }
 type ItemMovedEvent struct {
-	Id          engine.SummaryId
-	OldAncestry []engine.SummaryId
-	NewAncestry []engine.SummaryId
+	Id          SummaryId
+	OldAncestry []SummaryId
+	NewAncestry []SummaryId
 }
 
 type EditItemEvent struct {
-	Id engine.SummaryId
+	Id SummaryId
 }
 
 // VX:TODO flesh this out with all the events that might be interesting

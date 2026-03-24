@@ -85,7 +85,7 @@ func (e *EngineBullet) Delete(gid *engine.GotId) error {
 	//This is a strange order, but basically if anything in this chain breaks, we have a partially deleted item
 	//which is no good.
 	// Publish delete event with state and ancestry
-	err = e.publishItemDeletedEvent(ItemDeletedEvent{
+	err = e.publishItemDeletedEvent(engine.ItemDeletedEvent{
 		Id:       summaryId,
 		State:    itemState,
 		Ancestry: ancestryIds,
