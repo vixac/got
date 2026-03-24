@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 /*
@@ -175,7 +176,7 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 
 	parentIndex := len(e.Ancestry) - 1
 	parentSummaryId := e.Ancestry[parentIndex]
-	if parentSummaryId == engine.SummaryId(TheRootNoteInt32) {
+	if parentSummaryId == engine.SummaryId(engine_util.TheRootNoteInt32) {
 		return a.summaryStore.UpsertManySummaries(upserts)
 	}
 	parentSummary, ok := ancestorAggs[parentSummaryId]
@@ -224,7 +225,7 @@ func (a *Aggregator) ItemStateChanged(e StateChangeEvent) error {
 	//so at this point we MIGHT have an upsert for the parent already,
 	//and we have increments established for the ancestors and for the parent.
 	for _, summaryId := range e.Ancestry {
-		if summaryId == engine.SummaryId(TheRootNoteInt32) {
+		if summaryId == engine.SummaryId(engine_util.TheRootNoteInt32) {
 			continue
 		}
 		if summaryId == parentSummaryId {
@@ -280,12 +281,12 @@ func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
 	// Collect all ancestor IDs we need to fetch (excluding root)
 	var allAncestorIds []engine.SummaryId
 	for _, id := range e.OldAncestry {
-		if id != engine.SummaryId(TheRootNoteInt32) {
+		if id != engine.SummaryId(engine_util.TheRootNoteInt32) {
 			allAncestorIds = append(allAncestorIds, id)
 		}
 	}
 	for _, id := range e.NewAncestry {
-		if id != engine.SummaryId(TheRootNoteInt32) {
+		if id != engine.SummaryId(engine_util.TheRootNoteInt32) {
 			allAncestorIds = append(allAncestorIds, id)
 		}
 	}
@@ -301,7 +302,7 @@ func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
 	// Decrement the moved item's state from all old ancestors
 	decChange := engine.NewCountChange(*summary.State, false)
 	for _, id := range e.OldAncestry {
-		if id == engine.SummaryId(TheRootNoteInt32) {
+		if id == engine.SummaryId(engine_util.TheRootNoteInt32) {
 			continue
 		}
 		ancestorSummary, ok := ancestorSummaries[id]
@@ -315,7 +316,7 @@ func (a *Aggregator) ItemMoved(e ItemMovedEvent) error {
 	// Increment the moved item's state on all new ancestors
 	incChange := engine.NewCountChange(*summary.State, true)
 	for _, id := range e.NewAncestry {
-		if id == engine.SummaryId(TheRootNoteInt32) {
+		if id == engine.SummaryId(engine_util.TheRootNoteInt32) {
 			continue
 		}
 		// Check if we already have this ancestor in upserts (could be shared between old and new)

@@ -24,7 +24,7 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 		return nil, err
 	}
 
-	parentIsRoot := parentGid.IntValue == TheRootNoteInt32
+	parentIsRoot := parentGid.IntValue == engine_util.TheRootNoteInt32
 
 	//1.gid->ancestor (object -> subject)
 	//2.all descendants: allpairs for full key
@@ -234,10 +234,10 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	}
 	var sorted []engine.GotItemDisplay
 	if sortByPath {
-		sorted = SortTheseIntoDFS(itemDisplays)
+		sorted = engine_util.SortTheseIntoDFS(itemDisplays)
 
 	} else {
-		sorted = SortByUpdated(itemDisplays)
+		sorted = engine_util.SortByUpdated(itemDisplays)
 	}
 	return e.renderSummaries(sorted, parentItemDisplay)
 }

@@ -1,4 +1,4 @@
-package bullet_engine
+package engine_util
 
 import (
 	"errors"
@@ -8,6 +8,16 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
+)
+
+// 0 is a bit like a null terminator character. Beacuse ancestor list is forward only
+// duplicate objects aren't a problem. We'll give this value to all nodes that are infact a leaf node.
+var (
+	TheRootNoteInt32 int32 = 0
+	//if no parent is provided, then the root ancestor is provided.
+	TheRootNode = bullet_stl.ListSubject{
+		Value: "0",
+	}
 )
 
 const (

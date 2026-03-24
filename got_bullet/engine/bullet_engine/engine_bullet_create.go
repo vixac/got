@@ -24,7 +24,6 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 			return nil, errors.New("could not find parent")
 		}
 		parentGotId = fetchedParent
-
 	}
 
 	var newId int32
