@@ -2,6 +2,8 @@ package engine_util
 
 import (
 	"errors"
+	"strings"
+	"unicode"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
@@ -20,6 +22,53 @@ func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId i
 	return &BulletAliasStore{
 		TwoWay: twoWay,
 	}, nil
+
+}
+
+func CheckNumber(p []byte) bool {
+	r := string(p)
+
+	sep := 0
+	for i, b := range r {
+
+		if unicode.IsNumber(b) {
+			continue
+		}
+
+		if b == '-' {
+			if i != 0 {
+				return false
+			}
+			continue
+		}
+
+		if b == '.' {
+			if sep > 0 {
+				return false
+			}
+			sep++
+			continue
+		}
+
+		return false
+	}
+
+	return len(r) > 0
+}
+func IsValidAlias(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	spaces := strings.Contains(input, " ")
+	if spaces {
+		return false
+	}
+	bytes := []byte(input)
+	firstCharIsNumber := CheckNumber([]byte{bytes[0]})
+	if firstCharIsNumber {
+		return false
+	}
+	return true
 
 }
 

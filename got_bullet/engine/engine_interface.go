@@ -3,9 +3,7 @@ package engine
 import (
 	"errors"
 	"math"
-	"strings"
 	"time"
-	"unicode"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
@@ -14,29 +12,28 @@ type SummaryId int32
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngineInterface interface {
-	EditTitle(lookup GidLookup, newHeading string) error
-	//state changes
-	MarkResolved(lookup []GidLookup) error
-	MarkActive(lookup GidLookup) (*NodeId, error)
-	MarkAsNote(lookup GidLookup) (*NodeId, error)
-	DeleteMany(lookups []GidLookup) error
-	ToggleCollapse(lookup GidLookup, collapsed bool) error
-
-	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
-	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
-	TagItem(lookup GidLookup, tag TagLookup) error
-
 	GotAliasInterface
 	GotCreateItemInterface
 	GotFetchInterface
 	RestoreInterface
 	NoteInterface
+	GotEditInterface
+	GotTreeInterface
+}
+
+type GotTreeInterface interface {
+	DeleteMany(lookups []GidLookup) error
+	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
 }
 
 type GotEditInterface interface {
+	MarkResolved(lookup []GidLookup) error
+	EditTitle(lookup GidLookup, newHeading string) error
+	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
+	TagItem(lookup GidLookup, tag TagLookup) error
+	ToggleCollapse(lookup GidLookup, collapsed bool) error
 }
 
-// VX:TODO finish this.
 type NoteInterface interface {
 	JotNote(lookup GidLookup, note string) (LongFormKey, error)
 	NotesFor(lookup *GidLookup, recurse bool) (*LongFormBlockResult, error)
@@ -263,54 +260,6 @@ type GotAliasInterface interface {
 	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
 	Alias(lookup GidLookup, alias string) (bool, error)
-}
-
-func IsValidAlias(input string) bool {
-	if len(input) == 0 {
-		return false
-	}
-	spaces := strings.Contains(input, " ")
-	if spaces {
-		return false
-	}
-	bytes := []byte(input)
-	firstCharIsNumber := CheckNumber([]byte{bytes[0]})
-	if firstCharIsNumber {
-		return false
-	}
-	return true
-
-}
-
-func CheckNumber(p []byte) bool {
-	r := string(p)
-
-	sep := 0
-	for i, b := range r {
-
-		if unicode.IsNumber(b) {
-			continue
-		}
-
-		if b == '-' {
-			if i != 0 {
-				return false
-			}
-			continue
-		}
-
-		if b == '.' {
-			if sep > 0 {
-				return false
-			}
-			sep++
-			continue
-		}
-
-		return false
-	}
-
-	return len(r) > 0
 }
 
 type DateLookup struct {

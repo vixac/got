@@ -197,17 +197,6 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 	return &res, nil
 }
 
-func (e *EngineBullet) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
-	var newState engine.GotState = engine.Active
-	return nil, e.updateState(lookup, newState)
-
-}
-
-func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
-	var newState engine.GotState = engine.Note
-	return nil, e.updateState(lookup, newState)
-}
-
 func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *engine.AncestorLookupResult) error {
 	summaryId := engine.SummaryId(gid.IntValue)
 	ids := []engine.SummaryId{summaryId}

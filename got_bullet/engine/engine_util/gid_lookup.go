@@ -61,7 +61,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	}
 
 	//this is a number<GO> lookup
-	if engine.CheckNumber([]byte(lookup.Input)) {
+	if CheckNumber([]byte(lookup.Input)) {
 		number, err := strconv.Atoi(lookup.Input)
 		if err != nil {
 			return nil, err
