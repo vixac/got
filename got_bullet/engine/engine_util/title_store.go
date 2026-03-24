@@ -10,11 +10,20 @@ import (
 	"vixac.com/got/engine"
 )
 
+type TitleStoreInterface interface {
+	UpsertItem(id int32, title string) error
+	TitleFor(id int32) (*string, error)
+
+	TitleForMany(ids []int32) (map[int32]string, error)
+	RemoveItem(id int32) error
+}
+
+// VX:TODO move to bullet_engine?
 type BulletTitleStore struct {
 	Collection bullet_stl.Collection
 }
 
-func NewBulletTitleStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface) engine.TitleStoreInterface {
+func NewBulletTitleStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface) TitleStoreInterface {
 	coll := bullet_stl.NewBulletCollection(bucketId, track, depot)
 	return &BulletTitleStore{
 		Collection: coll,

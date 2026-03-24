@@ -33,9 +33,8 @@ type MockEngine struct {
 	resolveLookup engine.GidLookup
 	errorToThrow  error
 
-	nodeIdToReturn *engine.NodeId
-	gotIdToReturn  *engine.GotId
-	unaliasAlias   string
+	gotIdToReturn *engine.GotId
+	unaliasAlias  string
 
 	moveLookup    engine.GidLookup
 	moveNewParent engine.GidLookup
@@ -93,14 +92,6 @@ func (m *MockEngine) MarkResolved(lookup []engine.GidLookup) error {
 	m.doneLookup = lookup
 	return m.errorToThrow
 }
-func (m *MockEngine) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
-	m.resolveLookup = lookup
-	return m.nodeIdToReturn, m.errorToThrow
-}
-func (m *MockEngine) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
-	m.resolveLookup = lookup
-	return m.nodeIdToReturn, m.errorToThrow
-}
 
 func (m *MockEngine) Alias(lookup engine.GidLookup, alias string) (bool, error) {
 	m.resolveLookup = lookup
@@ -120,10 +111,10 @@ func (m *MockEngine) Lookup(alias string) (*engine.GotId, error) {
 	return nil, errors.New("not impl")
 
 }
-func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
+func (m *MockEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) error {
 	m.moveLookup = lookup
 	m.moveNewParent = newParent
-	return m.nodeIdToReturn, m.errorToThrow
+	return m.errorToThrow
 }
 
 func (m *MockEngine) JotNote(lookup engine.GidLookup, note string) (engine.LongFormKey, error) {

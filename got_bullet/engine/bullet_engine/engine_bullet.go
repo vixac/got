@@ -29,10 +29,9 @@ const (
 
 type EngineBullet struct {
 	Client        bullet_interface.BulletClientInterface
-	AncestorList  engine.AncestorListInterface
-	TitleStore    engine.TitleStoreInterface
+	AliasStore    engine_util.AliasStoreInterface
+	TitleStore    engine_util.TitleStoreInterface
 	GidLookup     engine.GidLookupInterface
-	AliasStore    engine.AliasStoreInterface
 	NumberGoStore engine.NumberGoStoreInterface
 	SummaryStore  engine.SummaryStoreInterface
 	LongFormStore engine.LongFormStoreInterface
@@ -40,11 +39,12 @@ type EngineBullet struct {
 
 	EventListeners []engine.EventListenerInterface //these will listen to events broadcasted by engineBullet
 
+	AncestorList AncestorListInterface
 }
 
 type IdAncestorPair struct {
 	Id       engine.GotId
-	Ancestry engine.AncestorLookupResult
+	Ancestry AncestorLookupResult
 }
 
 func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
@@ -197,18 +197,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 	return &res, nil
 }
 
-func (e *EngineBullet) MarkActive(lookup engine.GidLookup) (*engine.NodeId, error) {
-	var newState engine.GotState = engine.Active
-	return nil, e.updateState(lookup, newState)
-
-}
-
-func (e *EngineBullet) MarkAsNote(lookup engine.GidLookup) (*engine.NodeId, error) {
-	var newState engine.GotState = engine.Note
-	return nil, e.updateState(lookup, newState)
-}
-
-func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *engine.AncestorLookupResult) error {
+func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *AncestorLookupResult) error {
 	summaryId := engine.SummaryId(gid.IntValue)
 	ids := []engine.SummaryId{summaryId}
 	res, err := e.SummaryStore.Fetch(ids)
@@ -327,21 +316,21 @@ func (e *EngineBullet) MarkResolved(lookups []engine.GidLookup) error {
 	return nil
 }
 
-func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
+func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) error {
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil || gid == nil {
-		return nil, err
+		return err
 	}
 	parent, err := e.GidLookup.InputToGid(&newParent)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	moveRes, err := e.AncestorList.MoveItem(*gid, parent)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if moveRes == nil {
-		return nil, errors.New("move returned nil result")
+		return errors.New("move returned nil result")
 	}
 
 	// Convert old ancestry to SummaryIds
@@ -366,7 +355,7 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 		NewAncestry: newAncestry,
 	})
 
-	return nil, nil
+	return nil
 }
 
 func (e *EngineBullet) publishMoveEvent(event engine.ItemMovedEvent) error {
@@ -453,7 +442,7 @@ func (e *EngineBullet) Alias(lookup engine.GidLookup, alias string) (bool, error
 }
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor
-func (e *EngineBullet) ancestorPathFrom(ancestors *engine.AncestorLookupResult) (*engine.GotPath, error) {
+func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
 	if ancestors == nil {
 		return nil, nil
 	}
@@ -491,7 +480,7 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *engine.AncestorLookupResult) 
 }
 
 // VX:TODO use this one, delete ancestorPathFrom
-func ancestorPathFor(ancestors *engine.AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
+func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
 	var items []engine.PathItem
 	for _, id := range ancestors.Ids {
 		var alias *string

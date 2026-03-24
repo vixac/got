@@ -22,18 +22,14 @@ func buildMvCommand(deps RootDependencies) *cobra.Command {
 			target := args[0]
 			newParent := args[1]
 
-			oldParent, err := deps.Engine.Move(engine.GidLookup{Input: target}, engine.GidLookup{Input: newParent})
+			err := deps.Engine.Move(engine.GidLookup{Input: target}, engine.GidLookup{Input: newParent})
 			if err != nil {
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
 			}
 
 			var msg string
-			if oldParent == nil {
-				msg = "Success: " + target + " moved to new parent " + newParent
-			} else {
-				msg = "Success: " + target + " moved from old parent '" + oldParent.Title + "' to " + newParent
-			}
+			msg = "Success: " + target + " moved to new parent " + newParent
 			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}

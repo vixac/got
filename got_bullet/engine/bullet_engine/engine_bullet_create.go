@@ -6,6 +6,7 @@ import (
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 	"vixac.com/got/engine"
+	"vixac.com/got/engine/engine_util"
 )
 
 func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.GotId, error) {
@@ -85,7 +86,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		}
 	} else if override && request.OverrideSettings.NoAlias == true {
 		//do nothing. This buck explicitlyu has no radiu
-	} else if engine.IsValidAlias(headingToStore) {
+	} else if engine_util.IsValidAlias(headingToStore) {
 		_, err := e.AliasStore.Alias(gotId, headingToStore)
 		if err != nil {
 			return nil, err

@@ -2,6 +2,8 @@ package engine_util
 
 import (
 	"errors"
+	"strings"
+	"unicode"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
@@ -12,7 +14,15 @@ type BulletAliasStore struct {
 	TwoWay *bullet_stl.TwoWayListImpl
 }
 
-func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId int32) (engine.AliasStoreInterface, error) {
+type AliasStoreInterface interface {
+	Lookup(alias string) (*engine.GotId, error)
+	LookupAliasForGid(gid string) (*string, error)
+	LookupAliasForMany(gid []string) (map[string]*string, error)
+	Unalias(alias string) (*engine.GotId, error)
+	Alias(id engine.GotId, alias string) (bool, error)
+}
+
+func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId int32) (AliasStoreInterface, error) {
 	twoWay, err := bullet_stl.NewBulletTwoWayList(track, bucketId, "alias", ">", "<")
 	if err != nil {
 		return nil, err
@@ -20,6 +30,53 @@ func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId i
 	return &BulletAliasStore{
 		TwoWay: twoWay,
 	}, nil
+
+}
+
+func CheckNumber(p []byte) bool {
+	r := string(p)
+
+	sep := 0
+	for i, b := range r {
+
+		if unicode.IsNumber(b) {
+			continue
+		}
+
+		if b == '-' {
+			if i != 0 {
+				return false
+			}
+			continue
+		}
+
+		if b == '.' {
+			if sep > 0 {
+				return false
+			}
+			sep++
+			continue
+		}
+
+		return false
+	}
+
+	return len(r) > 0
+}
+func IsValidAlias(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	spaces := strings.Contains(input, " ")
+	if spaces {
+		return false
+	}
+	bytes := []byte(input)
+	firstCharIsNumber := CheckNumber([]byte{bytes[0]})
+	if firstCharIsNumber {
+		return false
+	}
+	return true
 
 }
 

@@ -3,9 +3,7 @@ package engine
 import (
 	"errors"
 	"math"
-	"strings"
 	"time"
-	"unicode"
 
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/ids"
 )
@@ -14,35 +12,57 @@ type SummaryId int32
 
 // / This is the machine that takes the commands, changes the backend state and returns wahts requested.
 type GotEngineInterface interface {
-	EditTitle(lookup GidLookup, newHeading string) error
-	//state changes
-	MarkResolved(lookup []GidLookup) error
-	MarkActive(lookup GidLookup) (*NodeId, error)
-	MarkAsNote(lookup GidLookup) (*NodeId, error)
-	DeleteMany(lookups []GidLookup) error
-	ToggleCollapse(lookup GidLookup, collapsed bool) error
-
-	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
-	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
-	TagItem(lookup GidLookup, tag TagLookup) error
-
 	GotAliasInterface
 	GotCreateItemInterface
 	GotFetchInterface
 	RestoreInterface
 	NoteInterface
+	GotEditInterface
+	GotTreeInterface
+}
+
+type GotTreeInterface interface {
+	DeleteMany(lookups []GidLookup) error
+	Move(lookup GidLookup, newParent GidLookup) error //returns the oldParents id
 }
 
 type GotEditInterface interface {
+	MarkResolved(lookup []GidLookup) error
+	EditTitle(lookup GidLookup, newHeading string) error
+	ScheduleItem(lookup GidLookup, dateLookup DateLookup) error
+	TagItem(lookup GidLookup, tag TagLookup) error
+	ToggleCollapse(lookup GidLookup, collapsed bool) error
 }
 
-// VX:TODO finish this.
 type NoteInterface interface {
 	JotNote(lookup GidLookup, note string) (LongFormKey, error)
 	NotesFor(lookup *GidLookup, recurse bool) (*LongFormBlockResult, error)
 	OpenThenTimestamp(lookup GidLookup) error
 }
+type RestoreInterface interface {
+	CreateStoreFile() (string, error)
+	RestoreFromFile(filename string) error
+}
 
+// All the lookup stuff
+type GotFetchInterface interface {
+	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
+}
+
+type GotCreateItemInterface interface {
+	CreateBuck(request CreateBuckRequest) (*GotId, error)
+}
+
+// The interface for all aliasing functionality
+type GotAliasInterface interface {
+	Lookup(alias string) (*GotId, error)
+	LookupAliasForGid(gid string) (*string, error)
+	LookupAliasForMany(gid []string) (map[string]*string, error)
+	Unalias(alias string) (*GotId, error)
+	Alias(lookup GidLookup, alias string) (bool, error)
+}
+
+// ///VX:TODO everything under here doesn't belong in this file, and probably belongs in util.
 type IdGeneratorInterface interface {
 	SetLastIdIfLower(newId int64) error //if we're overriding the ids, the last Id may be replaced with this one.
 	LastId() (int64, error)             //fetches the last createdId
@@ -61,24 +81,6 @@ type NumberGoPair struct {
 	Gid    string `json:"g"`
 }
 
-type MoveItemResult struct {
-	OldAncestry *Ancestry
-	NewAncestry *Ancestry
-}
-
-type AncestorLookupResult struct {
-	Ids []GotId
-}
-
-type AncestorManyLookupResult struct {
-	Ids map[GotId]AncestorLookupResult
-}
-
-type RestoreInterface interface {
-	CreateStoreFile() (string, error)
-	RestoreFromFile(filename string) error
-}
-
 type SummaryStoreInterface interface {
 	UpsertSummary(id SummaryId, agg Summary) error
 	UpsertManySummaries(aggs map[SummaryId]Summary) error
@@ -88,25 +90,6 @@ type SummaryStoreInterface interface {
 
 type GidLookupInterface interface {
 	InputToGid(lookup *GidLookup) (*GotId, error)
-}
-
-type DescendantLookupResult struct {
-	//each decendant gid mapped to their AncestorLookupResult
-	Ids map[string]AncestorLookupResult
-}
-
-type Ancestry struct {
-	Ids []GotId
-}
-
-// The engine interface for whatever is going to store ancestor and descendant trees
-type AncestorListInterface interface {
-	AddItem(id GotId, under *GotId) (*Ancestry, error)
-	RemoveItem(id GotId) error
-	FetchImmediatelyUnder(id GotId) (*DescendantLookupResult, error)
-	FetchAncestorsOf(id GotId) (*AncestorLookupResult, error)
-	FetchAncestorsOfMany(id []GotId) (*AncestorManyLookupResult, error)
-	MoveItem(id GotId, under *GotId) (*MoveItemResult, error)
 }
 
 type LongFormBlockResult struct {
@@ -139,19 +122,6 @@ type TitleStoreInterface interface {
 	RemoveItem(id int32) error
 }
 
-// The interface for all aliasing functionality
-type AliasStoreInterface interface {
-	Lookup(alias string) (*GotId, error)
-	LookupAliasForGid(gid string) (*string, error)
-	LookupAliasForMany(gid []string) (map[string]*string, error)
-	Unalias(alias string) (*GotId, error)
-	Alias(id GotId, alias string) (bool, error)
-}
-
-/**
-VX:TODO initial state will require an update state call after creation, and if the update date is set,
-then we also need to ask the update date not to change
-*/
 // Contains the values for fields that would normally be populated by the engine
 type CreateOverrideSettings struct {
 	OverrideId   *int32                 `json:"g,omitempty"`
@@ -164,6 +134,7 @@ type CreateOverrideSettings struct {
 	Flags        []string               `json:"f,omitempty"`
 	LongForm     []LongFormRestoreBlock `json:"l,omitempty"`
 }
+
 type LongFormRestoreBlock struct {
 	KeyString  string `json:"k,omitempty"`
 	Content    string `json:"c,omitempty"`
@@ -203,10 +174,6 @@ func NewCreateBuckRequest(lookup *GidLookup, dateLookup *DateLookup, heading str
 		OverrideSettings:    overrides,
 		InitialState:        state,
 	}
-}
-
-type GotCreateItemInterface interface {
-	CreateBuck(request CreateBuckRequest) (*GotId, error)
 }
 
 // descendant types
@@ -249,68 +216,6 @@ const (
 type GotFetchResult struct {
 	Parent *GotItemDisplay
 	Result []GotItemDisplay
-}
-
-// All the lookup stuff
-type GotFetchInterface interface {
-	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
-}
-
-// The interface for all aliasing functionality
-type GotAliasInterface interface {
-	Lookup(alias string) (*GotId, error)
-	LookupAliasForGid(gid string) (*string, error)
-	LookupAliasForMany(gid []string) (map[string]*string, error)
-	Unalias(alias string) (*GotId, error)
-	Alias(lookup GidLookup, alias string) (bool, error)
-}
-
-func IsValidAlias(input string) bool {
-	if len(input) == 0 {
-		return false
-	}
-	spaces := strings.Contains(input, " ")
-	if spaces {
-		return false
-	}
-	bytes := []byte(input)
-	firstCharIsNumber := CheckNumber([]byte{bytes[0]})
-	if firstCharIsNumber {
-		return false
-	}
-	return true
-
-}
-
-func CheckNumber(p []byte) bool {
-	r := string(p)
-
-	sep := 0
-	for i, b := range r {
-
-		if unicode.IsNumber(b) {
-			continue
-		}
-
-		if b == '-' {
-			if i != 0 {
-				return false
-			}
-			continue
-		}
-
-		if b == '.' {
-			if sep > 0 {
-				return false
-			}
-			sep++
-			continue
-		}
-
-		return false
-	}
-
-	return len(r) > 0
 }
 
 type DateLookup struct {
@@ -361,12 +266,6 @@ type Gid struct {
 	Id string
 }
 
-// VX:TODO RM?
-type NodeId struct {
-	Gid   Gid
-	Title string
-	Alias string
-}
 type PathItem struct {
 	Id    string
 	Alias *string

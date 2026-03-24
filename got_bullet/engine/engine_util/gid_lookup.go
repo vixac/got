@@ -10,12 +10,12 @@ import (
 
 // VX:TODO wants number<GO> lookup
 type BulletGidLookup struct {
-	AliasStore    engine.AliasStoreInterface
+	AliasStore    AliasStoreInterface
 	NumberGoStore engine.NumberGoStoreInterface
 	IdGenerator   engine.IdGeneratorInterface
 }
 
-func NewBulletGidLookup(aliasStore engine.AliasStoreInterface, numberGoStore engine.NumberGoStoreInterface, idGen engine.IdGeneratorInterface) (*BulletGidLookup, error) {
+func NewBulletGidLookup(aliasStore AliasStoreInterface, numberGoStore engine.NumberGoStoreInterface, idGen engine.IdGeneratorInterface) (*BulletGidLookup, error) {
 	return &BulletGidLookup{AliasStore: aliasStore, NumberGoStore: numberGoStore, IdGenerator: idGen}, nil
 }
 
@@ -61,7 +61,7 @@ func (b *BulletGidLookup) InputToGid(lookup *engine.GidLookup) (*engine.GotId, e
 	}
 
 	//this is a number<GO> lookup
-	if engine.CheckNumber([]byte(lookup.Input)) {
+	if CheckNumber([]byte(lookup.Input)) {
 		number, err := strconv.Atoi(lookup.Input)
 		if err != nil {
 			return nil, err
