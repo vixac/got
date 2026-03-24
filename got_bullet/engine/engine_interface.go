@@ -161,6 +161,7 @@ type CreateOverrideSettings struct {
 	Flags        []string               `json:"f,omitempty"`
 	LongForm     []LongFormRestoreBlock `json:"l,omitempty"`
 }
+
 type LongFormRestoreBlock struct {
 	KeyString  string `json:"k,omitempty"`
 	Content    string `json:"c,omitempty"`
