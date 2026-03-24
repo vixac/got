@@ -36,11 +36,11 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	}
 
 	// we tolerate having no children here because we want to render the parent no matter what.
-	var allIds map[string]engine.AncestorLookupResult
+	var allIds map[string]AncestorLookupResult
 	if all != nil {
 		allIds = all.Ids
 	} else {
-		allIds = make(map[string]engine.AncestorLookupResult)
+		allIds = make(map[string]AncestorLookupResult)
 	}
 
 	var plusParent = 0

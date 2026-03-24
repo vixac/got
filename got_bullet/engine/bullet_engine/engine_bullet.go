@@ -29,10 +29,9 @@ const (
 
 type EngineBullet struct {
 	Client        bullet_interface.BulletClientInterface
-	AncestorList  engine.AncestorListInterface
-	TitleStore    engine.TitleStoreInterface
+	AliasStore    engine_util.AliasStoreInterface
+	TitleStore    engine_util.TitleStoreInterface
 	GidLookup     engine.GidLookupInterface
-	AliasStore    engine.AliasStoreInterface
 	NumberGoStore engine.NumberGoStoreInterface
 	SummaryStore  engine.SummaryStoreInterface
 	LongFormStore engine.LongFormStoreInterface
@@ -40,11 +39,12 @@ type EngineBullet struct {
 
 	EventListeners []engine.EventListenerInterface //these will listen to events broadcasted by engineBullet
 
+	AncestorList AncestorListInterface
 }
 
 type IdAncestorPair struct {
 	Id       engine.GotId
-	Ancestry engine.AncestorLookupResult
+	Ancestry AncestorLookupResult
 }
 
 func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.DateLookup) error {
@@ -197,7 +197,7 @@ func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent
 	return &res, nil
 }
 
-func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *engine.AncestorLookupResult) error {
+func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *AncestorLookupResult) error {
 	summaryId := engine.SummaryId(gid.IntValue)
 	ids := []engine.SummaryId{summaryId}
 	res, err := e.SummaryStore.Fetch(ids)
@@ -442,7 +442,7 @@ func (e *EngineBullet) Alias(lookup engine.GidLookup, alias string) (bool, error
 }
 
 // VX:TODO this is used in Summary, but can be deleted and replaced with  ancestorPathFor
-func (e *EngineBullet) ancestorPathFrom(ancestors *engine.AncestorLookupResult) (*engine.GotPath, error) {
+func (e *EngineBullet) ancestorPathFrom(ancestors *AncestorLookupResult) (*engine.GotPath, error) {
 	if ancestors == nil {
 		return nil, nil
 	}
@@ -480,7 +480,7 @@ func (e *EngineBullet) ancestorPathFrom(ancestors *engine.AncestorLookupResult) 
 }
 
 // VX:TODO use this one, delete ancestorPathFrom
-func ancestorPathFor(ancestors *engine.AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
+func ancestorPathFor(ancestors *AncestorLookupResult, aliases map[string]*string) *engine.GotPath {
 	var items []engine.PathItem
 	for _, id := range ancestors.Ids {
 		var alias *string

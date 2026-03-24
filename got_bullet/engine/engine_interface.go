@@ -39,7 +39,30 @@ type NoteInterface interface {
 	NotesFor(lookup *GidLookup, recurse bool) (*LongFormBlockResult, error)
 	OpenThenTimestamp(lookup GidLookup) error
 }
+type RestoreInterface interface {
+	CreateStoreFile() (string, error)
+	RestoreFromFile(filename string) error
+}
 
+// All the lookup stuff
+type GotFetchInterface interface {
+	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
+}
+
+type GotCreateItemInterface interface {
+	CreateBuck(request CreateBuckRequest) (*GotId, error)
+}
+
+// The interface for all aliasing functionality
+type GotAliasInterface interface {
+	Lookup(alias string) (*GotId, error)
+	LookupAliasForGid(gid string) (*string, error)
+	LookupAliasForMany(gid []string) (map[string]*string, error)
+	Unalias(alias string) (*GotId, error)
+	Alias(lookup GidLookup, alias string) (bool, error)
+}
+
+// ///VX:TODO everything under here doesn't belong in this file, and probably belongs in util.
 type IdGeneratorInterface interface {
 	SetLastIdIfLower(newId int64) error //if we're overriding the ids, the last Id may be replaced with this one.
 	LastId() (int64, error)             //fetches the last createdId
@@ -58,24 +81,6 @@ type NumberGoPair struct {
 	Gid    string `json:"g"`
 }
 
-type MoveItemResult struct {
-	OldAncestry *Ancestry
-	NewAncestry *Ancestry
-}
-
-type AncestorLookupResult struct {
-	Ids []GotId
-}
-
-type AncestorManyLookupResult struct {
-	Ids map[GotId]AncestorLookupResult
-}
-
-type RestoreInterface interface {
-	CreateStoreFile() (string, error)
-	RestoreFromFile(filename string) error
-}
-
 type SummaryStoreInterface interface {
 	UpsertSummary(id SummaryId, agg Summary) error
 	UpsertManySummaries(aggs map[SummaryId]Summary) error
@@ -85,25 +90,6 @@ type SummaryStoreInterface interface {
 
 type GidLookupInterface interface {
 	InputToGid(lookup *GidLookup) (*GotId, error)
-}
-
-type DescendantLookupResult struct {
-	//each decendant gid mapped to their AncestorLookupResult
-	Ids map[string]AncestorLookupResult
-}
-
-type Ancestry struct {
-	Ids []GotId
-}
-
-// The engine interface for whatever is going to store ancestor and descendant trees
-type AncestorListInterface interface {
-	AddItem(id GotId, under *GotId) (*Ancestry, error)
-	RemoveItem(id GotId) error
-	FetchImmediatelyUnder(id GotId) (*DescendantLookupResult, error)
-	FetchAncestorsOf(id GotId) (*AncestorLookupResult, error)
-	FetchAncestorsOfMany(id []GotId) (*AncestorManyLookupResult, error)
-	MoveItem(id GotId, under *GotId) (*MoveItemResult, error)
 }
 
 type LongFormBlockResult struct {
@@ -136,19 +122,6 @@ type TitleStoreInterface interface {
 	RemoveItem(id int32) error
 }
 
-// The interface for all aliasing functionality
-type AliasStoreInterface interface {
-	Lookup(alias string) (*GotId, error)
-	LookupAliasForGid(gid string) (*string, error)
-	LookupAliasForMany(gid []string) (map[string]*string, error)
-	Unalias(alias string) (*GotId, error)
-	Alias(id GotId, alias string) (bool, error)
-}
-
-/**
-VX:TODO initial state will require an update state call after creation, and if the update date is set,
-then we also need to ask the update date not to change
-*/
 // Contains the values for fields that would normally be populated by the engine
 type CreateOverrideSettings struct {
 	OverrideId   *int32                 `json:"g,omitempty"`
@@ -203,10 +176,6 @@ func NewCreateBuckRequest(lookup *GidLookup, dateLookup *DateLookup, heading str
 	}
 }
 
-type GotCreateItemInterface interface {
-	CreateBuck(request CreateBuckRequest) (*GotId, error)
-}
-
 // descendant types
 const (
 	AllDescendants           = 0
@@ -247,20 +216,6 @@ const (
 type GotFetchResult struct {
 	Parent *GotItemDisplay
 	Result []GotItemDisplay
-}
-
-// All the lookup stuff
-type GotFetchInterface interface {
-	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
-}
-
-// The interface for all aliasing functionality
-type GotAliasInterface interface {
-	Lookup(alias string) (*GotId, error)
-	LookupAliasForGid(gid string) (*string, error)
-	LookupAliasForMany(gid []string) (map[string]*string, error)
-	Unalias(alias string) (*GotId, error)
-	Alias(lookup GidLookup, alias string) (bool, error)
 }
 
 type DateLookup struct {

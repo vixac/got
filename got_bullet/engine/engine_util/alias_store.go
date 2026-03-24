@@ -14,7 +14,15 @@ type BulletAliasStore struct {
 	TwoWay *bullet_stl.TwoWayListImpl
 }
 
-func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId int32) (engine.AliasStoreInterface, error) {
+type AliasStoreInterface interface {
+	Lookup(alias string) (*engine.GotId, error)
+	LookupAliasForGid(gid string) (*string, error)
+	LookupAliasForMany(gid []string) (map[string]*string, error)
+	Unalias(alias string) (*engine.GotId, error)
+	Alias(id engine.GotId, alias string) (bool, error)
+}
+
+func NewBulletAliasStore(track bullet_interface.TrackClientInterface, bucketId int32) (AliasStoreInterface, error) {
 	twoWay, err := bullet_stl.NewBulletTwoWayList(track, bucketId, "alias", ">", "<")
 	if err != nil {
 		return nil, err
