@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
-	"vixac.com/got/engine"
 )
 
 func TestMoveCommand_MissingGID(t *testing.T) {
@@ -77,8 +76,6 @@ func TestMoveCommand_ValidButWithExistingParent(t *testing.T) {
 
 	var p = MockMessenger{}
 	var e = MockEngine{}
-	var node = engine.NodeId{Title: "old_parent_title"}
-	e.nodeIdToReturn = &node
 	mockDeps := RootDependencies{
 		Printer: &p,
 		Engine:  &e,
@@ -93,5 +90,5 @@ func TestMoveCommand_ValidButWithExistingParent(t *testing.T) {
 	assert.Equal(t, e.moveLookup.Input, "abc")
 	assert.Equal(t, e.moveNewParent.Input, "new_parent")
 	assert.Equal(t, len(p.messages), 1)
-	assert.Equal(t, p.messages[0].Message, "Success: abc moved from old parent 'old_parent_title' to new_parent")
+	assert.Equal(t, p.messages[0].Message, "Success: abc moved to new parent new_parent")
 }

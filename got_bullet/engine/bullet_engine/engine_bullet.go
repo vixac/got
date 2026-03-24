@@ -316,21 +316,21 @@ func (e *EngineBullet) MarkResolved(lookups []engine.GidLookup) error {
 	return nil
 }
 
-func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) (*engine.NodeId, error) {
+func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup) error {
 	gid, err := e.GidLookup.InputToGid(&lookup)
 	if err != nil || gid == nil {
-		return nil, err
+		return err
 	}
 	parent, err := e.GidLookup.InputToGid(&newParent)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	moveRes, err := e.AncestorList.MoveItem(*gid, parent)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if moveRes == nil {
-		return nil, errors.New("move returned nil result")
+		return errors.New("move returned nil result")
 	}
 
 	// Convert old ancestry to SummaryIds
@@ -355,7 +355,7 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 		NewAncestry: newAncestry,
 	})
 
-	return nil, nil
+	return nil
 }
 
 func (e *EngineBullet) publishMoveEvent(event engine.ItemMovedEvent) error {

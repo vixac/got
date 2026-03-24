@@ -23,7 +23,7 @@ type GotEngineInterface interface {
 
 type GotTreeInterface interface {
 	DeleteMany(lookups []GidLookup) error
-	Move(lookup GidLookup, newParent GidLookup) (*NodeId, error) //returns the oldParents id
+	Move(lookup GidLookup, newParent GidLookup) error //returns the oldParents id
 }
 
 type GotEditInterface interface {
@@ -310,12 +310,6 @@ type Gid struct {
 	Id string
 }
 
-// VX:TODO RM?
-type NodeId struct {
-	Gid   Gid
-	Title string
-	Alias string
-}
 type PathItem struct {
 	Id    string
 	Alias *string
