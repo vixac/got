@@ -9,6 +9,7 @@ import (
 	"vixac.com/got/engine"
 )
 
+// VX:TODO this test is completely reusable for any interface. Once grove is ready, I can duplicate. and change NewEngineBullet to NewGroveEngine
 func TestCreateBuckWithOverrideSettings(t *testing.T) {
 
 	mock_client := BuildTestClient()
@@ -117,10 +118,12 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, item1Flags["flag1"], true)
 	assert.Equal(t, item1Flags["flag2"], true)
 
-	longformRes, err := sut.LongFormStore.LongFormForMany([]engine.GotId{*buck1IdGot})
-	assert.Equal(t, len(longformRes), 1)
-	assert.Equal(t, len(longformRes[*buck1IdGot].Blocks), 1)
-	assert.Equal(t, longformRes[*buck1IdGot].Blocks[0].Content, "This is a long form text entry.")
+	lookup := engine.GidLookup{
+		Input: "0" + buck1IdGot.AasciValue,
+	}
+	longformRes, err := sut.NotesFor(&lookup, false)
+	assert.Equal(t, len(longformRes.Blocks), 1)
+	assert.Equal(t, longformRes.Blocks[0].Content, "This is a long form text entry.")
 
 }
 

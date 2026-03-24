@@ -2,7 +2,6 @@ package engine_util
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
@@ -69,12 +68,10 @@ func (s *BulletLongFormStore) AppendNote(id engine.GotId, content string) (*engi
 	}
 
 	newLongFormNoteStringId := newLongFormId.ToString()
-	collId, err := s.Collection.CreateItemUnder(newLongFormNoteStringId, content, &now)
+	_, err = s.Collection.CreateItemUnder(newLongFormNoteStringId, content, &now)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("VX: Note created under colelction Id %s \n", collId.Key)
 	return &newLongFormId, nil
 }
 
@@ -130,7 +127,6 @@ func (s *BulletLongFormStore) LongFormForMany(ids []engine.GotId) (map[engine.Go
 
 // VX:TODO this could take a nil and then we could smoosh the results or something for ranged lookup
 func (s *BulletLongFormStore) LongFormNotesFor(id engine.GotId) (*engine.LongFormBlockResult, error) {
-	fmt.Printf("VX: id is %s\n", id.AasciValue)
 	res, err := s.Collection.AllItemsUnderPrefix(id.AasciValue)
 	if err != nil || len(res) == 0 {
 		return nil, err

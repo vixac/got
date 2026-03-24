@@ -38,10 +38,8 @@ type EngineBullet struct {
 	LongFormStore engine.LongFormStoreInterface
 	IgGenerator   engine.IdGeneratorInterface
 
-	EventListeners []EventListenerInterface //these will listen to events broadcasted by engineBullet
+	EventListeners []engine.EventListenerInterface //these will listen to events broadcasted by engineBullet
 
-	//interface conformance
-	//	LongFormStoreInterface
 }
 
 type IdAncestorPair struct {
@@ -236,7 +234,7 @@ func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.Got
 
 		}
 	}
-	event := StateChangeEvent{
+	event := engine.StateChangeEvent{
 		Id:       summaryId,
 		OldState: *oldState,
 		NewState: &newState,
@@ -267,7 +265,7 @@ func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) err
 	if gid == nil {
 		return nil
 	}
-	_ = e.publishEditEvent(EditItemEvent{Id: engine.SummaryId(gid.IntValue)})
+	_ = e.publishEditEvent(engine.EditItemEvent{Id: engine.SummaryId(gid.IntValue)})
 	return e.TitleStore.UpsertItem(gid.IntValue, newHeading)
 }
 
@@ -362,7 +360,7 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 		}
 	}
 
-	e.publishMoveEvent(ItemMovedEvent{
+	e.publishMoveEvent(engine.ItemMovedEvent{
 		Id:          engine.SummaryId(gid.IntValue),
 		OldAncestry: oldAncestry,
 		NewAncestry: newAncestry,
@@ -371,7 +369,7 @@ func (e *EngineBullet) Move(lookup engine.GidLookup, newParent engine.GidLookup)
 	return nil, nil
 }
 
-func (e *EngineBullet) publishMoveEvent(event ItemMovedEvent) error {
+func (e *EngineBullet) publishMoveEvent(event engine.ItemMovedEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemMoved(event)
 		if err != nil {
@@ -382,7 +380,7 @@ func (e *EngineBullet) publishMoveEvent(event ItemMovedEvent) error {
 	return nil
 }
 
-func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
+func (e *EngineBullet) publishAddEvent(event engine.AddItemEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemAdded(event)
 		if err != nil {
@@ -393,7 +391,7 @@ func (e *EngineBullet) publishAddEvent(event AddItemEvent) error {
 	return nil
 }
 
-func (e *EngineBullet) publishItemDeletedEvent(event ItemDeletedEvent) error {
+func (e *EngineBullet) publishItemDeletedEvent(event engine.ItemDeletedEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemDeleted(event)
 		if err != nil {
@@ -404,7 +402,7 @@ func (e *EngineBullet) publishItemDeletedEvent(event ItemDeletedEvent) error {
 	return nil
 }
 
-func (e *EngineBullet) publishEditEvent(event EditItemEvent) error {
+func (e *EngineBullet) publishEditEvent(event engine.EditItemEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemEdited(event)
 		if err != nil {
@@ -415,7 +413,7 @@ func (e *EngineBullet) publishEditEvent(event EditItemEvent) error {
 	return nil
 }
 
-func (e *EngineBullet) publishStateChangeEvent(event StateChangeEvent) error {
+func (e *EngineBullet) publishStateChangeEvent(event engine.StateChangeEvent) error {
 	for _, l := range e.EventListeners {
 		err := l.ItemStateChanged(event)
 		if err != nil {
@@ -516,7 +514,7 @@ func ancestorPathFor(ancestors *engine.AncestorLookupResult, aliases map[string]
 }
 
 // VX:TODO that "anc" prefix is totally unneeded because you have a bucket.
-func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBullet, error) {
+func NewEngineBullet(client bullet_interface.BulletClientInterface) (engine.GotEngineInterface, error) {
 	ancestorList, err := NewAncestorList(client, "anc", ancestorBucket, ":", ">", "<")
 
 	if err != nil {
@@ -552,7 +550,7 @@ func NewEngineBullet(client bullet_interface.BulletClientInterface) (*EngineBull
 		return nil, err
 	}
 
-	var listeners []EventListenerInterface
+	var listeners []engine.EventListenerInterface
 	aggregator, err := NewAggregator(aggStore)
 	if err != nil {
 		return nil, err

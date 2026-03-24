@@ -21,7 +21,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	var completeState = engine.GotState(engine.Complete)
 
 	//create alice -> bob
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -33,7 +33,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 
 	assert.Equal(t, len(store.aggs), 1)
 
-	agg.ItemAdded(AddItemEvent{
+	agg.ItemAdded(engine.AddItemEvent{
 		Id:       bob,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -62,7 +62,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.State, nilState)
 
 	//complete bob, expect alice to become active
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -92,7 +92,7 @@ func TestAggregatorJustAliceAndBob(t *testing.T) {
 	//now complete alice:
 
 	//complete alice
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       aliceId,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -131,7 +131,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	var activeState = engine.GotState(engine.Active)
 	var completeState = engine.GotState(engine.Complete)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       top,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -141,7 +141,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	assert.NilError(t, err)
 
 	//create zob ->alice -> bob
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{top},
@@ -153,7 +153,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 
 	assert.Equal(t, len(store.aggs), 2)
 
-	agg.ItemAdded(AddItemEvent{
+	agg.ItemAdded(engine.AddItemEvent{
 		Id:       bob,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{top, aliceId},
@@ -192,7 +192,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	assert.Equal(t, fetchedAlice.State, nilState)
 
 	//complete bob, expect alice to become active
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -233,7 +233,7 @@ func TestAggregatorTopAliceAndBob(t *testing.T) {
 	//now complete alice:
 
 	//complete alice
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       aliceId,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -270,7 +270,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	var activeState = engine.GotState(engine.Active)
 	var completeState = engine.GotState(engine.Complete)
 	//create alice -> bob
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -282,7 +282,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 
 	assert.Equal(t, len(store.aggs), 1)
 
-	agg.ItemAdded(AddItemEvent{
+	agg.ItemAdded(engine.AddItemEvent{
 		Id:       bob,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -311,7 +311,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	assert.Equal(t, fetchedAlice.State, nilState)
 
 	//complete bob, expect alice to become active
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -340,7 +340,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 
 	//now add an active item under alice
 	fmt.Println("adding carol..")
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       carolId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -364,7 +364,7 @@ func TestAggregatorPreservesCompletes(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
 
 	//complete carol
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       carolId,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -401,7 +401,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	var completeState = engine.GotState(engine.Complete)
 
 	//create alice -> bob
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -413,7 +413,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 
 	assert.Equal(t, len(store.aggs), 1)
 
-	agg.ItemAdded(AddItemEvent{
+	agg.ItemAdded(engine.AddItemEvent{
 		Id:       bob,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -442,7 +442,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	assert.Equal(t, fetchedAlice.State, nilState)
 
 	//complete bob, expect alice to become active
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       bob,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -471,7 +471,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	assert.Equal(t, *fetchedAlice.State, activeState)
 
 	//now add an active item under alice
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       carolId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -495,7 +495,7 @@ func TestAggregatorHandlesDelete(t *testing.T) {
 	assert.Equal(t, fetchedAlice.Counts.Notes, 0)
 
 	//deleting carol carol
-	err = agg.ItemDeleted(ItemDeletedEvent{
+	err = agg.ItemDeleted(engine.ItemDeletedEvent{
 		Id:       carolId,
 		Ancestry: []engine.SummaryId{aliceId},
 	})
@@ -529,7 +529,7 @@ func TestAggregatorMoveActiveItem(t *testing.T) {
 	// Create alice and bob as top-level groups with carol under alice
 	// alice -> carol (active)
 	// bob (empty)
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -537,7 +537,7 @@ func TestAggregatorMoveActiveItem(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       bobId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -545,7 +545,7 @@ func TestAggregatorMoveActiveItem(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       carolId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -563,7 +563,7 @@ func TestAggregatorMoveActiveItem(t *testing.T) {
 	assert.Assert(t, fetchedBob.Counts == nil) // bob is a leaf, no children
 
 	// Move carol from alice to bob
-	err = agg.ItemMoved(ItemMovedEvent{
+	err = agg.ItemMoved(engine.ItemMovedEvent{
 		Id:          carolId,
 		OldAncestry: []engine.SummaryId{aliceId},
 		NewAncestry: []engine.SummaryId{bobId},
@@ -593,7 +593,7 @@ func TestAggregatorMoveCompleteItem(t *testing.T) {
 	var completeState = engine.GotState(engine.Complete)
 
 	// Create alice -> carol (active), bob (empty)
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -601,7 +601,7 @@ func TestAggregatorMoveCompleteItem(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       bobId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -609,7 +609,7 @@ func TestAggregatorMoveCompleteItem(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       carolId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -618,7 +618,7 @@ func TestAggregatorMoveCompleteItem(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Complete carol
-	err = agg.ItemStateChanged(StateChangeEvent{
+	err = agg.ItemStateChanged(engine.StateChangeEvent{
 		Id:       carolId,
 		OldState: engine.Active,
 		NewState: &completeState,
@@ -636,7 +636,7 @@ func TestAggregatorMoveCompleteItem(t *testing.T) {
 	assert.Assert(t, fetchedBob.Counts == nil) // bob is a leaf, no children
 
 	// Move carol from alice to bob
-	err = agg.ItemMoved(ItemMovedEvent{
+	err = agg.ItemMoved(engine.ItemMovedEvent{
 		Id:          carolId,
 		OldAncestry: []engine.SummaryId{aliceId},
 		NewAncestry: []engine.SummaryId{bobId},
@@ -666,7 +666,7 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	var carolId = engine.SummaryId(12)
 
 	// Create hierarchy: top -> alice -> carol (active), top -> bob (empty)
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       topId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -674,7 +674,7 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{topId},
@@ -682,7 +682,7 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       bobId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{topId},
@@ -690,7 +690,7 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       carolId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{topId, aliceId},
@@ -716,7 +716,7 @@ func TestAggregatorMoveItemDeepHierarchy(t *testing.T) {
 	// Move carol from alice to bob (both under top)
 	// Old ancestry: [top, alice]
 	// New ancestry: [top, bob]
-	err = agg.ItemMoved(ItemMovedEvent{
+	err = agg.ItemMoved(engine.ItemMovedEvent{
 		Id:          carolId,
 		OldAncestry: []engine.SummaryId{topId, aliceId},
 		NewAncestry: []engine.SummaryId{topId, bobId},
@@ -751,7 +751,7 @@ func TestAggregatorMoveItemToALeaf(t *testing.T) {
 	var carolId = engine.SummaryId(12)
 
 	// Create hierarchy: top -> alice -> carol (active), top -> bob (empty)
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       topId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -759,7 +759,7 @@ func TestAggregatorMoveItemToALeaf(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{topId},
@@ -767,7 +767,7 @@ func TestAggregatorMoveItemToALeaf(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       bobId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{topId},
@@ -775,7 +775,7 @@ func TestAggregatorMoveItemToALeaf(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       carolId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{topId, aliceId},
@@ -803,7 +803,7 @@ func TestAggregatorMoveItemToALeaf(t *testing.T) {
 	//New: top -> alice, top -> bob -> carol
 	// Old ancestry: [top, alice]
 	// New ancestry: [top, bob]
-	err = agg.ItemMoved(ItemMovedEvent{
+	err = agg.ItemMoved(engine.ItemMovedEvent{
 		Id:          bobId,
 		OldAncestry: []engine.SummaryId{topId},
 		NewAncestry: []engine.SummaryId{topId, carolId},
@@ -835,7 +835,7 @@ func TestAggregatorMoveNoteItem(t *testing.T) {
 	var noteId = engine.SummaryId(12)
 
 	// Create alice -> note, bob (empty)
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       aliceId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -843,7 +843,7 @@ func TestAggregatorMoveNoteItem(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       bobId,
 		State:    engine.Active,
 		Ancestry: []engine.SummaryId{},
@@ -851,7 +851,7 @@ func TestAggregatorMoveNoteItem(t *testing.T) {
 	})
 	assert.NilError(t, err)
 
-	err = agg.ItemAdded(AddItemEvent{
+	err = agg.ItemAdded(engine.AddItemEvent{
 		Id:       noteId,
 		State:    engine.Note,
 		Ancestry: []engine.SummaryId{aliceId},
@@ -869,7 +869,7 @@ func TestAggregatorMoveNoteItem(t *testing.T) {
 	assert.Assert(t, fetchedBob.Counts == nil) // bob is a leaf, no children
 
 	// Move note from alice to bob
-	err = agg.ItemMoved(ItemMovedEvent{
+	err = agg.ItemMoved(engine.ItemMovedEvent{
 		Id:          noteId,
 		OldAncestry: []engine.SummaryId{aliceId},
 		NewAncestry: []engine.SummaryId{bobId},

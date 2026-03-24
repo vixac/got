@@ -11,7 +11,7 @@ import (
 
 type RootDependencies struct {
 	Printer console.Messenger
-	Engine  engine.GotEngine
+	Engine  engine.GotEngineInterface
 }
 
 func Execute(deps RootDependencies) {
