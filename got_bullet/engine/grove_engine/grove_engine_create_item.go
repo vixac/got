@@ -2,7 +2,6 @@ package grove_engine
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"vixac.com/got/engine"
@@ -21,21 +20,9 @@ func (g *GroveEngine) CreateBuck(request engine.CreateBuckRequest) (*engine.GotI
 		return nil, err
 	}
 
-	deadline, err := deriveDeadline(request)
-	if err != nil {
-		return nil, err
-	}
-
 	err = g.aliasBuckIfNeeded(request, *newId)
 	if err != nil {
 		return nil, err
-	}
-
-	if parentGotId != nil {
-		fmt.Printf("VX: TODO use parent id %s \n to create\n", parentGotId.AasciValue)
-	}
-	if deadline != nil {
-		fmt.Printf("VX: TODO use  deadline %s \n to create\n", deadline.Date)
 	}
 
 	err = g.maybeWriteLongforms(request.OverrideSettings)
@@ -43,9 +30,59 @@ func (g *GroveEngine) CreateBuck(request engine.CreateBuckRequest) (*engine.GotI
 		return nil, err
 	}
 
-	//next longform
-	//then create the event in grove.
-	return nil, errors.New("nope1")
+	err = g.writeBuckInfo(request, *newId)
+	if err != nil {
+		return nil, err
+	}
+
+	groveReq := GotStoreCreateRequest{
+		Id:     *newId,
+		State:  request.InitialState,
+		Parent: parentGotId,
+	}
+	err = g.GroveStore.CreateBuck(groveReq)
+	if err != nil {
+		return nil, err
+	}
+	return newId, nil
+}
+
+func (g *GroveEngine) writeBuckInfo(request engine.CreateBuckRequest, id engine.GotId) error {
+	now, _ := engine.NewDateTime(time.Now())
+	created, err := createdTimeOrNil(request.OverrideSettings)
+	if err != nil {
+		return err
+	}
+	updated, err := updatedTimeOrNil(request.OverrideSettings)
+	if err != nil {
+		return err
+	}
+	deadline, err := deriveDeadline(request)
+	if err != nil {
+		return err
+	}
+	if created == nil {
+		created = &now
+	}
+	if updated == nil {
+		updated = &now
+	}
+
+	var tags []engine.Tag
+	if request.OverrideSettings != nil {
+		tags = request.OverrideSettings.Tags
+	}
+	flags := make(map[string]bool)
+	if request.OverrideSettings != nil {
+		for _, f := range request.OverrideSettings.Flags {
+			flags[f] = true
+
+		}
+	}
+
+	buckInfo := engine_util.NewBuckInfo(request.Heading, deadline, *created, *updated, tags, flags)
+	err = g.InfoStore.UpsertInfo(id, buckInfo)
+	return err
 }
 
 func (g *GroveEngine) maybeWriteLongforms(override *engine.CreateOverrideSettings) error {
@@ -145,4 +182,29 @@ func (g *GroveEngine) deriveLookup(lookup *engine.GidLookup) (*engine.GotId, err
 	}
 	return fetched, nil
 
+}
+
+func stringToTime(dateString string) (engine.DateTime, error) {
+	createdDate, err := engine.NewTimeFromString(dateString)
+	if err != nil {
+		return engine.DateTime{}, err
+	}
+	return engine.NewDateTime(time.Time(*createdDate))
+
+}
+func createdTimeOrNil(override *engine.CreateOverrideSettings) (*engine.DateTime, error) {
+
+	if override != nil {
+		date, err := stringToTime(override.CreatedDate)
+		return &date, err
+	}
+	return nil, nil
+}
+func updatedTimeOrNil(override *engine.CreateOverrideSettings) (*engine.DateTime, error) {
+
+	if override != nil {
+		date, err := stringToTime(override.UpdatedDate)
+		return &date, err
+	}
+	return nil, nil
 }

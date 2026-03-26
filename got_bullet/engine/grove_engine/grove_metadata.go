@@ -1,12 +1,6 @@
 package grove_engine
 
-import (
-	"strings"
-
-	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
-	"vixac.com/got/engine"
-)
-
+/*
 const (
 	customPrefix = "c:"
 )
@@ -50,3 +44,4 @@ func (g *GroveMetaData) ToGrove() *bullet_interface.NodeMetadata {
 func customFieldToMetaKey(field string) string {
 	return customPrefix + field
 }
+*/

@@ -9,8 +9,9 @@ import (
 const (
 	groveIdGenBucket int32 = 200
 	aliasBucket      int32 = 2001
-	numberGoBucket   int32 = 2006
 	longFormBucket   int32 = 2005
+	numberGoBucket   int32 = 2006
+	infoBucket       int32 = 2007
 )
 
 /*
@@ -30,6 +31,8 @@ type GroveEngine struct {
 	NumberGoStore engine.NumberGoStoreInterface
 	LongFormStore engine.LongFormStoreInterface
 	IdGenerator   engine.IdGeneratorInterface
+	GroveStore    GotStoreInterface
+	InfoStore     engine_util.BuckStoreInterface
 }
 
 func NewGroveEngine(client bullet_interface.BulletClientInterface) (*GroveEngine, error) {
@@ -53,6 +56,13 @@ func NewGroveEngine(client bullet_interface.BulletClientInterface) (*GroveEngine
 	if err != nil {
 		return nil, err
 	}
+	codec := &engine_util.JSONCodec[engine_util.BuckInfo]{}
+	infoStore := engine_util.NewBuckStore(infoBucket, client, client, codec)
+
+	groveStore, err := NewGroveGotStore(client)
+	if err != nil {
+		return nil, err
+	}
 
 	return &GroveEngine{
 		Client:        client,
@@ -61,5 +71,7 @@ func NewGroveEngine(client bullet_interface.BulletClientInterface) (*GroveEngine
 		NumberGoStore: numberGoStore,
 		LongFormStore: longFormStore,
 		IdGenerator:   idGenerator,
+		GroveStore:    groveStore,
+		InfoStore:     infoStore,
 	}, nil
 }
