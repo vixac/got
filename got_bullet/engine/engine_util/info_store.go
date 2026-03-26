@@ -39,17 +39,28 @@ type BuckInfo struct {
 	Flags       map[string]bool `json:"f,omitempty"`
 }
 
+func NewBuckInfo(title string, deadline *engine.DateTime, created engine.DateTime, updated engine.DateTime, tags []engine.Tag, flags map[string]bool) BuckInfo {
+	return BuckInfo{
+		Title:       title,
+		Deadline:    deadline,
+		CreatedDate: created,
+		UpdatedDate: updated,
+		Tags:        tags,
+		Flags:       flags,
+	}
+}
+
 type BuckStore struct {
 	Codec      Codec[BuckInfo]
 	Collection bullet_stl.Collection
 }
 
-func NewBuckStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface, codec Codec[BuckInfo]) (BuckStoreInterface, error) {
+func NewBuckStore(bucketId int32, track bullet_interface.TrackClientInterface, depot bullet_interface.DepotClientInterface, codec Codec[BuckInfo]) BuckStoreInterface {
 	coll := bullet_stl.NewBulletCollection(bucketId, track, depot)
 	return &BuckStore{
 		Codec:      codec,
 		Collection: coll,
-	}, nil
+	}
 }
 
 func (b *BuckStore) UpsertInfo(id engine.GotId, info BuckInfo) error {
