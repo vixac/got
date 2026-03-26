@@ -1,6 +1,7 @@
 package grove_engine
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -91,7 +92,8 @@ func (s *GroveGotStore) CreateBuck(createBuckRequest GotStoreCreateRequest) erro
 	if createBuckRequest.OverrideSettings != nil && createBuckRequest.OverrideSettings.Flags != nil {
 		customFlags = createBuckRequest.OverrideSettings.Flags
 	}
-	meta := NewGroveMetaData(customFlags)
+	fmt.Printf("VX:TODO Scheduled parameter is not currently being stored in grove store")
+	meta := NewGroveMetaData(customFlags, *created, nil)
 
 	nodeId := bullet_interface.NodeID(createBuckRequest.Id.AasciValue)
 	groveReq := bullet_interface.GroveCreateNodeRequest{

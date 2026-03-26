@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
+	"vixac.com/got/engine"
 )
 
 const (
@@ -11,7 +12,9 @@ const (
 )
 
 type GroveMetaData struct {
-	Custom []string
+	Custom  []string
+	Created engine.DateTime
+	//Scheduled *engine.DateTime
 }
 
 func NewGroveMetaDataFrom(nodeMeta bullet_interface.NodeMetadata) GroveMetaData {
@@ -25,19 +28,14 @@ func NewGroveMetaDataFrom(nodeMeta bullet_interface.NodeMetadata) GroveMetaData 
 	return GroveMetaData{Custom: customStrings}
 }
 
-type GroveAggregateData struct {
-	ActiveCount   int
-	CompleteCount int
-}
-
-func NewGroveMetaData(customFlags []string) GroveMetaData {
+func NewGroveMetaData(customFlags []string, createdDate engine.DateTime, scheduled *engine.DateTime) GroveMetaData {
 	meta := GroveMetaData{
-		Custom: customFlags,
+		Custom:  customFlags,
+		Created: createdDate,
 	}
 	return meta
 }
 
-// map[string]interface{}
 func (g *GroveMetaData) ToGrove() *bullet_interface.NodeMetadata {
 	var meta = make(bullet_interface.NodeMetadata)
 	for _, c := range g.Custom {
@@ -45,6 +43,7 @@ func (g *GroveMetaData) ToGrove() *bullet_interface.NodeMetadata {
 			meta[customFieldToMetaKey(c)] = 1
 		}
 	}
+	meta["created"] = g.Created.Date
 	return &meta
 }
 
