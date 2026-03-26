@@ -76,7 +76,6 @@ func (g *GroveEngine) writeBuckInfo(request engine.CreateBuckRequest, id engine.
 	if request.OverrideSettings != nil {
 		for _, f := range request.OverrideSettings.Flags {
 			flags[f] = true
-
 		}
 	}
 
