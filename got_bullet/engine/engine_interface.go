@@ -55,8 +55,6 @@ type GotCreateItemInterface interface {
 
 // The interface for all aliasing functionality
 type GotAliasInterface interface {
-	Lookup(alias string) (*GotId, error)
-	LookupAliasForGid(gid string) (*string, error)
 	LookupAliasForMany(gid []string) (map[string]*string, error)
 	Unalias(alias string) (*GotId, error)
 	Alias(lookup GidLookup, alias string) (bool, error)
@@ -114,14 +112,6 @@ type LongFormStoreInterface interface {
 	RemoveAllItemsFromLongStoreUnder(id GotId) error
 }
 
-type TitleStoreInterface interface {
-	UpsertItem(id int32, title string) error
-	TitleFor(id int32) (*string, error)
-
-	TitleForMany(ids []int32) (map[int32]string, error)
-	RemoveItem(id int32) error
-}
-
 // Contains the values for fields that would normally be populated by the engine
 type CreateOverrideSettings struct {
 	OverrideId   *int32                 `json:"g,omitempty"`
@@ -150,6 +140,7 @@ func NewRestoreBlock(block LongFormBlock) LongFormRestoreBlock {
 	return restoreBlock
 }
 
+// VX:if createBuckRequests have idempotency keys, then retrying a failed create buck might be permissible.
 type CreateBuckRequest struct {
 	GidLookupInput      *string                 `json:"lookupInput,omitempty"`
 	ScheduleLookupInput *string                 `json:"scheduleInput,omitempty"`
@@ -158,6 +149,9 @@ type CreateBuckRequest struct {
 	InitialState        GotState                `json:"state,omitempty"`
 }
 
+func (c *CreateBuckRequest) HasOverride() bool {
+	return c.OverrideSettings != nil
+}
 func NewCreateBuckRequest(lookup *GidLookup, dateLookup *DateLookup, heading string, state GotState, overrides *CreateOverrideSettings) CreateBuckRequest {
 	var gidLookupString *string = nil
 	var scheduleLookup *string = nil
