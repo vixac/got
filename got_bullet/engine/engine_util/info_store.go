@@ -1,6 +1,9 @@
 package engine_util
 
 import (
+	"errors"
+	"time"
+
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
 	bullet_stl "github.com/vixac/firbolg_clients/bullet/bullet_stl/containers"
 	"vixac.com/got/engine"
@@ -50,13 +53,86 @@ func NewBuckStore(bucketId int32, track bullet_interface.TrackClientInterface, d
 }
 
 func (b *BuckStore) UpsertInfo(id engine.GotId, info BuckInfo) error {
-	return nil
+	key := idToStr(id)
+	existing, err := b.Collection.AllItemsUnderPrefix(key)
+	if err != nil {
+		return err
+	}
 
+	encoded, err := b.Codec.Encode(info)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	if len(existing) == 0 {
+		_, err := b.Collection.CreateItemUnder(key, encoded, &now)
+		return err
+	}
+	if len(existing) != 1 {
+		return errors.New("upserting to a key that is not unique")
+	}
+
+	var theCollId bullet_stl.CollectionId
+	for k := range existing {
+		theCollId = k
+	}
+	return b.Collection.EditPayload(theCollId, encoded, &now)
 }
+
 func (b *BuckStore) DeleteInfoMany(ids []engine.GotId) error {
-	return nil
+	var keys []string
+	for _, id := range ids {
+		keys = append(keys, idToStr(id))
+	}
+	res, err := b.Collection.ItemsForKeys(keys)
+	if err != nil || res == nil {
+		return err
+	}
 
+	collids := make([]bullet_stl.CollectionId, 0, len(res))
+	for k := range res {
+		collids = append(collids, k)
+	}
+	return b.Collection.DeleteItems(collids)
 }
+
 func (b *BuckStore) InfoForMany(ids []engine.GotId) (*InfoManyResponse, error) {
-	return nil, nil
+	keyToId := make(map[string]engine.GotId)
+	var keys []string
+	for _, id := range ids {
+		key := idToStr(id)
+		keys = append(keys, key)
+		keyToId[key] = id
+	}
+
+	resp, err := b.Collection.ItemsForKeys(keys)
+	if err != nil {
+		return nil, err
+	}
+
+	infoMap := make(map[engine.GotId]BuckInfo)
+	foundKeys := make(map[string]bool)
+
+	for collId, item := range resp {
+		var info BuckInfo
+		if err := b.Codec.Decode(item.Payload, &info); err != nil {
+			return nil, err
+		}
+		gotId := keyToId[collId.Key]
+		infoMap[gotId] = info
+		foundKeys[collId.Key] = true
+	}
+
+	var missing []engine.GotId
+	for key, id := range keyToId {
+		if !foundKeys[key] {
+			missing = append(missing, id)
+		}
+	}
+
+	return &InfoManyResponse{
+		InfoMap: infoMap,
+		Missing: missing,
+	}, nil
 }
