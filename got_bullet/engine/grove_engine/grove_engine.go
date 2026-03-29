@@ -16,7 +16,7 @@ const (
 
 /*
 	//GotAliasInterface
-	GotCreateItemInterface
+	//GotCreateItemInterface
 	GotFetchInterface
 	RestoreInterface
 	NoteInterface

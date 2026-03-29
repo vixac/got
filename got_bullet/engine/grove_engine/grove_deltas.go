@@ -5,20 +5,35 @@ import (
 	"vixac.com/got/engine"
 )
 
-type GroveDeltas struct {
+const (
+	activeKey   = "active"
+	completeKey = "complete"
+)
+
+type GroveAggregate struct {
 	Active   int
 	Complete int
 }
 
-/*
-type AggregateKey string
-type MutationID string
-type AggregateValue int64
-type AggregateDeltas map[AggregateKey]AggregateValue
-*/
+func NewAggregate(groveMap map[bullet_interface.AggregateKey]bullet_interface.AggregateValue) GroveAggregate {
+	activeCount := 0
+	completeCount := 0
+	active, ok := groveMap[activeKey]
+	if ok {
+		activeCount = int(active)
+	}
+	complete, ok := groveMap[completeKey]
+	if ok {
+		completeCount = int(complete)
+	}
+	return GroveAggregate{
+		Active:   activeCount,
+		Complete: completeCount,
+	}
 
-func NewMutationDelta(state engine.GotState) GroveDeltas {
-	deltas := GroveDeltas{}
+}
+func NewMutationDelta(state engine.GotState) GroveAggregate {
+	deltas := GroveAggregate{}
 	if state == engine.Active {
 		deltas.Active = 1
 	} else if state == engine.Complete {
@@ -28,9 +43,9 @@ func NewMutationDelta(state engine.GotState) GroveDeltas {
 
 }
 
-func (g *GroveDeltas) ToGrove() bullet_interface.AggregateDeltas {
+func (g *GroveAggregate) ToGrove() bullet_interface.AggregateDeltas {
 	res := make(map[bullet_interface.AggregateKey]bullet_interface.AggregateValue)
-	res["active"] = bullet_interface.AggregateValue(g.Active)
-	res["complete"] = bullet_interface.AggregateValue(g.Complete)
+	res[activeKey] = bullet_interface.AggregateValue(g.Active)
+	res[completeKey] = bullet_interface.AggregateValue(g.Complete)
 	return res
 }
