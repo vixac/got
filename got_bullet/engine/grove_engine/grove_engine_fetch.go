@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"vixac.com/got/console"
 	"vixac.com/got/engine"
 	"vixac.com/got/engine/engine_util"
 )
@@ -125,17 +126,22 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		}
 		//
 
+		var deadline = ""
+		if info.Deadline != nil {
+			deadline = info.Deadline.Date
+		}
 		_, hasTNote := longForms[id]
 		display := engine.GotItemDisplay{
-			GotId:      id,
-			DisplayGid: "0" + id.AasciValue,
-			Path:       thePath,
-			Title:      info.Title,
-			Alias:      theAlias,
-			Deadline:   info.Deadline.Date,
-			SummaryObj: &summary,
-			NumberGo:   -1, //VX:TODO
-			HasTNote:   hasTNote,
+			GotId:         id,
+			DisplayGid:    "0" + id.AasciValue,
+			Path:          thePath,
+			Title:         info.Title,
+			Alias:         theAlias,
+			Deadline:      deadline,
+			DeadlineToken: console.TokenBrand{},
+			SummaryObj:    &summary,
+			NumberGo:      -1, //VX:TODO
+			HasTNote:      hasTNote,
 		}
 		if id == *parentGid {
 			parent = &display

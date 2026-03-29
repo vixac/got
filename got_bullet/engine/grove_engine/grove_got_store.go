@@ -1,6 +1,7 @@
 package grove_engine
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/vixac/firbolg_clients/bullet/bullet_interface"
@@ -194,12 +195,19 @@ func (s *GroveGotStore) FetchBelow(id *engine.GotId) ([]GotIdWithDepth, error) {
 	}
 	return result, nil
 }
-
-func (s *GroveGotStore) CreateBuck(createBuckRequest GotStoreCreateRequest) error {
+func (s *GroveGotStore) createBuckAttempt(createBuckRequest GotStoreCreateRequest, numTries int) error {
 	var parent *bullet_interface.NodeID = nil
+	var parentIsRoot = false
 	if createBuckRequest.Parent != nil {
+		fmt.Printf("VX: poarent is %s\n", *createBuckRequest.Parent)
 		parentVal := bullet_interface.NodeID(createBuckRequest.Parent.AasciValue)
 		parent = &parentVal
+	} else {
+		parentIsRoot = true
+		rootId, _ := engine.NewGotIdFromInt(0)
+		rootParent := nodeFrom(rootId)
+		parent = &rootParent
+		fmt.Printf("VX: user entered no parent. Should we check the parent exists?")
 	}
 
 	nodeId := nodeFrom(&createBuckRequest.Id)
@@ -212,6 +220,27 @@ func (s *GroveGotStore) CreateBuck(createBuckRequest GotStoreCreateRequest) erro
 	}
 	err := s.Grove.GroveCreateNode(groveReq)
 	if err != nil {
+
+		if parentIsRoot && numTries == 0 {
+			fmt.Printf("VX: ok This must be the first node ver. Lets try to create the root node and then try again.")
+
+			groveRootNodeReq := bullet_interface.GroveCreateNodeRequest{
+				NodeID:   *parent,
+				TreeID:   groveStoreTreeId,
+				Parent:   nil,
+				Position: nil,
+				Metadata: nil,
+			}
+			err := s.Grove.GroveCreateNode(groveRootNodeReq)
+			if err != nil {
+				fmt.Printf("VX: Failed to create the root node.\n")
+				return err
+			}
+			return s.createBuckAttempt(createBuckRequest, 1)
+			//This might be the first buck entered, so we need to create the root node.
+
+		}
+		fmt.Printf("VX: grove create node failed.. should we check her?")
 		return err
 	}
 
@@ -228,4 +257,8 @@ func (s *GroveGotStore) CreateBuck(createBuckRequest GotStoreCreateRequest) erro
 	err = s.Grove.GroveApplyAggregateMutation(mutationReq)
 
 	return err
+}
+func (s *GroveGotStore) CreateBuck(createBuckRequest GotStoreCreateRequest) error {
+	return s.createBuckAttempt(createBuckRequest, 0)
+
 }

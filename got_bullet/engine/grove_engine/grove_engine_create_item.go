@@ -11,7 +11,11 @@ import (
 // This is not idempodent, and if it errors out part of the way, then you're in crazy town.
 func (g *GroveEngine) CreateBuck(request engine.CreateBuckRequest) (*engine.GotId, error) {
 	//grab the parent, which might be nil
-	parentGotId, err := g.deriveLookup(&engine.GidLookup{Input: *request.GidLookupInput})
+	var lookup *engine.GidLookup = nil
+	if request.GidLookupInput != nil {
+		lookup = &engine.GidLookup{Input: *request.GidLookupInput}
+	}
+	parentGotId, err := g.deriveLookup(lookup)
 	if err != nil {
 		return nil, err
 	}
@@ -173,6 +177,7 @@ func (g *GroveEngine) deriveLookup(lookup *engine.GidLookup) (*engine.GotId, err
 		return nil, nil
 	}
 	fetched, err := g.GidLookup.InputToGid(lookup)
+
 	if err != nil {
 		return nil, err
 	}
