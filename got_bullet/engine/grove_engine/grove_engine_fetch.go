@@ -67,18 +67,29 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		}
 	}
 
-	aggregates, err := g.GroveStore.AggregatesForMany(descendantPlusParentIds)
+	aggs, err := g.GroveStore.AggregatesOfDescendantsForMany(descendantPlusParentIds)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("VX: theres the aggs %+v\n", aggregates)
 
-	displays := make(map[engine.GotId]engine.GotItemDisplay)
+	individualStates, err := g.GroveStore.IndividualStateForMany(descendantPlusParentIds)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("VX: theres the aggs %+v\n", aggs)
+
+	//VX:TODO unfortunately fetches all notes here.
+	longForms, err := g.LongFormStore.LongFormForMany(descendantPlusParentIds)
+	if err != nil {
+		return nil, err
+	}
+
+	//displays := make(map[engine.GotId]engine.GotItemDisplay)
+	var displays []engine.GotItemDisplay
 	//add a display node for each id
+	var parent *engine.GotItemDisplay
 	for _, id := range descendantPlusParentIds {
-		if id == *parentGid {
-			//VX:TODO this is the parent node. We want to render it but not WITH the others.
-		}
+
 		var thePath *engine.GotPath = nil
 		path, ok := gotPaths[id]
 		if ok {
@@ -93,17 +104,50 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		if ok {
 			theAlias = *alias
 		}
+		individual, ok := individualStates[id]
+		if !ok {
+			return nil, errors.New("missing agg")
+		}
+		state := individual
 
-		displays[id] = engine.GotItemDisplay{
+		var flagsArray []string
+		for k, _ := range info.Flags {
+			flagsArray = append(flagsArray, k)
+		}
+		summary := engine.NewSummary(state, info.Deadline, &info.CreatedDate, &info.UpdatedDate, info.Tags, flagsArray)
+
+		agg, ok := aggs[id]
+		if ok {
+			summary.Counts = &engine.AggCount{
+				Complete: agg.Counts[engine.Complete],
+				Active:   agg.Counts[engine.Active],
+			}
+		}
+		//
+
+		_, hasTNote := longForms[id]
+		display := engine.GotItemDisplay{
 			GotId:      id,
 			DisplayGid: "0" + id.AasciValue,
 			Path:       thePath,
 			Title:      info.Title,
 			Alias:      theAlias,
 			Deadline:   info.Deadline.Date,
+			SummaryObj: &summary,
+			NumberGo:   -1, //VX:TODO
+			HasTNote:   hasTNote,
+		}
+		if id == *parentGid {
+			parent = &display
+			//VX:TODO this is the parent node. We want to render it but not WITH the others.
+		} else {
+			displays = append(displays, display)
 		}
 	}
 
-	return nil, nil
+	return &engine.GotFetchResult{
+		Parent: parent,
+		Result: displays,
+	}, nil
 
 }

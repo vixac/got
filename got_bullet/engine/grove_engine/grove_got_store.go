@@ -17,7 +17,12 @@ type GotStoreInterface interface {
 	CreateBuck(req GotStoreCreateRequest) error
 	FetchBelow(id *engine.GotId) ([]GotIdWithDepth, error)
 	FetchAncestorsForMany(gotIds []engine.GotId) ([]GotIdWithPath, error)
-	AggregatesForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error)
+
+	// this is the individual contribution to aggregates for each node. There is no addition being done here.
+	IndividualStateForMany(gotIds []engine.GotId) (map[engine.GotId]engine.GotState, error)
+
+	//returns the aggregates of the descendants
+	AggregatesOfDescendantsForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error)
 }
 
 type GotIdWithDepth struct {
@@ -51,7 +56,6 @@ func NewGroveGotStore(grove bullet_interface.GroveClientInterface) (GotStoreInte
 	groveStore := GroveGotStore{
 		Grove: grove,
 	}
-
 	return &groveStore, nil
 }
 
@@ -65,16 +69,17 @@ func gotIdFrom(nodeId bullet_interface.NodeID) (*engine.GotId, error) {
 	return engine.NewGotId(string(nodeId))
 }
 
-func (s *GroveGotStore) AggregatesForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error) {
+// VX:Note duplication here.
+func (s *GroveGotStore) AggregatesOfDescendantsForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error) {
 	var nodeIds []bullet_interface.NodeID
 	for _, id := range gotIds {
 		nodeIds = append(nodeIds, nodeFrom(&id))
 	}
-	req := bullet_interface.GroveGetNodeLocalAggregatesBulkRequest{
+	req := bullet_interface.GroveGetNodeWithDescendantsAggregatesBulkRequest{
 		TreeID:  groveStoreTreeId,
 		NodeIDs: nodeIds,
 	}
-	aggs, err := s.Grove.GroveGetNodeLocalAggregatesBulk(req)
+	aggs, err := s.Grove.GroveGetNodeWithDescendantsAggregatesBulk(req)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +98,38 @@ func (s *GroveGotStore) AggregatesForMany(gotIds []engine.GotId) (map[engine.Got
 			Counts: counts,
 		}
 	}
+	return result, nil
+}
+
+func (s *GroveGotStore) IndividualStateForMany(gotIds []engine.GotId) (map[engine.GotId]engine.GotState, error) {
+	var nodeIds []bullet_interface.NodeID
+	for _, id := range gotIds {
+		nodeIds = append(nodeIds, nodeFrom(&id))
+	}
+	req := bullet_interface.GroveGetNodeLocalAggregatesBulkRequest{
+		TreeID:  groveStoreTreeId,
+		NodeIDs: nodeIds,
+	}
+	aggs, err := s.Grove.GroveGetNodeLocalAggregatesBulk(req)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[engine.GotId]engine.GotState)
+	for k, v := range aggs.Aggregates {
+		gotId, err := gotIdFrom(k)
+		if err != nil {
+			return nil, err
+		}
+		groveAgg := NewAggregate(v)
+		//VX:TODO for now, if its not active, its complete.
+		if groveAgg.Active == 1 {
+			result[*gotId] = engine.Active
+		} else {
+			result[*gotId] = engine.Complete
+		}
+	}
+	//now we expect each aggregate to be 1 for one state and 0 for the rest, or no state at all.
+
 	return result, nil
 }
 
