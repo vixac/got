@@ -17,10 +17,10 @@ const (
 /*
 	//GotAliasInterface
 	//GotCreateItemInterface
-	GotFetchInterface
-	RestoreInterface
-	NoteInterface
-	GotEditInterface
+	//GotFetchInterface
+	//RestoreInterface
+	//NoteInterface
+	//(Stubs) GotEditInterface
 	GotTreeInterface
 */
 

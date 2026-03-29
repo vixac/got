@@ -87,6 +87,12 @@ func main() {
 		Space: space,
 		Store: sqlite,
 	}
+	/*
+		fmt.Printf("VX: Here comes the Grove engine.")
+		ene, err := grove_engine.NewGroveEngine(&localBullet)
+		if err != nil {
+			log.Fatal(err)
+		}*/
 
 	ene, err := bullet_engine.NewEngineBullet(&localBullet)
 	if err != nil {
