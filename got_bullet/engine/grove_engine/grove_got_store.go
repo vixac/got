@@ -54,6 +54,7 @@ type GotStoreCreateRequest struct {
 
 type GotAggregate struct {
 	Counts map[engine.GotState]int
+	IsLeaf bool
 }
 
 type GroveGotStore struct {
@@ -143,6 +144,7 @@ func (s *GroveGotStore) AggregatesOfDescendantsForMany(gotIds []engine.GotId) (m
 
 		result[*gotId] = GotAggregate{
 			Counts: counts,
+			IsLeaf: groveAgg.Active+groveAgg.Complete < 2, //VX:Note this is an imperfect way to establish if a node is a leaf.
 		}
 	}
 	return result, nil

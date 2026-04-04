@@ -30,6 +30,18 @@ const (
 type SpaceTime struct {
 	TimeType int
 }
+
+func ToToken(s SpaceTime) Token {
+	switch s.TimeType {
+	case PastMany:
+		return TokenAlert{}
+	case FutureMany:
+		return TokenBrand{}
+	default:
+		return TokenWarning{}
+	}
+}
+
 type RFC3339Time time.Time
 
 func (t RFC3339Time) MarshalJSON() ([]byte, error) {
