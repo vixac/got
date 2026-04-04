@@ -12,7 +12,7 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/local_bullet"
 	"vixac.com/got/cmd"
 	"vixac.com/got/console"
-	"vixac.com/got/engine/bullet_engine"
+	"vixac.com/got/engine/grove_engine"
 )
 
 func migrateBucket(bucket int32, m *migrator.TrackMigrator) {
@@ -50,8 +50,8 @@ func main() {
 		Store: sqlite,
 	}
 
-	//ene, err := grove_engine.NewGroveEngine(&localBullet)
-	ene, err := bullet_engine.NewEngineBullet(&localBullet)
+	ene, err := grove_engine.NewGroveEngine(&localBullet)
+	//ene, err := bullet_engine.NewEngineBullet(&localBullet)
 
 	if err != nil {
 		log.Fatal(err)
