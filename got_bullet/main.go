@@ -10,7 +10,7 @@ import (
 	"github.com/vixac/firbolg_clients/bullet/local_bullet"
 	"vixac.com/got/cmd"
 	"vixac.com/got/console"
-	"vixac.com/got/engine/grove_engine"
+	"vixac.com/got/engine/bullet_engine"
 )
 
 func main() {

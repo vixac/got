@@ -26,6 +26,7 @@ type GotStoreInterface interface {
 	AggregatesOfDescendantsForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error)
 
 	BulkChangeState(ids []GotIdWithState, newState engine.GotState, mutationId string) error
+	Move(id engine.GotId, underParent engine.GotId) error
 }
 
 type GotIdWithDepth struct {
@@ -75,6 +76,17 @@ func nodeFrom(id *engine.GotId) bullet_interface.NodeID {
 }
 func gotIdFrom(nodeId bullet_interface.NodeID) (*engine.GotId, error) {
 	return engine.NewGotId(string(nodeId))
+}
+
+func (s *GroveGotStore) Move(id engine.GotId, underParent engine.GotId) error {
+	parentNode := nodeFrom(&underParent)
+	req := bullet_interface.GroveMoveNodeRequest{
+		NodeID:      nodeFrom(&id),
+		TreeID:      groveStoreTreeId,
+		NewParent:   &parentNode,
+		NewPosition: nil,
+	}
+	return s.Grove.GroveMoveNode(req)
 }
 
 func (s *GroveGotStore) BulkChangeState(ids []GotIdWithState, newState engine.GotState, mutationId string) error {
@@ -233,7 +245,7 @@ func (s *GroveGotStore) createBuckAttempt(createBuckRequest GotStoreCreateReques
 	var parent *bullet_interface.NodeID = nil
 	var parentIsRoot = false
 	if createBuckRequest.Parent != nil {
-		fmt.Printf("VX: poarent is %s\n", *createBuckRequest.Parent)
+		fmt.Printf("VX: poarent is %+v\n", *createBuckRequest.Parent)
 		parentVal := bullet_interface.NodeID(createBuckRequest.Parent.AasciValue)
 		parent = &parentVal
 	} else {
