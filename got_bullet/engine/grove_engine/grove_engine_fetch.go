@@ -151,6 +151,8 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 
 		}
 		if shouldShow {
+
+			//VX:Note NumberGo is added add by EnrichWithNumberGos
 			display := engine.GotItemDisplay{
 				GotId:         id,
 				DisplayGid:    "0" + id.AasciValue,
@@ -160,7 +162,6 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 				Deadline:      deadline,
 				DeadlineToken: console.TokenBrand{},
 				SummaryObj:    &summary,
-				NumberGo:      -1, //VX:TODO
 				HasTNote:      hasTNote,
 			}
 			if id == *parentGid {
