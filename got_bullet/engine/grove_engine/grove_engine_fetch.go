@@ -81,6 +81,13 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		return nil, err
 	}
 
+	var collapsedIds = make(map[engine.GotId]bool)
+	for id, info := range infos.InfoMap {
+		if info.Flags["collapsed"] == true {
+			collapsedIds[id] = true
+		}
+	}
+
 	var displays []engine.GotItemDisplay
 	//add a display node for each id
 	var parent *engine.GotItemDisplay
@@ -126,24 +133,43 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 			deadline = info.Deadline.Date
 		}
 		_, hasTNote := longForms[id]
-		display := engine.GotItemDisplay{
-			GotId:         id,
-			DisplayGid:    "0" + id.AasciValue,
-			Path:          thePath,
-			Title:         info.Title,
-			Alias:         theAlias,
-			Deadline:      deadline,
-			DeadlineToken: console.TokenBrand{},
-			SummaryObj:    &summary,
-			NumberGo:      -1, //VX:TODO
-			HasTNote:      hasTNote,
+
+		shouldShow := true //we check state and collapsed flags on ancestors to decide if we're showing this item.
+
+		//check the ancestor paths
+		if hideUnderCollapsed {
+			for _, pathItem := range path.Ancestry {
+				ancestorId, err := engine.NewGotId(pathItem.Id)
+				if err != nil {
+					return nil, err
+				}
+				_, isCollapsed := collapsedIds[*ancestorId]
+				if isCollapsed {
+					shouldShow = false
+				}
+			}
+
 		}
-		if id == *parentGid {
-			parent = &display
-			//VX:TODO this is the parent node. We want to render it but not WITH the others.
-		} else {
-			displays = append(displays, display)
+		if shouldShow {
+			display := engine.GotItemDisplay{
+				GotId:         id,
+				DisplayGid:    "0" + id.AasciValue,
+				Path:          thePath,
+				Title:         info.Title,
+				Alias:         theAlias,
+				Deadline:      deadline,
+				DeadlineToken: console.TokenBrand{},
+				SummaryObj:    &summary,
+				NumberGo:      -1, //VX:TODO
+				HasTNote:      hasTNote,
+			}
+			if id == *parentGid {
+				parent = &display
+			} else {
+				displays = append(displays, display)
+			}
 		}
+
 	}
 
 	var sorted []engine.GotItemDisplay

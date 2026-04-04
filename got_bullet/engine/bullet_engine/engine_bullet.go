@@ -202,19 +202,6 @@ func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.Got
 	return e.publishStateChangeEvent(event)
 }
 
-func (e *EngineBullet) updateState(lookup engine.GidLookup, newState engine.GotState) error {
-	gid, err := e.GidLookup.InputToGid(&lookup)
-	if err != nil || gid == nil {
-		return err
-	}
-	ancestry, err := e.AncestorList.FetchAncestorsOf(*gid)
-	if err != nil {
-		return errors.New("error fetching ancestors")
-	}
-	return e.performUpdateState(gid, newState, ancestry)
-
-}
-
 func (e *EngineBullet) EditTitle(lookup engine.GidLookup, newHeading string) error {
 
 	gid, err := e.GidLookup.InputToGid(&lookup)
