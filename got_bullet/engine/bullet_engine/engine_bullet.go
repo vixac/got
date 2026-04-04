@@ -75,9 +75,15 @@ func (e *EngineBullet) ScheduleItem(lookup engine.GidLookup, dateLookup engine.D
 
 func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title string, alias string, path *engine.GotPath, hasToNote bool) (*engine.GotItemDisplay, error) {
 
-	displayDeadline, deadlineToken, err := deadline(summary, now)
-	if err != nil {
-		return nil, err
+	var displayDeadlineStr = ""
+	var deadlineToken console.Token = console.TokenAlert{}
+	if summary.State != nil {
+		displayDeadline, t, err := engine_util.Deadline(summary.Deadline, *summary.State, now)
+		if err != nil {
+			return nil, err
+		}
+		displayDeadlineStr = displayDeadline
+		deadlineToken = t
 	}
 
 	createdStr, err := createdDateDisplayString(summary, now)
@@ -88,6 +94,7 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 	if err != nil {
 		return nil, err
 	}
+
 	return &engine.GotItemDisplay{
 		GotId:         gid,
 		DisplayGid:    "0" + gid.AasciValue,
@@ -96,42 +103,11 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 		Alias:         alias,
 		SummaryObj:    &summary,
 		HasTNote:      hasToNote,
-		Deadline:      displayDeadline,
+		Deadline:      displayDeadlineStr,
 		DeadlineToken: deadlineToken,
 		Created:       createdStr,
 		Updated:       updatedStr,
 	}, nil
-}
-
-func deadline(summary engine.Summary, now time.Time) (string, console.Token, error) {
-
-	var displayDeadline = ""
-	var deadlineToken console.Token = console.TokenSecondary{}
-	//VX:TODO get this date wrangling out. Its business logic	//if theres a deadline and either its a group or its an active job
-	if summary.Deadline != nil && (summary.State == nil || (summary.State != nil && *summary.State == engine.Active)) {
-
-		//this "n" is not strongly typed and I feel bad.
-		//handle all the special cases
-		if summary.Deadline.Special == "n" {
-			return "---Now---", console.TokenNow{}, nil
-		}
-
-		//if its not special, its assumed to be a normal deadline
-
-		deadlineDate, err := summary.Deadline.ToDate()
-		if err != nil {
-			return "", deadlineToken, err
-		}
-		if deadlineDate == nil {
-			return "", deadlineToken, errors.New("Missing deadline date.")
-		}
-
-		deadStr, spaceTime := console.HumanizeDate(time.Time(*deadlineDate), now)
-		displayDeadline = deadStr
-		deadlineToken = ToToken(spaceTime)
-		return displayDeadline, deadlineToken, nil
-	}
-	return "", deadlineToken, nil
 }
 
 func updatedDateDisplayString(summary engine.Summary) (string, error) {
@@ -154,17 +130,6 @@ func createdDateDisplayString(summary engine.Summary, now time.Time) (string, er
 		createdStr, _ = console.HumanizeDate(time.Time(*createdDate), now)
 	}
 	return createdStr, nil
-}
-
-func ToToken(s console.SpaceTime) console.Token {
-	switch s.TimeType {
-	case console.PastMany:
-		return console.TokenAlert{}
-	case console.FutureMany:
-		return console.TokenBrand{}
-	default:
-		return console.TokenWarning{}
-	}
 }
 
 func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *AncestorLookupResult) error {

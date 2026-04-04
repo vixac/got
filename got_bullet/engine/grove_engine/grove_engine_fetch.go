@@ -2,6 +2,7 @@ package grove_engine
 
 import (
 	"errors"
+	"time"
 
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
@@ -74,7 +75,6 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 	if err != nil {
 		return nil, err
 	}
-
 	//VX:TODO unfortunately fetches all notes here.
 	longForms, err := g.LongFormStore.LongFormForMany(descendantPlusParentIds)
 	if err != nil {
@@ -120,21 +120,20 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		summary := engine.NewSummary(state, info.Deadline, &info.CreatedDate, &info.UpdatedDate, info.Tags, flagsArray)
 
 		agg, ok := aggs[id]
-		if ok {
+		if ok && !agg.IsLeaf {
 			summary.Counts = &engine.AggCount{
 				Complete: agg.Counts[engine.Complete],
 				Active:   agg.Counts[engine.Active],
 			}
 		}
-		//
-
-		var deadline = ""
-		if info.Deadline != nil {
-			deadline = info.Deadline.Date
-		}
 		_, hasTNote := longForms[id]
 
 		shouldShow := true //we check state and collapsed flags on ancestors to decide if we're showing this item.
+
+		_, stateIsBeingDisplayed := statesToFetch[*summary.State]
+		if !stateIsBeingDisplayed {
+			shouldShow = false
+		}
 
 		//check the ancestor paths
 		if hideUnderCollapsed {
@@ -148,8 +147,20 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 					shouldShow = false
 				}
 			}
-
 		}
+
+		var displayDeadlineStr = ""
+		var deadlineToken console.Token = console.TokenAlert{}
+
+		if summary.State != nil {
+			displayDeadline, t, err := engine_util.Deadline(summary.Deadline, *summary.State, time.Now())
+			if err != nil {
+				return nil, err
+			}
+			displayDeadlineStr = displayDeadline
+			deadlineToken = t
+		}
+
 		if shouldShow {
 
 			//VX:Note NumberGo is added add by EnrichWithNumberGos
@@ -159,8 +170,8 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 				Path:          thePath,
 				Title:         info.Title,
 				Alias:         theAlias,
-				Deadline:      deadline,
-				DeadlineToken: console.TokenBrand{},
+				Deadline:      displayDeadlineStr,
+				DeadlineToken: deadlineToken,
 				SummaryObj:    &summary,
 				HasTNote:      hasTNote,
 			}
