@@ -40,8 +40,6 @@ func (g *GroveEngine) ResolveBulkLookupsReverseDepthSorted(lookups []engine.GidL
 	return sortedPairs, nil
 }
 
-// everything above is.... ideas.
-
 func (g *GroveEngine) MarkResolved(lookups []engine.GidLookup) error {
 	sortedPairs, err := g.ResolveBulkLookupsReverseDepthSorted(lookups)
 	if err != nil {
