@@ -91,25 +91,26 @@ func CreateStoreFile(e engine.GotFetchInterface, longForm engine.LongFormStoreIn
 		if longFormPtr != nil {
 			for _, b := range longFormPtr.Blocks {
 				restoreBlock := engine.NewRestoreBlock(b)
-
 				longFormRestoreBlocks = append(longFormRestoreBlocks, restoreBlock)
 			}
 		}
 
 		overrides := engine.CreateOverrideSettings{
-			OverrideId:  &item.GotId.IntValue,
-			UpdatedDate: updated,
-			CreatedDate: createdDate,
-			Alias:       alias,
-			NoAlias:     noAlias,
-			Tags:        item.SummaryObj.Tags,
-			Flags:       flags,
-			LongForm:    longFormRestoreBlocks,
+			OverrideId:   &item.GotId.IntValue,
+			UpdatedDate:  updated,
+			CreatedDate:  createdDate,
+			ScheduleDate: item.SummaryObj.Deadline,
+			Alias:        alias,
+			NoAlias:      noAlias,
+			Tags:         item.SummaryObj.Tags,
+			Flags:        flags,
+			LongForm:     longFormRestoreBlocks,
 		}
 		var state engine.GotState = engine.Active
 		if item.SummaryObj != nil && item.SummaryObj.State != nil {
 			state = *item.SummaryObj.State
 		}
+
 		req := engine.NewCreateBuckRequest(lookup, nil, item.Title, state, &overrides)
 		createItemRequests = append(createItemRequests, req)
 	}
