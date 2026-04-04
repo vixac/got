@@ -2,19 +2,76 @@ package grove_engine
 
 import (
 	"errors"
+	"sort"
+	"strconv"
 	"time"
 
 	"vixac.com/got/engine"
 	"vixac.com/got/engine/engine_util"
 )
 
-func (g *GroveEngine) MarkResolved(lookup []engine.GidLookup) error {
-	/**
-	the previous one works by calling  fetchAndDepthSortAncestry and then perform update
-	1 at a time. not great.
+func (g *GroveEngine) fetchAndDepthSortAncestry(gids []engine.GotId) ([]GotIdWithPath, error) {
+	pairs, err := g.GroveStore.FetchAncestorsForMany(gids)
 
-	*/
-	return errors.New(" MarkResolved Not impl")
+	if err != nil {
+		return nil, err
+	}
+	//sorted for leaf nodes first.
+	sort.Slice(pairs, func(i, j int) bool {
+		return len(pairs[i].Path) > len(pairs[j].Path)
+	})
+	return pairs, nil
+}
+
+// resolves all gidlookups into gotids and then sorts them to deepest first.
+func (g *GroveEngine) ResolveBulkLookupsReverseDepthSorted(lookups []engine.GidLookup) ([]GotIdWithPath, error) {
+	var gids []engine.GotId
+	for _, lookup := range lookups {
+		gid, err := g.GidLookup.InputToGid(&lookup)
+		if err != nil || gid == nil {
+			return nil, err
+		}
+		gids = append(gids, *gid)
+	}
+	sortedPairs, err := g.fetchAndDepthSortAncestry(gids)
+	if err != nil {
+		return nil, err
+	}
+	return sortedPairs, nil
+}
+
+// everything above is.... ideas.
+
+func (g *GroveEngine) MarkResolved(lookups []engine.GidLookup) error {
+	sortedPairs, err := g.ResolveBulkLookupsReverseDepthSorted(lookups)
+	if err != nil {
+		return err
+	}
+	complete := engine.GotState(engine.Complete)
+	now := time.Now()
+	millis := now.UnixNano()
+	millisStr := strconv.FormatInt(millis, 10)
+	var ids []engine.GotId
+	for _, pair := range sortedPairs {
+		ids = append(ids, pair.Id)
+	}
+
+	stateMap, err := g.GroveStore.IndividualStateForMany(ids)
+	if err != nil {
+		return err
+	}
+	var statePairs []GotIdWithState
+	for _, id := range ids {
+		state, ok := stateMap[id]
+		if !ok {
+			return errors.New("Missing state.")
+		}
+		statePairs = append(statePairs, GotIdWithState{
+			Id:    id,
+			State: state,
+		})
+	}
+	return g.GroveStore.BulkChangeState(statePairs, complete, millisStr)
 }
 
 // grab the info for this lookup, assuming it maps to 1 info item, and update the timeedited on the info object before returning it (this doesnt save anything)

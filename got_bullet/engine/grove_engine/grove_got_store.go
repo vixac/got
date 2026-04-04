@@ -24,6 +24,8 @@ type GotStoreInterface interface {
 
 	//returns the aggregates of the descendants
 	AggregatesOfDescendantsForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error)
+
+	BulkChangeState(ids []GotIdWithStated, newState engine.GotState, mutationId string) error
 }
 
 type GotIdWithDepth struct {
@@ -33,6 +35,11 @@ type GotIdWithDepth struct {
 type GotIdWithPath struct {
 	Id   engine.GotId
 	Path []engine.GotId
+}
+
+type GotIdWithState struct {
+	Id    engine.GotId
+	State engine.GotState
 }
 
 type GotStoreCreateRequest struct {
@@ -68,6 +75,33 @@ func nodeFrom(id *engine.GotId) bullet_interface.NodeID {
 }
 func gotIdFrom(nodeId bullet_interface.NodeID) (*engine.GotId, error) {
 	return engine.NewGotId(string(nodeId))
+}
+
+func (s *GroveGotStore) BulkChangeState(ids []GotIdWithState, newState engine.GotState, mutationId string) error {
+
+	//VX:Note yep this is hella slow.
+	for _, pair := range ids {
+		nodeId := nodeFrom(&pair.Id)
+		currentState := pair.State
+		if currentState == newState {
+			fmt.Printf("VX: change state requeset on the same state is a no-op")
+			continue
+		}
+		deltas := NewMutationDelta(newState)  //+1 to the new state
+		deltas.Increment(currentState, false) //-1 to the old state.
+
+		req := bullet_interface.GroveApplyAggregateMutationRequest{
+			MutationID: bullet_interface.MutationID(mutationId),
+			TreeID:     groveStoreTreeId,
+			NodeID:     nodeId,
+			Deltas:     deltas.ToGrove(),
+		}
+		err := s.Grove.GroveApplyAggregateMutation(req)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // VX:Note duplication here.

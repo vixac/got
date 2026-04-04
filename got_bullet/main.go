@@ -1,31 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/vixac/bullet/store/store_interface"
 
-	migrator "github.com/vixac/bullet/store/migrator"
 	sqlite_store "github.com/vixac/bullet/store/sqlite"
 	"github.com/vixac/firbolg_clients/bullet/local_bullet"
 	"vixac.com/got/cmd"
 	"vixac.com/got/console"
-	"vixac.com/got/engine/bullet_engine"
+	"vixac.com/got/engine/grove_engine"
 )
 
-func migrateBucket(bucket int32, m *migrator.TrackMigrator) {
-	fmt.Printf("VX: MIGRATION on bucket %d starting...\n", bucket)
-	err := m.Migrate(bucket)
-	if err != nil {
-		fmt.Printf("VX: error migrating bucket %d, %s", bucket, err)
-		log.Fatal()
-	}
-
-	fmt.Printf("VX: MIGRATION on bucket %d Complete.\n", bucket)
-
-}
 func main() {
 	space := store_interface.TenancySpace{
 		AppId:     123,

@@ -15,6 +15,18 @@ type GroveAggregate struct {
 	Complete int
 }
 
+func (g *GroveAggregate) Increment(state engine.GotState, increment bool) {
+	var value = 1
+	if increment == false {
+		value = -1
+	}
+	if state == engine.Active {
+		g.Active = g.Active + value
+	} else if state == engine.Complete {
+		g.Complete = g.Complete + value
+	}
+}
+
 func NewAggregate(groveMap map[bullet_interface.AggregateKey]bullet_interface.AggregateValue) GroveAggregate {
 	activeCount := 0
 	completeCount := 0
@@ -34,6 +46,7 @@ func NewAggregate(groveMap map[bullet_interface.AggregateKey]bullet_interface.Ag
 }
 func NewMutationDelta(state engine.GotState) GroveAggregate {
 	deltas := GroveAggregate{}
+
 	if state == engine.Active {
 		deltas.Active = 1
 	} else if state == engine.Complete {
