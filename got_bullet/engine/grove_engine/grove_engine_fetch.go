@@ -2,7 +2,6 @@ package grove_engine
 
 import (
 	"errors"
-	"fmt"
 
 	"vixac.com/got/console"
 	"vixac.com/got/engine"
@@ -40,12 +39,10 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("VX: paths %+v \n", paths)
 	infos, err := g.InfoStore.InfoForMany(descendantPlusParentIds)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("VX: infos %+v \n", infos)
 
 	var idStrings []string
 	for _, id := range descendantPlusParentIds {
@@ -77,7 +74,6 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("VX: theres the aggs %+v\n", aggs)
 
 	//VX:TODO unfortunately fetches all notes here.
 	longForms, err := g.LongFormStore.LongFormForMany(descendantPlusParentIds)
@@ -85,7 +81,6 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		return nil, err
 	}
 
-	//displays := make(map[engine.GotId]engine.GotItemDisplay)
 	var displays []engine.GotItemDisplay
 	//add a display node for each id
 	var parent *engine.GotItemDisplay
@@ -151,9 +146,13 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 		}
 	}
 
-	return &engine.GotFetchResult{
-		Parent: parent,
-		Result: displays,
-	}, nil
+	var sorted []engine.GotItemDisplay
+	if sortByPath {
+		sorted = engine_util.SortTheseIntoDFS(displays)
+
+	} else {
+		sorted = engine_util.SortByUpdated(displays)
+	}
+	return engine_util.EnrichWithNumberGos(g.NumberGoStore, sorted, parent)
 
 }

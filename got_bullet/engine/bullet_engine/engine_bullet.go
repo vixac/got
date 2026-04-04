@@ -167,36 +167,6 @@ func ToToken(s console.SpaceTime) console.Token {
 	}
 }
 
-// adds the items to the number go store as well as
-func (e *EngineBullet) renderSummaries(summaries []engine.GotItemDisplay, parent *engine.GotItemDisplay) (*engine.GotFetchResult, error) {
-
-	var expandedSummaries []engine.GotItemDisplay
-	var pairs []engine.NumberGoPair
-	//here we enrich the itemdisplays by adding the number go, now that we know the sort order.
-	for i, s := range summaries {
-
-		num := i + 1
-		pairs = append(pairs, engine.NumberGoPair{
-			Number: num,
-			Gid:    s.GotId.AasciValue,
-		})
-
-		copy := s
-		copy.NumberGo = num
-		expandedSummaries = append(expandedSummaries, copy)
-	}
-
-	//the number go order is saved so it can be used in subsequent calls
-	err := e.NumberGoStore.AssignNumberPairs(pairs)
-	if err != nil {
-		return nil, err
-	}
-
-	//the summaries injected dont have number go assigned.
-	res := engine.GotFetchResult{Result: expandedSummaries, Parent: parent}
-	return &res, nil
-}
-
 func (e *EngineBullet) performUpdateState(gid *engine.GotId, newState engine.GotState, ancestry *AncestorLookupResult) error {
 	summaryId := engine.SummaryId(gid.IntValue)
 	ids := []engine.SummaryId{summaryId}

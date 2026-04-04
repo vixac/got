@@ -45,56 +45,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	/*
-		_, err := boltdb.NewBoltStore(path)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		trackMigrator := migrator.TrackMigrator{
-			SourceTrack: bolt,
-			TargetTrack: sqlite,
-			Tenancy:     space,
-		}
-		trackMigrator.Migrate(100)
-		trackMigrator.Migrate(1001)
-		trackMigrator.Migrate(1003)
-		depotMigrator := migrator.DepotMigrator{
-			SourceDepot: bolt,
-			TargetDepot: sqlite,
-			Tenancy:     space,
-		}
-
-		allItems, err := bolt.DepotGetAll(depotMigrator.Tenancy)
-		if err != nil {
-			log.Fatal("fetching all keys didn't work.")
-		}
-
-		var allKeys []int64
-		for k, _ := range allItems {
-			allKeys = append(allKeys, k)
-		}
-		totalKeys := len(allItems)
-		fmt.Printf("VX: depoing this many keys %d\n", totalKeys)
-		depotMigrator.Migrate(allKeys)
-		//ok so I need to get all the keys. The migrator should know how to do it.
-		//or a depot debug class or somethign.
-		//bolt.DepotGetMany(space)
-		//depotMigrator.Migrate()
-		fmt.Printf("VX: THIS IS MIGRATED")
-	*/
 	localBullet := local_bullet.LocalBullet{
 		Space: space,
 		Store: sqlite,
 	}
-	/*
-		fmt.Printf("VX: Here comes the Grove engine.")
-		ene, err := grove_engine.NewGroveEngine(&localBullet)
-		if err != nil {
-			log.Fatal(err)
-		}*/
 
+	//ene, err := grove_engine.NewGroveEngine(&localBullet)
 	ene, err := bullet_engine.NewEngineBullet(&localBullet)
+
 	if err != nil {
 		log.Fatal(err)
 	}

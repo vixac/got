@@ -239,5 +239,5 @@ func (e *EngineBullet) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool
 	} else {
 		sorted = engine_util.SortByUpdated(itemDisplays)
 	}
-	return e.renderSummaries(sorted, parentItemDisplay)
+	return engine_util.EnrichWithNumberGos(e.NumberGoStore, sorted, parentItemDisplay)
 }
