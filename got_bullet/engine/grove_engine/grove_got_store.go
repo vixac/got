@@ -25,7 +25,7 @@ type GotStoreInterface interface {
 	//returns the aggregates of the descendants
 	AggregatesOfDescendantsForMany(gotIds []engine.GotId) (map[engine.GotId]GotAggregate, error)
 
-	BulkChangeState(ids []GotIdWithStated, newState engine.GotState, mutationId string) error
+	BulkChangeState(ids []GotIdWithState, newState engine.GotState, mutationId string) error
 }
 
 type GotIdWithDepth struct {
