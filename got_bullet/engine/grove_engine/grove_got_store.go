@@ -1,6 +1,7 @@
 package grove_engine
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -94,6 +95,17 @@ func (s *GroveGotStore) BulkChangeState(ids []GotIdWithState, newState engine.Go
 
 	//VX:Note yep this is hella slow.
 	for _, pair := range ids {
+
+		//this is the rule that blocks completing nodes with incomplete descendants. It's slow and manual
+		currentAggsForThisNodeAtThisMoment, err := s.AggregatesOfDescendantsForMany([]engine.GotId{pair.Id})
+		agg, ok := currentAggsForThisNodeAtThisMoment[pair.Id]
+		if !ok {
+			return errors.New("Missing node.")
+		}
+		if agg.Counts[engine.Active] > 1 { //the 1 is for its own self.
+			fmt.Printf("Error: Completing this node is not permitted as it has %d active descendants.\n", agg.Counts[engine.Active])
+			return errors.New("Attempted to complete a node with active descendants")
+		}
 		nodeId := nodeFrom(&pair.Id)
 		currentState := pair.State
 		if currentState == newState {
@@ -109,7 +121,7 @@ func (s *GroveGotStore) BulkChangeState(ids []GotIdWithState, newState engine.Go
 			NodeID:     nodeId,
 			Deltas:     deltas.ToGrove(),
 		}
-		err := s.Grove.GroveApplyAggregateMutation(req)
+		err = s.Grove.GroveApplyAggregateMutation(req)
 		if err != nil {
 			return err
 		}
