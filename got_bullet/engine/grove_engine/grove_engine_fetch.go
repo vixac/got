@@ -127,7 +127,6 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 			}
 		}
 		_, hasTNote := longForms[id]
-
 		shouldShow := true //we check state and collapsed flags on ancestors to decide if we're showing this item.
 
 		_, stateIsBeingDisplayed := statesToFetch[*summary.State]
@@ -161,12 +160,19 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 			deadlineToken = t
 		}
 
+		//VX:Note days ago str
+		//createdStr, err := humanizeDateTime(summary.CreatedDate, now)
+		createdStr, err := summary.CreatedDate.JsonDateToReadable()
+		if err != nil {
+			return nil, err
+		}
 		if shouldShow {
 
 			//VX:Note NumberGo is added add by EnrichWithNumberGos
 			display := engine.GotItemDisplay{
 				GotId:         id,
-				DisplayGid:    "0" + id.AasciValue,
+				Created:       createdStr,
+				DisplayGid:    id.DisplayAasci(),
 				Path:          thePath,
 				Title:         info.Title,
 				Alias:         theAlias,
@@ -193,4 +199,16 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 	}
 	return engine_util.EnrichWithNumberGos(g.NumberGoStore, sorted, parent)
 
+}
+
+func humanizeDateTime(date *engine.DateTime, now time.Time) (string, error) {
+	dateUnix, err := date.ToDate()
+	if err != nil {
+		return "", err
+	}
+	var dateStr = ""
+	if dateUnix != nil {
+		dateStr, _ = console.HumanizeDate(time.Time(*dateUnix), now)
+	}
+	return dateStr, nil
 }

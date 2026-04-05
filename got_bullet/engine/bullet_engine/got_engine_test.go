@@ -83,7 +83,7 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	buck1Id := overrideId
 
 	parentLookup := engine.GidLookup{
-		Input: parentId.AasciValue,
+		Input: parentId.DisplayAasci(),
 	}
 
 	req1 := engine.NewCreateBuckRequest(&parentLookup, nil, "buck1", engine.Active, &override)
@@ -93,11 +93,14 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 
 	//fetch items below -1, which is buck1, (buck2 is 0 as it was added most recently)
 	items, err := sut.FetchItemsBelow(&engine.GidLookup{
-		Input: parentId.AasciValue,
+		Input: parentId.DisplayAasci(),
 	}, false, []engine.GotState{engine.Active}, false)
 	assert.NoError(t, err)
 
-	assert.Equal(t, len(items.Result), 1)
+	assert.Equal(t, len(items.Result), 2) //returns the parent AND the buck. The parent is always the last item in the list.
+	assert.Equal(t, items.Parent.Title, "parent Id")
+	assert.Equal(t, items.Result[0].Title, "buck1")
+	assert.Equal(t, items.Result[1].Title, "parent Id")
 
 	theItem := items.Result[0]
 	assert.Equal(t, theItem.GotId.IntValue, buck1Id)
@@ -110,7 +113,7 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	item1Flags := theItem.SummaryObj.Flags
 	assert.Equal(t, len(theItem.Path.Ancestry), 2)
 	fmt.Printf("VX: pathi s %+v\n", *theItem.Path)
-	assert.Equal(t, "0"+theItem.Path.Ancestry[1].Id, parentId.AasciValue)
+	assert.Equal(t, theItem.Path.Ancestry[1].Id, parentId.AasciValue)
 	assert.Equal(t, len(item1Tags), 1)
 	assert.Equal(t, len(item1Flags), 2)
 	assert.Equal(t, item1Tags[0].Literal.Display, "tag1")
@@ -119,7 +122,7 @@ func TestCreateBuckWithOverrideSettings(t *testing.T) {
 	assert.Equal(t, item1Flags["flag2"], true)
 
 	lookup := engine.GidLookup{
-		Input: "0" + buck1IdGot.AasciValue,
+		Input: buck1IdGot.DisplayAasci(),
 	}
 	longformRes, err := sut.NotesFor(&lookup, false)
 	assert.Equal(t, len(longformRes.Blocks), 1)
@@ -155,8 +158,9 @@ func TestCreateCompleteBuck(t *testing.T) {
 		Input: "-1",
 	}, false, []engine.GotState{engine.Active}, false)
 	assert.NoError(t, err)
-	assert.Equal(t, len(items.Result), 1)
+	assert.Equal(t, len(items.Result), 2)
 	assert.Equal(t, items.Result[0].GotId.IntValue, buck2Id)
+	assert.Equal(t, items.Result[1].GotId.IntValue, buck1Id)
 
 	//now add a complete item, buck3 under buck1
 	buck3Id := int32(362)
@@ -172,7 +176,7 @@ func TestCreateCompleteBuck(t *testing.T) {
 	}, false, []engine.GotState{engine.Active, engine.Complete}, false)
 
 	assert.NoError(t, err)
-	assert.Equal(t, len(items.Result), 2) //buck2 and buck3 are present.
+	assert.Equal(t, len(items.Result), 3) //buck2 and buck3 are present. (plus the parent)
 
 	//now we add a complete item UNDER buck3
 	buck4Id := int32(363)

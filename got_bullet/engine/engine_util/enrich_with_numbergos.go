@@ -19,6 +19,11 @@ func EnrichWithNumberGos(store engine.NumberGoStoreInterface, summaries []engine
 		copy.NumberGo = num
 		expandedSummaries = append(expandedSummaries, copy)
 	}
+	if parent != nil {
+		parent.NumberGo = len(summaries) + 1
+		expandedSummaries = append(expandedSummaries, *parent)
+	}
+	//assign the parent as the "last", zeroeth item.
 
 	//the number go order is saved so it can be used in subsequent calls
 	err := store.AssignNumberPairs(pairs)

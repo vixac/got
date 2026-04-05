@@ -139,7 +139,7 @@ func (e *EngineBullet) CreateBuck(request engine.CreateBuckRequest) (*engine.Got
 		OverrideSettings: request.OverrideSettings,
 	})
 	return &engine.GotId{
-		AasciValue: "0" + stringId,
+		AasciValue: stringId,
 		IntValue:   int32(newId),
 	}, nil
 }
