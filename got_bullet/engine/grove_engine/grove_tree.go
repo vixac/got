@@ -19,5 +19,5 @@ func (g *GroveEngine) Move(lookup engine.GidLookup, newParent engine.GidLookup) 
 	if err != nil {
 		return err
 	}
-	return g.GroveStore.Move(*gid, *parent)
+	return g.GroveStore.Move(*gid, parent)
 }

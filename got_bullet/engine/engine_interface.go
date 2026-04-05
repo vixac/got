@@ -282,6 +282,10 @@ type GotId struct {
 	IntValue   int32
 }
 
+func (g *GotId) DisplayAasci() string {
+	return "0" + g.AasciValue
+}
+
 func NewGotIdFromInt(intValue int32) (*GotId, error) {
 	strVal, err := bullet_stl.BulletIdIntToAasci(int64(intValue))
 	if err != nil {

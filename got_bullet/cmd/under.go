@@ -49,7 +49,7 @@ func buildUnderCommand(deps RootDependencies) *cobra.Command {
 				return err
 			}
 			if id != nil {
-				deps.Printer.Print(console.Message{Message: id.AasciValue})
+				deps.Printer.Print(console.Message{Message: id.DisplayAasci()})
 			}
 			return nil
 		},

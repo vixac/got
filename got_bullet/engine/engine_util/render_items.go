@@ -139,6 +139,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 		titleCells = append(titleCells, console.NewTableCellFromStr("Updated ", console.TokenTextTertiary{}))
 	}
 	titleRow := NewGotRow()
+	titleRow.Created = console.NewTableCellFromStr("Created", console.TokenGroup{})
 	titleRow.Path = console.NewTableCellFromStr("Path", console.TokenTextTertiary{})
 	titleRow.GroupStart = console.NewTableCellFromStr("[", console.TokenTextTertiary{})
 	titleRow.GroupEnd = console.NewTableCellFromStr("] ", console.TokenTextTertiary{})

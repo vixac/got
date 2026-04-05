@@ -14,7 +14,6 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 		Use:   "jobs",
 		Short: "fetch jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
-			//VX:TODO no more -u, lets got got jobs <id> optinoal.
 			if len(args) > 1 {
 				deps.Printer.Error(console.Message{Message: "jobs takes an optional <lookup> and thats it"})
 				return
@@ -35,7 +34,7 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			options := engine_util.TableRenderOptions{
 				FlatPaths:          false,
 				ShowCreatedColumn:  true,
-				ShowUpdatedColumn:  true,
+				ShowUpdatedColumn:  false,
 				SortByPath:         true,
 				HideUnderCollapsed: true,
 			}

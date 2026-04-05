@@ -251,9 +251,11 @@ func renderTable(lookup *engine.GidLookup, states []engine.GotState, options eng
 			return
 		}
 		sections = siblingSections
-		if res.Parent != nil {
-			sections = append(sections, engine_util.TableSection{Name: "", Items: []engine.GotItemDisplay{*res.Parent}})
-		}
+		//VX:TODO remove render parent.
+		/*
+			if res.Parent != nil {
+				sections = append(sections, engine_util.TableSection{Name: "", Items: []engine.GotItemDisplay{*res.Parent}})
+			}*/
 	}
 
 	table, err := engine_util.NewTable(&engine_util.GotTableSections{

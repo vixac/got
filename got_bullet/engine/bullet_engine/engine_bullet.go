@@ -97,7 +97,7 @@ func itemDisplay(summary engine.Summary, now time.Time, gid engine.GotId, title 
 
 	return &engine.GotItemDisplay{
 		GotId:         gid,
-		DisplayGid:    "0" + gid.AasciValue,
+		DisplayGid:    gid.DisplayAasci(),
 		Title:         title,
 		Path:          path,
 		Alias:         alias,
