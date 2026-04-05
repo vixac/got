@@ -83,7 +83,7 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 
 	var collapsedIds = make(map[engine.GotId]bool)
 	for id, info := range infos.InfoMap {
-		if info.Flags["collapsed"] == true {
+		if id.AasciValue != parentGid.AasciValue && info.Flags["collapsed"] == true {
 			collapsedIds[id] = true
 		}
 	}
