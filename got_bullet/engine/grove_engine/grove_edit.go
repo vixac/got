@@ -10,6 +10,43 @@ import (
 	"vixac.com/got/engine/engine_util"
 )
 
+// grab the info for this lookup, assuming it maps to 1 info item, and update the timeedited on the info object before returning it (this doesnt save anything)
+func (g *GroveEngine) updatedEditTimeInfoForLookup(lookup engine.GidLookup) (*engine_util.BuckInfo, *engine.GotId, error) {
+	gid, err := g.GidLookup.InputToGid(&lookup)
+	if err != nil || gid == nil {
+		return nil, nil, err
+	}
+
+	return g.updatedEditTimeInfoForId(*gid, time.Now())
+
+}
+
+func (g *GroveEngine) updatedEditTimeInfoForId(gid engine.GotId, time time.Time) (*engine_util.BuckInfo, *engine.GotId, error) {
+	infoMap, err := g.InfoStore.InfoForMany([]engine.GotId{gid})
+	if err != nil {
+		return nil, nil, err
+	}
+	info, ok := infoMap.InfoMap[gid]
+	if !ok {
+		return nil, nil, errors.New("missing info for gid")
+	}
+	//apply the date to the edited field of this
+	now, err := engine.NewDateTime(time)
+	if err != nil {
+		return nil, nil, err
+	}
+	info.UpdatedDate = now
+
+	return &info, &gid, nil
+
+}
+
+func (g *GroveEngine) UpdateEditTimestamp(id engine.GotId, time time.Time) error {
+	_, _, err := g.updatedEditTimeInfoForId(id, time)
+	return err
+
+}
+
 func (g *GroveEngine) fetchAndDepthSortAncestry(gids []engine.GotId) ([]GotIdWithPath, error) {
 	pairs, err := g.GroveStore.FetchAncestorsForMany(gids)
 
@@ -69,33 +106,19 @@ func (g *GroveEngine) MarkResolved(lookups []engine.GidLookup) error {
 			State: state,
 		})
 	}
-	return g.GroveStore.BulkChangeState(statePairs, complete, millisStr)
-}
 
-// grab the info for this lookup, assuming it maps to 1 info item, and update the timeedited on the info object before returning it (this doesnt save anything)
-func (g *GroveEngine) updatedEditTimeInfoForLookup(lookup engine.GidLookup) (*engine_util.BuckInfo, *engine.GotId, error) {
-	gid, err := g.GidLookup.InputToGid(&lookup)
-	if err != nil || gid == nil {
-		return nil, nil, err
-	}
-
-	infoMap, err := g.InfoStore.InfoForMany([]engine.GotId{*gid})
+	err = g.GroveStore.BulkChangeState(statePairs, complete, millisStr)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
-	info, ok := infoMap.InfoMap[*gid]
-	if !ok {
-		return nil, nil, errors.New("missing info for gid")
+	//send the edit timestamp event
+	for _, id := range ids {
+		err = g.UpdateEditTimestamp(id, now)
+		if err != nil {
+			return err
+		}
 	}
-	//apply the date to the edited field of this
-	now, err := engine.NewDateTime(time.Now())
-	if err != nil {
-		return nil, nil, err
-	}
-	info.UpdatedDate = now
-
-	return &info, gid, nil
-
+	return nil
 }
 
 func (g *GroveEngine) EditTitle(lookup engine.GidLookup, newHeading string) error {

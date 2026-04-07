@@ -20,7 +20,6 @@ type GotEngineInterface interface {
 	GotEditInterface
 	GotTreeInterface
 }
-
 type GotTreeInterface interface {
 	DeleteMany(lookups []GidLookup) error
 	Move(lookup GidLookup, newParent GidLookup) error //returns the oldParents id
@@ -105,8 +104,8 @@ func (l *LongFormBlock) Created() time.Time {
 }
 
 type LongFormStoreInterface interface {
-	AppendNote(id GotId, content string) (*LongFormKey, error)
-	InsertBlock(block LongFormBlock) error
+	AppendNote(id GotId, content string) (*LongFormKey, error) //creates and appends a block by using an incremented id, and the current timetstamp for edit time.
+	InsertBlock(block LongFormBlock) error                     //similar to appendNote, except the block includes meta data
 	LongFormNotesFor(id GotId) (*LongFormBlockResult, error)
 	LongFormForMany(ids []GotId) (map[GotId]LongFormBlockResult, error)
 	RemoveAllItemsFromLongStoreUnder(id GotId) error
