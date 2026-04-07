@@ -17,7 +17,7 @@ type AggCount struct {
 	Notes    int `json:"n,omitempty"`
 }
 
-// VX:TODO its either state OR its counts.
+// VX:Note Summary is a bit of a relic. We have info now.
 // deadline is separate. Maybe it doesn't belong here but we'll see.
 type Summary struct {
 	State       *GotState       `json:"s,omitempty"`
