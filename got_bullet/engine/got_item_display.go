@@ -15,6 +15,7 @@ type GotItemDisplay struct {
 	Path          *GotPath
 	NumberGo      int
 	HasTNote      bool
+	IsParent      bool
 }
 
 func (i *GotItemDisplay) IsCollapsed() bool {

@@ -151,6 +151,7 @@ type CreateBuckRequest struct {
 func (c *CreateBuckRequest) HasOverride() bool {
 	return c.OverrideSettings != nil
 }
+
 func NewCreateBuckRequest(lookup *GidLookup, dateLookup *DateLookup, heading string, state GotState, overrides *CreateOverrideSettings) CreateBuckRequest {
 	var gidLookupString *string = nil
 	var scheduleLookup *string = nil
