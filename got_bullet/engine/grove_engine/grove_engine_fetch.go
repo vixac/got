@@ -44,12 +44,27 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 	if err != nil {
 		return nil, err
 	}
+	//aliases too.
 
-	var idStrings []string
+	var idsWeWantAliasesFor []string
 	for _, id := range descendantPlusParentIds {
-		idStrings = append(idStrings, id.AasciValue)
+		idsWeWantAliasesFor = append(idsWeWantAliasesFor, id.AasciValue)
 	}
-	aliases, err := g.LookupAliasForMany(idStrings)
+
+	//if a parent was passed in, we want the alias of all its ancestors so we can
+	//render the parents full path
+	if parentGid != nil {
+		for _, idWithPath := range paths {
+			if idWithPath.Id == *parentGid {
+				for _, parentAncestor := range idWithPath.Path {
+					idsWeWantAliasesFor = append(idsWeWantAliasesFor, parentAncestor.AasciValue)
+				}
+
+			}
+		}
+	}
+
+	aliases, err := g.LookupAliasForMany(idsWeWantAliasesFor)
 
 	gotPaths := make(map[engine.GotId]engine.GotPath)
 	for _, idWithPath := range paths {
@@ -167,7 +182,7 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 			return nil, err
 		}
 		if shouldShow {
-
+			isParent := id == *parentGid
 			//VX:Note NumberGo is added add by EnrichWithNumberGos
 			display := engine.GotItemDisplay{
 				GotId:         id,
@@ -180,8 +195,9 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 				DeadlineToken: deadlineToken,
 				SummaryObj:    &summary,
 				HasTNote:      hasTNote,
+				IsParent:      isParent,
 			}
-			if id == *parentGid {
+			if isParent {
 				parent = &display
 			} else {
 				displays = append(displays, display)

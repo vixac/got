@@ -39,6 +39,7 @@ func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {
 			pathSnippets = append(pathSnippets, console.NewSnippet("/", console.TokenTextTertiary{}))
 		}
 		if node.Alias != nil {
+
 			pathSnippets = append(pathSnippets, console.NewSnippet(*node.Alias, console.TokenAlias{}))
 		} else {
 			if node.Id != "0" {
@@ -178,7 +179,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 				itemRow.Updated = console.NewTableCellFromStr(" "+item.Updated+" ", console.TokenNote{})
 			}
 
-			if options.FlatPaths {
+			if options.FlatPaths || item.IsParent {
 				pathCell := renderPathFlat(&item)
 				itemRow.Path = pathCell
 

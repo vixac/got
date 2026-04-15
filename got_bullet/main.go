@@ -1,13 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
+	sqlite_store "github.com/vixac/bullet/store/sqlite"
 	"github.com/vixac/bullet/store/store_interface"
 
-	sqlite_store "github.com/vixac/bullet/store/sqlite"
 	"github.com/vixac/firbolg_clients/bullet/local_bullet"
+	"github.com/vixac/firbolg_clients/bullet/rest_bullet"
 	"vixac.com/got/cmd"
 	"vixac.com/got/console"
 	"vixac.com/got/engine/grove_engine"
@@ -27,6 +29,7 @@ func main() {
 	if sqlitePath == "" {
 		log.Fatal("missing env GOT_SQLITE, which should be the path to the got sqlite file")
 	}
+
 	sqlite, err := sqlite_store.NewSQLiteStore(sqlitePath)
 	if err != nil {
 		log.Fatal(err)
@@ -37,8 +40,14 @@ func main() {
 		Store: sqlite,
 	}
 
+	fmt.Printf("VX:local bullet %s\n", localBullet.Space)
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+	option := rest_bullet.WithLogger(logger)
+	restClient := rest_bullet.NewRestClient("http://localhost:80", space, option)
+
+	fmt.Printf("VX: rest client %s\n", restClient.AppId)
 	ene, err := grove_engine.NewGroveEngine(&localBullet)
-	//ene, err := bullet_engine.NewEngineBullet(&localBullet)
+	//ene, err := grove_engine.NewGroveEngine(restClient)
 
 	if err != nil {
 		log.Fatal(err)
