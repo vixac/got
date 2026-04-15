@@ -111,7 +111,7 @@ func (i *IdGenerator) NextId() (int64, error) {
 	latest := bullet_stl.ListSubject{Value: i.LatestSubject}
 	currentHighest, err := list.GetObject(latest)
 	if err != nil {
-		fmt.Printf("VX next Id failed at get object. %s\n", err.Error())
+		fmt.Printf("VX next Id failed at get object.. Next it will return  %s\n", err.Error())
 		return 0, err
 	}
 

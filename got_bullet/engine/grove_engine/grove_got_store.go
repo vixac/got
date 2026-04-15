@@ -278,6 +278,7 @@ func (s *GroveGotStore) createBuckAttempt(createBuckRequest GotStoreCreateReques
 	}
 	err := s.Grove.GroveCreateNode(groveReq)
 	if err != nil {
+		fmt.Printf("VX: there was an error creating this node: %+v, error is %s\n", groveReq, err.Error())
 
 		if parentIsRoot && numTries == 0 {
 			//This is the first node to be created in this datastore. We must create the root node and then try again.
