@@ -226,7 +226,7 @@ func renderNotesFor(lookup *engine.GidLookup, recurse bool, deps RootDependencie
 }
 
 func renderTable(lookup *engine.GidLookup, states []engine.GotState, options engine_util.TableRenderOptions, deps RootDependencies) {
-	res, err := deps.Engine.FetchItemsBelow(lookup, options.SortByPath, states, options.HideUnderCollapsed)
+	res, err := deps.Engine.FetchItemsBelow(lookup, options.SortStyle, states, options.HideUnderCollapsed)
 	if err != nil {
 		deps.Printer.Error(console.Message{Message: err.Error()})
 		return

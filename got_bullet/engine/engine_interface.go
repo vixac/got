@@ -45,7 +45,7 @@ type RestoreInterface interface {
 
 // All the lookup stuff
 type GotFetchInterface interface {
-	FetchItemsBelow(lookup *GidLookup, sortByPath bool, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
+	FetchItemsBelow(lookup *GidLookup, sortStyle int, states []GotState, hideUnderCollapsed bool) (*GotFetchResult, error)
 }
 
 type GotCreateItemInterface interface {

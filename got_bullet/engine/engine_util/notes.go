@@ -7,7 +7,7 @@ import (
 )
 
 func NotesForMany(e engine.GotFetchInterface, lookup *engine.GidLookup, longform engine.LongFormStoreInterface) (*engine.LongFormBlockResult, error) {
-	items, err := e.FetchItemsBelow(lookup, false, []engine.GotState{engine.Active, engine.Complete}, false)
+	items, err := e.FetchItemsBelow(lookup, SortByPath, []engine.GotState{engine.Active, engine.Complete}, false)
 	if err != nil {
 		return nil, err
 	}

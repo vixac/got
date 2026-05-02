@@ -9,7 +9,7 @@ import (
 	"vixac.com/got/engine/engine_util"
 )
 
-func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool, states []engine.GotState, hideUnderCollapsed bool) (*engine.GotFetchResult, error) {
+func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortStyle int, states []engine.GotState, hideUnderCollapsed bool) (*engine.GotFetchResult, error) {
 	//now := time.Now()
 	statesToFetch := make(map[engine.GotState]bool)
 	for _, v := range states {
@@ -207,11 +207,13 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortByPath bool,
 	}
 
 	var sorted []engine.GotItemDisplay
-	if sortByPath {
+	if sortStyle == engine_util.SortByPath {
 		sorted = engine_util.SortTheseIntoDFS(displays)
 
-	} else {
+	} else if sortStyle == engine_util.SortByUpdatedDate {
 		sorted = engine_util.SortByUpdated(displays)
+	} else if sortStyle == engine_util.SortByDeadlineDate {
+		sorted = engine_util.SortByDeadline(displays)
 	}
 	return engine_util.EnrichWithNumberGos(g.NumberGoStore, sorted, parent)
 
