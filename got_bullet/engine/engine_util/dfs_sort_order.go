@@ -1,6 +1,7 @@
 package engine_util
 
 import (
+	"fmt"
 	"sort"
 
 	"vixac.com/got/engine"
@@ -50,6 +51,36 @@ func SortByUpdated(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 			return false
 		}
 		return sortableItems[i].SummaryObj.UpdatedDate.EpochMillis() < sortableItems[j].SummaryObj.UpdatedDate.EpochMillis()
+	})
+	return sortableItems
+}
+
+func SortByDeadline(items []engine.GotItemDisplay) []engine.GotItemDisplay {
+	fmt.Printf("VX: Sorteing by deadline \n")
+	var sortableItems []engine.GotItemDisplay = items
+
+	sort.Slice(sortableItems, func(i, j int) bool {
+		lhs := sortableItems[i].SummaryObj.Deadline
+		rhs := sortableItems[j].SummaryObj.Deadline
+		if lhs == nil && rhs == nil {
+			return true
+		}
+		if lhs == nil {
+			return true
+		}
+		if rhs == nil {
+			return false
+		}
+		if lhs.IsNow() && rhs.IsNow() {
+			return true
+		}
+		if lhs.IsNow() && !rhs.IsNow() {
+			return false
+		}
+		if !lhs.IsNow() && rhs.IsNow() {
+			return true
+		}
+		return sortableItems[i].SummaryObj.Deadline.EpochMillis() > sortableItems[j].SummaryObj.Deadline.EpochMillis()
 	})
 	return sortableItems
 }

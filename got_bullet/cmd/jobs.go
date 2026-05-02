@@ -10,7 +10,9 @@ import (
 // VX:TODO test
 func buildJobsCommand(deps RootDependencies) *cobra.Command {
 
-	var jobsCmd = &cobra.Command{
+	byDeadline := false
+	var sortByDeadline *bool = &byDeadline
+	var cmd = &cobra.Command{
 		Use:   "jobs",
 		Short: "fetch jobs under gid",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -29,18 +31,23 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 					Input: "",
 				}
 			}
+			sortStyle := engine_util.SortByPath
+			if *sortByDeadline {
+				sortStyle = engine_util.SortByDeadlineDate
+			}
 
 			states := []engine.GotState{engine.Active, engine.Note}
 			options := engine_util.TableRenderOptions{
-				FlatPaths:          false,
+				FlatPaths:          *sortByDeadline, //flat paths for deadline
 				ShowCreatedColumn:  true,
 				ShowUpdatedColumn:  false,
-				SortByPath:         true,
+				SortStyle:          sortStyle,
 				HideUnderCollapsed: true,
 			}
 			renderTable(lookup, states, options, deps)
 		},
 	}
-	return jobsCmd
+	cmd.Flags().BoolVarP(sortByDeadline, "now", "n", false, "Whether to sort by now or not.")
+	return cmd
 
 }

@@ -40,7 +40,7 @@ func main() {
 		Store: sqlite,
 	}
 
-	fmt.Printf("VX:local bullet %s\n", localBullet.Space)
+	fmt.Printf("VX:local bullet %+v\n", localBullet.Space)
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	option := rest_bullet.WithLogger(logger)
 	restClient := rest_bullet.NewRestClient("http://localhost:80", space, option)

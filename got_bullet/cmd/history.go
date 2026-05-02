@@ -36,7 +36,7 @@ func buildHistoryCommand(deps RootDependencies) *cobra.Command {
 				FlatPaths:          true,
 				ShowCreatedColumn:  true,
 				ShowUpdatedColumn:  true,
-				SortByPath:         false,
+				SortStyle:          engine_util.SortByUpdatedDate, //for now this means sort by updated, because we dont have more options yet.
 				GroupByTimeFrame:   true,
 				HideUnderCollapsed: false,
 			}

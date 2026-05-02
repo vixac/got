@@ -69,6 +69,10 @@ type DateTime struct {
 	Millis  int64  `json:"e,omitempty"`
 }
 
+func (d *DateTime) IsNow() bool {
+	return d != nil && d.Special == "n"
+}
+
 func (d *DateTime) EpochMillis() int64 {
 	if d == nil || d.Special != "" {
 		return 0

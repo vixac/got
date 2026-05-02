@@ -8,17 +8,22 @@ import (
 )
 
 const (
-	separatorChar = "─"
+	separatorChar      = "─"
+	SortByNone         = 0
+	SortByPath         = 1
+	SortByUpdatedDate  = 2
+	SortByDeadlineDate = 3
 )
 
 type TableRenderOptions struct {
 	FlatPaths          bool
 	ShowCreatedColumn  bool
 	ShowUpdatedColumn  bool
-	SortByPath         bool
+	SortStyle          int //correspdonds to SortByNone, SortByPath, or SortByDate
 	GroupByTimeFrame   bool
 	HideUnderCollapsed bool
 	HideNumberGo       bool
+	SortByDate         bool
 }
 
 func renderPathFlat(item *engine.GotItemDisplay) console.TableCell {

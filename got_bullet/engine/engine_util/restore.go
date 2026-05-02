@@ -30,7 +30,7 @@ func RestoreFromFile(filename string, e engine.GotCreateItemInterface) error {
 }
 
 func CreateStoreFile(e engine.GotFetchInterface, longForm engine.LongFormStoreInterface) (string, error) {
-	allItems, err := e.FetchItemsBelow(nil, true, []engine.GotState{engine.Active, engine.Complete}, false)
+	allItems, err := e.FetchItemsBelow(nil, SortByPath, []engine.GotState{engine.Active, engine.Complete}, false)
 	if err != nil {
 		return "", err
 	}
