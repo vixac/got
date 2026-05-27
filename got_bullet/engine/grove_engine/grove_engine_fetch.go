@@ -181,12 +181,18 @@ func (g *GroveEngine) FetchItemsBelow(lookup *engine.GidLookup, sortStyle int, s
 		if err != nil {
 			return nil, err
 		}
+
+		updatedStr, err := summary.UpdatedDate.JsonDateToReadable()
+		if err != nil {
+			return nil, err
+		}
 		if shouldShow {
 			isParent := id == *parentGid
 			//VX:Note NumberGo is added add by EnrichWithNumberGos
 			display := engine.GotItemDisplay{
 				GotId:         id,
 				Created:       createdStr,
+				Updated:       updatedStr,
 				DisplayGid:    id.DisplayAasci(),
 				Path:          thePath,
 				Title:         info.Title,

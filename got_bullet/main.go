@@ -9,7 +9,6 @@ import (
 	"github.com/vixac/bullet/store/store_interface"
 
 	"github.com/vixac/firbolg_clients/bullet/local_bullet"
-	"github.com/vixac/firbolg_clients/bullet/rest_bullet"
 	"vixac.com/got/cmd"
 	"vixac.com/got/console"
 	"vixac.com/got/engine/grove_engine"
@@ -41,11 +40,11 @@ func main() {
 	}
 
 	fmt.Printf("VX:local bullet %+v\n", localBullet.Space)
-	logger := log.New(os.Stdout, "", log.LstdFlags)
-	option := rest_bullet.WithLogger(logger)
-	restClient := rest_bullet.NewRestClient("http://localhost:80", space, option)
+	// logger := log.New(os.Stdout, "", log.LstdFlags)
+	// option := rest_bullet.WithLogger(logger)
+	// restClient := rest_bullet.NewRestClient("http://localhost:80", space, option)
 
-	fmt.Printf("VX: rest client %s\n", restClient.AppId)
+	//fmt.Printf("VX: rest client %s\n", restClient.AppId)
 	ene, err := grove_engine.NewGroveEngine(&localBullet)
 	//ene, err := grove_engine.NewGroveEngine(restClient)
 

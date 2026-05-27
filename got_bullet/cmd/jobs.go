@@ -39,8 +39,8 @@ func buildJobsCommand(deps RootDependencies) *cobra.Command {
 			states := []engine.GotState{engine.Active, engine.Note}
 			options := engine_util.TableRenderOptions{
 				FlatPaths:          *sortByDeadline, //flat paths for deadline
-				ShowCreatedColumn:  true,
-				ShowUpdatedColumn:  false,
+				ShowCreatedColumn:  false,
+				ShowUpdatedColumn:  true,
 				SortStyle:          sortStyle,
 				HideUnderCollapsed: true,
 			}

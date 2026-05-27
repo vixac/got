@@ -42,8 +42,12 @@ func (g *GroveEngine) updatedEditTimeInfoForId(gid engine.GotId, time time.Time)
 }
 
 func (g *GroveEngine) UpdateEditTimestamp(id engine.GotId, time time.Time) error {
-	_, _, err := g.updatedEditTimeInfoForId(id, time)
-	return err
+	updated, gid, err := g.updatedEditTimeInfoForId(id, time)
+	if err != nil {
+		return err
+	}
+
+	return g.InfoStore.UpsertInfo(*gid, *updated)
 
 }
 
