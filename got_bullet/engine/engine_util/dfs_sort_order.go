@@ -37,22 +37,55 @@ func SortTheseIntoDFS(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 
 func SortByUpdated(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 	var sortableItems []engine.GotItemDisplay = items
-
 	sort.Slice(sortableItems, func(i, j int) bool {
-		lhs := sortableItems[i].SummaryObj.UpdatedDate
-		rhs := sortableItems[j].SummaryObj.UpdatedDate
-		if lhs == nil && rhs == nil {
-			return true
-		}
-		if lhs == nil {
-			return true
-		}
-		if rhs == nil {
-			return false
-		}
-		return sortableItems[i].SummaryObj.UpdatedDate.EpochMillis() < sortableItems[j].SummaryObj.UpdatedDate.EpochMillis()
+		return updatedSort(sortableItems[i].SummaryObj, sortableItems[j].SummaryObj)
 	})
 	return sortableItems
+}
+
+func updatedSort(lhsSummary *engine.Summary, rhsSummary *engine.Summary) bool {
+	if lhsSummary == nil || rhsSummary == nil { //VX:Note this should not happen.
+		return true
+	}
+	lhs := lhsSummary.UpdatedDate
+	rhs := rhsSummary.UpdatedDate
+	if lhs == nil && rhs == nil {
+		return true
+	}
+	if lhs == nil {
+		return true
+	}
+	if rhs == nil {
+		return false
+	}
+	return lhs.EpochMillis() < rhs.EpochMillis()
+}
+
+func deadlineSort(lhsSummary *engine.Summary, rhsSummary *engine.Summary) bool {
+	if lhsSummary == nil || rhsSummary == nil { //VX:Note this should not happen.
+		return true
+	}
+	lhs := lhsSummary.Deadline
+	rhs := rhsSummary.Deadline
+	if lhs == nil && rhs == nil { //if there are no deadlines, sort by updated.
+		return updatedSort(lhsSummary, rhsSummary)
+	}
+	if lhs == nil {
+		return true
+	}
+	if rhs == nil {
+		return false
+	}
+	if lhs.IsNow() && rhs.IsNow() {
+		return true
+	}
+	if lhs.IsNow() && !rhs.IsNow() {
+		return false
+	}
+	if !lhs.IsNow() && rhs.IsNow() {
+		return true
+	}
+	return lhs.EpochMillis() > rhs.EpochMillis()
 }
 
 func SortByDeadline(items []engine.GotItemDisplay) []engine.GotItemDisplay {
@@ -60,27 +93,7 @@ func SortByDeadline(items []engine.GotItemDisplay) []engine.GotItemDisplay {
 	var sortableItems []engine.GotItemDisplay = items
 
 	sort.Slice(sortableItems, func(i, j int) bool {
-		lhs := sortableItems[i].SummaryObj.Deadline
-		rhs := sortableItems[j].SummaryObj.Deadline
-		if lhs == nil && rhs == nil {
-			return true
-		}
-		if lhs == nil {
-			return true
-		}
-		if rhs == nil {
-			return false
-		}
-		if lhs.IsNow() && rhs.IsNow() {
-			return true
-		}
-		if lhs.IsNow() && !rhs.IsNow() {
-			return false
-		}
-		if !lhs.IsNow() && rhs.IsNow() {
-			return true
-		}
-		return sortableItems[i].SummaryObj.Deadline.EpochMillis() > sortableItems[j].SummaryObj.Deadline.EpochMillis()
+		return deadlineSort(sortableItems[i].SummaryObj, sortableItems[j].SummaryObj)
 	})
 	return sortableItems
 }
