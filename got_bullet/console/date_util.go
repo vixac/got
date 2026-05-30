@@ -126,7 +126,7 @@ func HumanizeDate(target, now time.Time) (string, SpaceTime) {
 	absDays := int(math.Abs(float64(diffDays)))
 
 	// Switch to weeks if far away
-	if absDays > 100 {
+	if absDays > 400 {
 		weeks := absDays / 7
 		if diffDays < 0 {
 			return fmt.Sprintf("%d weeks ago", weeks), SpaceTime{TimeType: PastMany}

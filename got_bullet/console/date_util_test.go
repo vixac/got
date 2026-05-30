@@ -134,14 +134,14 @@ func TestHumanizeDate(t *testing.T) {
 			want:   "in 10 days",
 		},
 		{
-			name:   "over 100 days past uses weeks",
-			target: ref.AddDate(0, 0, -140),
-			want:   "20 weeks ago",
+			name:   "over 400 days past uses weeks",
+			target: ref.AddDate(0, 0, -440),
+			want:   "62 weeks ago",
 		},
 		{
-			name:   "over 100 days future uses weeks",
-			target: ref.AddDate(0, 0, 154),
-			want:   "in 22 weeks",
+			name:   "over 500 days future uses weeks",
+			target: ref.AddDate(0, 0, 554),
+			want:   "in 79 weeks",
 		},
 		{
 			name:   "time of day ignored",
