@@ -276,7 +276,7 @@ func NewTable(sections *GotTableSections, options TableRenderOptions) (console.C
 			}
 
 			if item.SummaryObj != nil {
-				itemRow.State = stateToCell(item.SummaryObj.State)
+				itemRow.State = stateToCell(item.SummaryObj.State, item.SummaryObj.Counts)
 			}
 
 			tagStr := ""
@@ -389,15 +389,18 @@ func stateToToken(state *engine.GotState) console.Token {
 	}
 	return console.TokenPrimary{}
 }
-func stateToStr(state *engine.GotState) string {
+func stateToStr(state *engine.GotState, counts *engine.AggCount) string {
 	if state == nil {
-		return ""
+		return "" //no state, no symbol
+	}
+	if *state == engine.Active && counts != nil && counts.Active > 0 {
+		return "" //if the item is active but it also contains active children, it's not workable directly, so no icon.
 	}
 	return state.ToStr()
 }
 
-func stateToCell(state *engine.GotState) console.TableCell {
-	return console.NewTableCellFromStr(stateToStr(state), stateToToken(state))
+func stateToCell(state *engine.GotState, counts *engine.AggCount) console.TableCell {
+	return console.NewTableCellFromStr(stateToStr(state, counts), stateToToken(state))
 }
 
 func zeroIsEmpty(input int) string {
