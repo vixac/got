@@ -20,7 +20,7 @@ func TestAliasCommand_MissingGID(t *testing.T) {
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 1)
 
-	if p.errors[0].Message != "missing args. Pass in an alias and a gid" {
+	if p.errors[0].Message != "Invalid args. Just 1 please." {
 		t.Errorf("wrong message: %v", p.errors[0].Message)
 	}
 }
@@ -35,12 +35,11 @@ func TestAliasCommandValidButEngineThrows(t *testing.T) {
 		Engine:  &e,
 	}
 	cmd := buildAliasCommand(mockDeps)
-	cmd.SetArgs([]string{"new_name", "abc"})
+	cmd.SetArgs([]string{"abc"})
 	_ = cmd.Execute()
 	assert.Equal(t, len(p.errors), 1)
 	assert.Equal(t, p.errors[0].Message, "test error")
 	assert.Equal(t, e.resolveLookup.Input, "abc")
-	assert.Equal(t, e.aliasAlias, "new_name")
 }
 
 func TestAliasCommand_Valid(t *testing.T) {
@@ -52,7 +51,7 @@ func TestAliasCommand_Valid(t *testing.T) {
 		Engine:  &e,
 	}
 	cmd := buildAliasCommand(mockDeps)
-	cmd.SetArgs([]string{"new_name", "abc"})
+	cmd.SetArgs([]string{"abc", "--to", "new_name"})
 	_ = cmd.Execute()
 	if len(p.errors) != 0 {
 		t.Errorf("expected  no errors. 0 != %d", len(p.errors))

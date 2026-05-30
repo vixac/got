@@ -9,22 +9,17 @@ import (
 )
 
 func buildAliasCommand(deps RootDependencies) *cobra.Command {
+	var alias string
 	var cmd = &cobra.Command{
 		Use:   "alias",
 		Short: "alias an item with a better name. <alias> <gid>",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) < 2 {
-				err := errors.New("missing args. Pass in an alias and a gid")
+			if len(args) != 1 {
+				err := errors.New("Invalid args. Just 1 please.")
 				deps.Printer.Error(console.Message{Message: err.Error()})
 				return
 			}
-			alias := args[0]
-			gid := args[1]
-
-			if alias == "" {
-				deps.Printer.Error(console.Message{Message: "Missing alias"})
-				return
-			}
+			gid := args[0]
 
 			if gid == "" {
 				deps.Printer.Error(console.Message{Message: "Missing gid"})
@@ -40,5 +35,6 @@ func buildAliasCommand(deps RootDependencies) *cobra.Command {
 			deps.Printer.Print(console.Message{Message: msg})
 		},
 	}
+	cmd.Flags().StringVarP(&alias, "to", "t", "", "The new alias")
 	return cmd
 }
